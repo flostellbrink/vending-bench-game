@@ -18,7 +18,9 @@ The generator reproduced the 30-day, seed-1 scripted result of €3,302.96 from 
 
 These are independent agent playtests of the live game, not human usability studies.
 
-With the receipt and caption hidden, a reviewer identified the selected lounge cabinet by its illuminated trim and the drinks cabinet by its bottle symbol. They could not identify the snack cabinet from the shelves or distinguish the inspection light moving at desktop play size. Cabinet selection is legible; machine type and motion still need work.
+With the receipt and caption hidden, a reviewer identified the cabinet the attendant approached. The spiral shelves distinguished the snack machine from the bottle machine. The walking motion alone did not distinguish inspection from refill. In reduced-motion mode, the clock went straight to the receipt time and the selected cabinet stayed lit.
+
+For an inspection at 16:55, the attendant was visible until 16:59 and gone at the 17:00 close. The scene then passed through night and reached 09:00 in 3.07 seconds from dispatch. With reduced motion on, a second inspection at 16:55 reached morning within 194 ms without a visible overnight sequence.
 
 ## Follow-up design studies
 
