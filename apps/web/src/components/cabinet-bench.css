@@ -124,3 +124,12 @@
     gap: 0.6rem;
   }
 }
+.slot-amendment {
+  border-left: 2px solid #738c74;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+  background: #e0e7d6;
+}
+.slot-amendment small {
+  color: #46584c;
+}

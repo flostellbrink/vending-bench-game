@@ -37,6 +37,11 @@ await test("each exported page ships only its own localized messages", async () 
       const messages = assertValue(dictionary[locale]);
       const landmark = assertValue(messages[segment ? "VBBOOT03" : "SX000001"]);
       assert.equal("VBBOOT03" in messages, segment === "run/", "Wrong boot-hint scope");
+      assert.equal(
+        "HN000001" in messages,
+        segment === "",
+        "The benchmark introduction belongs only on the landing page",
+      );
       assert.ok(!("VFADD001" in messages), "Unused order-form message shipped");
       assert.ok(
         !scripts.some((s) => s.includes(landmark)),

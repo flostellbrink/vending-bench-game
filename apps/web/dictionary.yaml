@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  laterObservations:
+    .id: SLCH0001
+    ^en: Since this inspection
+    es: Desde esta inspección
+    de: Seit dieser Prüfung
   paceReview:
     .id: PC000000
     ^en: "Pace review"
@@ -1004,7 +1009,119 @@ commands:
     ^en: "Reminders"
     es: "Recordatorios"
     de: "Erinnerungen"
+landing:
+  lead:
+    .id: HN000001
+    .inputs:
+      - $model :string
+    ^en: "{$model} ran a vending business. Your shift."
+    es: "{$model} gestionó un negocio de máquinas expendedoras. Te toca."
+    de: "{$model} hat Automaten betrieben. Jetzt bist du dran."
+  fallback:
+    .id: HN000002
+    ^en: "Your shift at the vending machines."
+    es: "Tu turno al frente de las máquinas."
+    de: "Deine Schicht an den Automaten."
+  context:
+    .id: HN000016
+    ^en: "This independent game lets you play Prosus Vending Bench, an open benchmark for AI agents. Your job is the same as theirs: find suppliers, buy stock, set prices and keep enough cash for tomorrow."
+    es: "Este juego independiente te permite jugar a Prosus Vending Bench, una prueba abierta para agentes de IA. Tu tarea es la misma: buscar proveedores, comprar productos, fijar precios y reservar dinero para mañana."
+    de: "Mit diesem unabhängigen Spiel kannst du Prosus Vending Bench spielen, einen offenen Benchmark für KI-Agenten. Deine Aufgabe ist dieselbe: Lieferanten finden, Waren kaufen, Preise setzen und genug Geld für morgen behalten."
+  best:
+    .id: HN000004
+    .inputs:
+      - $model :string
+      - $score :string
+      - $version :string
+    ^en: "{$model} led the published v{$version} model runs with {$score}."
+    es: "{$model} encabezó las partidas publicadas de la v{$version} con {$score}."
+    de: "{$model} führte die veröffentlichten Modellläufe in v{$version} mit {$score} an."
+  results:
+    .id: HN000005
+    ^en: "Published model runs"
+    es: "Partidas publicadas de los modelos"
+    de: "Veröffentlichte Modellläufe"
+  conditions:
+    .id: HN000006
+    .inputs:
+      - $version :string
+      - $days :integer
+      - $seed :integer
+    ^en: "v{$version} · {$days} days · seed {$seed}"
+    es: "v{$version} · {$days} días · semilla {$seed}"
+    de: "v{$version} · {$days} Tage · Seed {$seed}"
+  archived:
+    .id: HN000007
+    .inputs:
+      - $playable :string
+    ^en: "Different rules from the selected v{$playable} run. These scores are historical, not targets for your run."
+    es: "Las reglas difieren de la partida v{$playable} seleccionada. Son resultados históricos, no objetivos para tu partida."
+    de: "Andere Regeln als im gewählten Lauf v{$playable}. Diese historischen Ergebnisse sind keine Zielwerte für deinen Lauf."
+  method:
+    .id: HN000008
+    ^en: "How the benchmark works"
+    es: "Cómo funciona la prueba"
+    de: "So funktioniert der Benchmark"
+  rules:
+    .id: HN000009
+    .inputs:
+      - $machines :integer
+      - $sites :integer
+      - $days :integer
+      - $fee :string
+    ^en: "Operate {$machines} machines across {$sites} sites for {$days} simulated days. The network pays {$fee} in daily site fees. Your score is the final bank balance of a completed run; unsold stock does not count."
+    es: "Gestiona {$machines} máquinas en {$sites} sedes durante {$days} días simulados. La red paga {$fee} al día en alquiler. Puntúa el saldo bancario al terminar, no el inventario sin vender."
+    de: "Betreibe {$machines} Automaten an {$sites} Standorten für {$days} simulierte Tage. Die tägliche Standgebühr beträgt insgesamt {$fee}. Nur der Kontostand am Ende eines abgeschlossenen Laufs zählt, nicht die unverkaufte Ware."
+  clock:
+    .id: HN000010
+    .inputs:
+      - $opens :string
+      - $closes :string
+      - $minutes :integer
+    ^en: "Think for as long as you like. The clock moves when you act. The working day runs {$opens}–{$closes}; a refill costs {$minutes} simulated minutes. If you fill a slot but forget to price it, it sells nothing overnight."
+    es: "Tómate el tiempo que quieras para pensar. El reloj avanza al actuar. La jornada va de {$opens} a {$closes}; reponer un compartimento cuesta {$minutes} minutos simulados. Si lo llenas sin fijar un precio, no venderá nada esa noche."
+    de: "Denk so lange nach, wie du willst. Die Uhr läuft erst, wenn du handelst. Der Arbeitstag dauert von {$opens} bis {$closes}; eine Befüllung kostet {$minutes} simulierte Minuten. Ein gefülltes Fach ohne Preis verkauft nachts nichts."
+  source:
+    .id: HN000011
+    ^en: "Source and run conditions"
+    es: "Código y condiciones de la partida"
+    de: "Quellcode und Bedingungen"
+  local:
+    .id: HN000012
+    ^en: "The original Python simulator runs in your browser. No account, API key or server-side simulation. Your save stays on this device."
+    es: "El simulador original de Python se ejecuta en tu navegador. Sin cuenta, clave de API ni simulación en un servidor. La partida se guarda en este dispositivo."
+    de: "Der originale Python-Simulator läuft in deinem Browser. Kein Konto, kein API-Schlüssel, keine Simulation auf einem Server. Der Spielstand bleibt auf diesem Gerät."
+  publication:
+    .id: HN000013
+    ^en: "Published results"
+    es: "Resultados publicados"
+    de: "Veröffentlichte Ergebnisse"
+  human:
+    .id: HN000014
+    ^en: "Human operator interface"
+    es: "Interfaz del operador humano"
+    de: "Bedienplatz für Menschen"
+  score:
+    .id: HN000015
+    ^en: "Final score"
+    es: "Puntuación final"
+    de: "Endstand"
+  model:
+    .id: HN000016
+    ^en: "Model"
+    es: "Modelo"
+    de: "Modell"
 session:
+  keep:
+    .id: SX000019
+    ^en: Keep saved run
+    es: Conservar la partida
+    de: Spielstand behalten
+  replace:
+    .id: SX000020
+    ^en: Replace and start
+    es: Reemplazar e iniciar
+    de: Ersetzen und starten
   choose:
     .id: SX000001
     ^en: "Choose a benchmark"

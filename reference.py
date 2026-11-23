@@ -202,5 +202,8 @@ def metadata():
     models, archives = model_results(version)
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
+                       "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
+                                   "fee":config.DAILY_SPOT_FEE, "opens":config.DAY_START_MINUTE,
+                                   "closes":config.DAY_END_MINUTE, "refill":config.TOOL_MINUTES.get("restock_machine",config.DEFAULT_TOOL_MINUTES)},
                        "brief": brief.strip(), "tools": tool_descriptions(), "archives": archives,
                        "rivals": [reference_trace(version), *models]}, allow_nan=False)

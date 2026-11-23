@@ -25,6 +25,7 @@ const metadataSchema = v.object({
     "startingBalance",
     "currency",
     "brief",
+    "network",
     "tools",
   ]).entries,
   rivals: v.array(sourceRivalSchema),

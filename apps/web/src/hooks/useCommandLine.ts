@@ -6,6 +6,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import {
   commandGroups,
   completions,
+  draftMachine,
   local,
   operatorText,
   parse,
@@ -50,7 +51,7 @@ export function useCommandLine(
   const choices = state ? completions(prefix, state, actions, reports) : [];
   const orderEstimate = state ? priceOrder(line, state, actions, reports) : null;
   function edit(value: string, pos = value.length) {
-    if (value) nav.setSite(null);
+    if (state && draftMachine(value, state.machines)) nav.setSite(null);
     setLine(value);
     setCaret(pos);
     setBrowse(!!value);
@@ -115,7 +116,12 @@ export function useCommandLine(
           step === first ? { ...step, dispatchedAt: run.journal.length } : step,
         ),
       );
-      nav.setSite(null);
+      if (
+        draftMachine(first.line, state.machines) ||
+        first.verb === "depot" ||
+        first.verb === "order"
+      )
+        nav.setSite(null);
     }
   }
   function runCommand(command: string, fromPrompt = false) {
@@ -176,7 +182,8 @@ export function useCommandLine(
     try {
       const move = parse(raw, state, actions);
       if (run.submit({ move, line: raw })) {
-        nav.setSite(null);
+        if (draftMachine(raw, state.machines) || commandName === "depot" || commandName === "order")
+          nav.setSite(null);
         if (fromPrompt) edit("");
       }
     } catch (error) {

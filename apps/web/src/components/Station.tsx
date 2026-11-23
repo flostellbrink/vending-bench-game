@@ -1,6 +1,6 @@
 import type { Release } from "games-common/benchmark";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
 import { locales } from "@/dictionary/runtime";
 import { useCommandLine } from "@/hooks/useCommandLine";
@@ -11,8 +11,7 @@ import { operatorLabels, screenLabels, type Lang } from "@/localization/messages
 import { stationMessages as msg } from "@/localization/station-messages";
 
 import { OperatorTerminal } from "./OperatorTerminal";
-import { Scorecard } from "./Scorecard";
-import SessionSetup from "./SessionSetup";
+import { Settlement } from "./Settlement";
 import { Workspace } from "./Workspace";
 interface Props {
   release: Release;
@@ -31,53 +30,15 @@ export function Station({ release, lang, changeLang }: Props) {
     });
     return (value: number) => formatter.format(value);
   }, [lang, release.currency]);
-  const shell = useCommandLine(run, nav, release, lang, t, screen),
-    [reviewing, setReviewing] = useState(false);
-  const { state, rivals, best, reports, busy, history } = run;
+  const shell = useCommandLine(run, nav, release, lang, t, screen);
+  const { state, rivals, busy, history } = run;
   const opponent = rivals.find((r) => r.kind === "model") ?? rivals[0],
     day = history.length - 1,
     closing = history[day],
     rivalClose = opponent?.values?.[day];
   const gap =
     day > 0 && closing !== undefined && rivalClose !== undefined ? closing - rivalClose : null;
-  if (state?.over && !reviewing)
-    return (
-      <main className="settlement">
-        <header className="settlement-rail">
-          <h1>Vending Bench</h1>
-          <span>
-            {release.version} / {t("day")} {state.day}
-          </span>
-        </header>
-        <div className="settlement-body">
-          <section>
-            <Scorecard
-              {...{ state, rivals, best, lang, t, screen, reports, money }}
-              archives={release.archives}
-              history={history}
-              reviewDay={(d) => {
-                setReviewing(true);
-                nav.setBalanceDay(d);
-                nav.setTab("day:" + d);
-              }}
-              openReport={(id) => {
-                setReviewing(true);
-                nav.setTab(id);
-              }}
-            />
-            <button
-              onClick={() => {
-                setReviewing(true);
-                nav.setTab("world");
-              }}
-            >
-              {t("journal")}
-            </button>
-          </section>
-          <SessionSetup lang={lang} initialRevision={release.revision} compact />
-        </div>
-      </main>
-    );
+  if (state?.over) return <Settlement {...{ run, release, lang, t, screen, money }} />;
   return (
     <main className="station">
       <header className="mast">
@@ -130,7 +91,6 @@ export function Station({ release, lang, changeLang }: Props) {
             ? t("score") + " · " + money(state.final.reward)
             : "Vending Bench / " + release.id + " · Seed " + release.seed}
         </span>
-        {state?.over && <button onClick={() => setReviewing(false)}>{t("standings")}</button>}
         <a href={"/" + lang + "/"}>{t("setup")}</a>
       </footer>
     </main>

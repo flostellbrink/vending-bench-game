@@ -4,6 +4,7 @@ import { address } from "@/game/commands";
 
 import type { ObservationProps } from "./panel-props";
 
+import { DirectorySearch } from "./DirectorySearch";
 import "./dispatch.css";
 
 interface Props extends Pick<
@@ -32,7 +33,6 @@ export default function DispatchDesk({
   disabled,
   onCloseDraft,
 }: Props) {
-  const query = /^find\s/i.test(commandLine) ? commandLine.replace(/^find\s+/i, "") : "";
   if (!state) return null;
 
   const expected = orders.filter((order) => !order.arrival).toSorted((a, b) => a.eta - b.eta);
@@ -59,26 +59,7 @@ export default function DispatchDesk({
               </button>
             ))}
           </div>
-          <form
-            className="dispatch-search"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (query.trim()) runCommand("find " + query.trim(), true);
-            }}
-          >
-            <label htmlFor="dispatch-query">{t("searchSuppliers")}</label>
-            <div>
-              <input
-                id="dispatch-query"
-                value={query}
-                placeholder={t("searchExample")}
-                onChange={(event) => stageCommand("find " + event.target.value)}
-              />
-              <button type="submit" disabled={!query.trim() || disabled} data-clock-verb="find">
-                {t("execute")} · {state.costs.search_web ?? state.defaultCost} min
-              </button>
-            </div>
-          </form>
+          <DirectorySearch {...{ state, t, disabled, commandLine, stageCommand, runCommand }} />
           {lastDirectory && (
             <button className="dispatch-reference" onClick={() => onView(lastDirectory.id)}>
               {t("source")} #{lastDirectory.id} · {lastDirectory.line}

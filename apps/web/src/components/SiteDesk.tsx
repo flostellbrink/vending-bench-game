@@ -1,16 +1,16 @@
 import type { Report } from "games-common/benchmark";
 
-import { useState } from "react";
-
 import { address } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { DirectorySearch } from "./DirectorySearch";
+
 interface Props extends Pick<
   ObservationProps,
-  "state" | "t" | "reports" | "runCommand" | "disabled"
+  "state" | "t" | "reports" | "runCommand" | "disabled" | "commandLine" | "stageCommand"
 > {
   site: string;
   openReport: (id: number) => void;
@@ -23,9 +23,10 @@ export default function SiteDesk({
   reports,
   runCommand,
   openReport,
+  commandLine,
+  stageCommand,
   disabled,
 }: Props) {
-  const [query, setQuery] = useState("");
   const depot = site === "depot";
   const ids = state.machines.filter((id) => address(id).split(".")[0] === site);
   const name = depot ? t("depot") : (ids[0]?.split(":")[0] ?? site);
@@ -54,25 +55,7 @@ export default function SiteDesk({
       {depot ? (
         <>
           {inspection("depot", "depot", observed("get_storage_inventory"))}
-          <form
-            className="directory-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (query.trim()) runCommand("find " + query.trim());
-            }}
-          >
-            <label>
-              {t("searchSuppliers")}{" "}
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("searchExample")}
-              />
-            </label>
-            <button data-clock-verb="find" disabled={disabled || !query.trim()}>
-              {t("searchSuppliers")} · {timeLabel("find", state, t)}
-            </button>
-          </form>
+          <DirectorySearch {...{ state, t, disabled, commandLine, stageCommand, runCommand }} />
         </>
       ) : (
         ids.map((id) => (

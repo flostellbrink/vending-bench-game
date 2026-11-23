@@ -2,6 +2,7 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    laterObservations: msg.operator.laterObservations,
     paceReview: msg.operator.paceReview,
     opponent: msg.operator.opponent,
     largestPaceLoss: msg.operator.largestPaceLoss,

@@ -3,6 +3,7 @@ import { useId, type FormEvent } from "react";
 import type { CabinetSlot } from "@/game/cabinet-layout";
 
 import { parse } from "@/game/commands";
+import { slotChanges } from "@/game/slot-evidence";
 import { timeLabel } from "@/game/time-label";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
@@ -29,6 +30,7 @@ export function SlotInstrument({
   const quantity = targeted && verb === "refill" ? (args[1] ?? "") : "";
   const price = targeted && verb === "price" ? (args[0] ?? "") : "";
   const depot = reports?.findLast((r) => r.tool === "get_storage_inventory");
+  const changes = slotChanges(reports, slot.id, report.id);
   const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   function canDispatch(action: "refill" | "price") {
     if (disabled || !targeted || action !== verb) return false;
@@ -68,6 +70,25 @@ export function SlotInstrument({
           {field("price")}: {slot.price}
         </span>
       </div>
+      {changes.length > 0 && (
+        <div className="slot-amendment">
+          <b>{t("laterObservations")}</b>
+          {changes.slice(-3).map((change) => (
+            <div key={change.report.id}>
+              <small>
+                {t("day")} {change.report.day} · {clock(change.report.minute)}
+              </small>{" "}
+              {change.observation
+                ? field("quantity") +
+                  ": " +
+                  change.observation.qty +
+                  "/" +
+                  (change.observation.capacity ?? slot.capacity)
+                : field("price") + ": " + change.price}
+            </div>
+          ))}
+        </div>
+      )}
       <form onSubmit={(event) => submit(event, "refill")}>
         <label>
           {field("product_id")}
