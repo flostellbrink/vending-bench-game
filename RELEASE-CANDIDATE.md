@@ -36,6 +36,8 @@ The integrated path exercised supplier discovery, offer lookup, purchase, delive
 
 A completed €1,099.20 run was followed by a €1,140.00 run. The scorecard showed a €40.80 improvement against the previous record, including after switching to German and reloading. A stale tab could not overwrite a newer command; it restored the saved run and reported the conflict.
 
+A live branch that spent €20 showed €1,456 at the day-2 close against the original run’s €1,476. With synthetic saves, the settlement component rendered those balances in all three languages and selected the last day both runs had closed. This check did not exercise browser interaction on the completed branch.
+
 The static build passed. The replay and localized export checks also passed before this release pass on the same host. No previously passing check failed. New checks cover source provenance, a changed site fee, score-versus-balance handling, frozen comparison records, stale quotes and separated overnight notices. The local runs have no hosted CI run links.
 
 Generated files are ignored. The static export includes the Python runtime and has no backend. Nothing was published.
