@@ -152,3 +152,22 @@ digest.hexdigest()
   assert.equal(archives.length,1);
   assert.deepEqual(archives[0].scores, [["Example model", 2476]]);
 });
+
+test("a changed upstream site fee regenerates the brief and recalibrates the reference", async () => {
+  const release = catalog[0];
+  const python = await readSnapshot(release.revision);
+  const changed = JSON.parse(python.runPython(`
+config.DAILY_SPOT_FEE += 1
+updated = json.loads(metadata())
+json.dumps({
+    "brief": updated["brief"],
+    "fee": config.DAILY_SPOT_FEE,
+    "symbol": config.CURRENCY_SYMBOL,
+    "script": updated["rivals"][0],
+})
+`));
+  assert.notEqual(changed.brief, release.brief);
+  assert.ok(changed.brief.includes(changed.symbol + changed.fee));
+  assert.match(changed.script.sourcePath, /reference_bot\.py$/);
+  assert.equal(changed.script.values.length, release.days + 1);
+});

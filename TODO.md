@@ -1,5 +1,15 @@
 # Player experience queue
 
+## Release candidate
+
+1. [x] Baseline: two independent cold players; stress-test typing and day transitions on the M4 laptop.
+2. [x] Competition: show the objective, comparable opponents, dated cash movements and the record that preceded the run.
+3. [x] Transaction quality: compare the keyboard order with a working order slip; make receipts, letters and inventory distinct.
+4. [x] Retest independently. Prioritize repeated friction over extra visual effects.
+5. [x] Build and test the static export. Record real-device coverage separately from emulation.
+6. [x] Check replay, locale switching, input, stale-tab save protection and generated-file ignores.
+7. [ ] Exercise the release on physical iOS and mid-range Android, including the open keyboard; check desktop Safari and Firefox.
+
 ## Release pass
 
 1. [x] Check the authored room in motion during a successful refill. Remove unused cutout artwork.
