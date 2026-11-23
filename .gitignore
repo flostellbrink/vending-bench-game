@@ -3,12 +3,12 @@ dist/
 out/
 node_modules/
 src/dictionary/
+src/generated/
+public/benchmarks/
 public/*.zip
 public/releases.json
 public/NOTICE
 public/LICENSE
 public/python/
-public/vending-world.png
-public/glass-map.png
 next-env.d.ts
 *.tsbuildinfo

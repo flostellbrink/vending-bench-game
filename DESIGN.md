@@ -8,7 +8,7 @@ You are the remote operator, not a person walking between machines. Finish the c
 
 Keep one persistent command buffer at the foot of the terminal. The prompt has no box or submit button. Completions appear above it and do not move it. Enter runs the command; Shift+Enter inserts a continuation line. Keep the page inside the viewport; scroll the transcript and reports independently.
 
-The upper-right display shows the addressed office and three smaller site views. It is a view, not a control surface. No action requires a map click. The lower display uses roughly two-fifths of the available display height. Its tabs switch between the balance graph, reports, command index and scorecard without replacing the office. Typing `help` prints a short index in the terminal; `help refill` explains one command without opening another tab.
+The upper-right display shows the addressed office and a small plan of each other site. Selecting a site opens its desk without spending time. No action requires a map click. The lower display uses roughly two-fifths of the available display height. Its tabs switch between the balance graph, reports, command index and scorecard without replacing the office. Typing `help` prints a short index in the terminal; `help refill` explains one command without opening another tab.
 
 Use a graphite enclosure and slate keys. Show depth through the light and shadow on a key, not a different background hue for each panel. Reserve pale green phosphor for live readings and keyboard focus. Keep daylight and material colors in the office drawing. Separate comparison traces by line pattern as well as tone.
 
@@ -18,7 +18,7 @@ Keep both rear walls at full height. Cut down only the walls nearest the viewer.
 
 Draw the office, street tiles, furniture, stock and cabinet doors in the same orthographic projection. Show the last observed products behind the glass. Do not display live inventory counts on the map. When a refill succeeds, animate the service visit and hinged door during the simulated trip. The clock, daylight and shadows follow operating time; the balance graph uses days.
 
-Apply the optional CRT lens to the whole workstation. Deflection is strongest near the corners. The scanlines curve with the content, not the physical browser. Do not flicker or jitter the text. Switching the lens off restores a flat image.
+Use a flat display. The enclosure, controls, type and illustration supply the workstation’s character without a full-screen distortion filter.
 
 ## Decisions the interface must support
 
@@ -34,7 +34,7 @@ Tab completes the current word; Enter executes. History recall edits a copy, not
 
 Use the same synopsis in help, completion guidance and syntax errors: `<slot>` is required, `[quantity]` is optional, and `[<product> <quantity>]...` is a repeatable group. Type the values without brackets. For example, `order zuidas-groothandel stroopwafel-2pk 120` orders one product; append another product and quantity to include it in the same order.
 
-Each paid observation has a timestamp and remains readable. Local commands for help, tabs and the world view cost nothing. Grid headings sort displayed rows, not the underlying simulation. Keep the original report with the grid so a summary cannot hide order conditions or overnight notices. The prompt stays usable over any result.
+Each paid observation records its start time, end time and work cost. Reading it again costs nothing. Present mail as correspondence, a wholesale offer as an editable order slip, and closing as a bank statement. Keep the offer’s quantity, minimum, expiry and non-reserved price together. Overnight notices appear alongside the transaction that advanced the day. Show warnings where the player makes the decision, not behind a raw-output switch. Keyboard and graphical actions call the same simulator command. The prompt stays usable over any result.
 
 ## Version boundary
 

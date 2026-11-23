@@ -77,4 +77,3 @@ footer span { margin-right: auto; }
   .operator { display: none; }
   .world { width: 100%; }
 }
-@media (prefers-contrast: more), (forced-colors: active) { .crt::after { display: none; } }

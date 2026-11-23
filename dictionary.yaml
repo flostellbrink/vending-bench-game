@@ -1,15 +1,292 @@
 $schema: ./packages/localize/dictionary.schema.json
 operator:
-  displayOn:
-    .id: VBDSP001
-    ^en: "On"
-    es: "Sí"
-    de: "Ein"
-  displayOff:
-    .id: VBDSP002
-    ^en: "Off"
-    es: "No"
-    de: "Aus"
+  demand:
+    .id: VMDE0001
+    ^en: Demand factors
+    es: Factores de demanda
+    de: Nachfragefaktoren
+  nextQuoteQuantity:
+    .id: RELQ0007
+    ^en: Units for new quote
+    es: Unidades para nueva oferta
+    de: Menge für neues Angebot
+  useNewQuote:
+    .id: RELQ0008
+    ^en: Request the new quantity before placing this order.
+    es: Solicita la oferta para la nueva cantidad antes de comprar.
+    de: Fordere vor dem Kauf ein Angebot für die neue Menge an.
+  inspectNow:
+    .id: SI000000
+    ^en: "Inspect"
+    es: "Inspeccionar"
+    de: "Prüfen"
+  searchSuppliers:
+    .id: SI000001
+    ^en: "Find suppliers"
+    es: "Buscar proveedores"
+    de: "Lieferanten suchen"
+  searchExample:
+    .id: SI000002
+    ^en: "e.g. coffee"
+    es: "p. ej., café"
+    de: "z. B. Kaffee"
+  mailbox:
+    .id: SI000003
+    ^en: "Mailbox"
+    es: "Buzón"
+    de: "Postfach"
+  backToSlots:
+    .id: SI000004
+    ^en: "All slots"
+    es: "Todos los compartimentos"
+    de: "Alle Fächer"
+  refill:
+    .id: SI000005
+    ^en: "Refill"
+    es: "Reponer"
+    de: "Auffüllen"
+  setPrice:
+    .id: SI000006
+    ^en: "Set price"
+    es: "Fijar precio"
+    de: "Preis setzen"
+  compose:
+    .id: VP000000
+    ^en: "Order slip"
+    es: "Hoja de pedido"
+    de: "Bestellschein"
+  include:
+    .id: VP000001
+    ^en: "Buy"
+    es: "Comprar"
+    de: "Kaufen"
+  reprice:
+    .id: VP000002
+    ^en: "Request quote"
+    es: "Solicitar oferta"
+    de: "Angebot anfordern"
+  sendOrder:
+    .id: VP000003
+    ^en: "Place order"
+    es: "Hacer pedido"
+    de: "Bestellen"
+  bundle:
+    .id: VP000004
+    ^en: "Units per product"
+    es: "Unidades por producto"
+    de: "Stück je Produkt"
+  expires:
+    .id: VP000005
+    ^en: "Valid through day"
+    es: "Válida hasta el día"
+    de: "Gültig bis Tag"
+  opening:
+    .id: VP000006
+    ^en: "Opening balance"
+    es: "Saldo inicial"
+    de: "Anfangsbestand"
+  netReceipts:
+    .id: VP000007
+    ^en: "Money banked"
+    es: "Ingresos en cuenta"
+    de: "Geldeingänge"
+  closing:
+    .id: VP000008
+    ^en: "Closing balance"
+    es: "Saldo al cierre"
+    de: "Endbestand"
+  letter:
+    .id: VP000009
+    ^en: "Message"
+    es: "Mensaje"
+    de: "Nachricht"
+  rules:
+    .id: VP000010
+    ^en: "Operating brief"
+    es: "Instrucciones de operación"
+    de: "Betriebsauftrag"
+  read:
+    .id: VP000011
+    ^en: "Read"
+    es: "Leer"
+    de: "Lesen"
+  site:
+    .id: VP000012
+    ^en: "Site"
+    es: "Sede"
+    de: "Standort"
+  channel:
+    .id: VP000013
+    ^en: "Channel"
+    es: "Canal"
+    de: "Kanal"
+  recentCampaigns:
+    .id: VP000014
+    ^en: "Recent campaigns"
+    es: "Campañas recientes"
+    de: "Letzte Kampagnen"
+  traffic:
+    .id: VP000015
+    ^en: "Traffic multiplier"
+    es: "Factor de afluencia"
+    de: "Besucherfaktor"
+  printRules:
+    .id: VP000016
+    ^en: "Campaign terms"
+    es: "Condiciones de campaña"
+    de: "Werbebedingungen"
+  charged:
+    .id: VP000017
+    ^en: "Time spent"
+    es: "Tiempo empleado"
+    de: "Zeitaufwand"
+  total:
+    .id: VP000018
+    ^en: "Total"
+    es: "Total"
+    de: "Summe"
+  order:
+    .id: VP000019
+    ^en: "Order"
+    es: "Pedido"
+    de: "Bestellung"
+  statement:
+    .id: VP000020
+    ^en: "Day-end statement"
+    es: "Cierre del día"
+    de: "Tagesabschluss"
+  noCharge:
+    .id: VP000021
+    ^en: "No time cost"
+    es: "Sin coste de tiempo"
+    de: "Kein Zeitverbrauch"
+  fee:
+    .id: VP000022
+    ^en: "Daily site fee"
+    es: "Alquiler diario"
+    de: "Tägliche Standgebühr"
+  endRun:
+    .id: VP000023
+    ^en: "Final settlement"
+    es: "Liquidación final"
+    de: "Endabrechnung"
+  latestQuote:
+    .id: VP000024
+    ^en: "Prices are not reserved. The purchase uses current terms."
+    es: "Los precios no se reservan. La compra usa las condiciones vigentes."
+    de: "Preise sind nicht reserviert. Es gelten die Konditionen beim Kauf."
+  draft:
+    .id: VP000025
+    ^en: "Draft"
+    es: "Borrador"
+    de: "Entwurf"
+  noMail:
+    .id: VP000026
+    ^en: "No mail in this folder."
+    es: "No hay mensajes en esta carpeta."
+    de: "Keine Nachrichten in diesem Ordner."
+  siteFees:
+    .id: RELC0010
+    ^en: Site fees paid
+    es: Alquiler pagado
+    de: Gezahlte Standgebühren
+  orders:
+    .id: RELO0001
+    ^en: Orders
+    es: Pedidos
+    de: Bestellungen
+  expectedClose:
+    .id: RELO0002
+    ^en: Expected at close of day
+    es: Previsto al cierre del día
+    de: Erwartet am Tagesende von Tag
+  arrived:
+    .id: RELO0003
+    ^en: Received
+    es: Recibido
+    de: Eingegangen
+  incompleteOrder:
+    .id: RELO0004
+    ^en: Short shipment
+    es: Entrega incompleta
+    de: Teillieferung
+  source:
+    .id: RELO0005
+    ^en: Receipt
+    es: Recibo
+    de: Beleg
+  sender:
+    .id: RELM0001
+    ^en: Correspondent
+    es: Contacto
+    de: Kontakt
+  needQuote:
+    .id: RELQ0001
+    ^en: No quote for this quantity. Check the price before ordering.
+    es: No hay oferta para esta cantidad. Consulta el precio antes de comprar.
+    de: Kein Angebot für diese Menge. Prüfe den Preis vor der Bestellung.
+  expiredQuote:
+    .id: RELQ0002
+    ^en: Quote expired. Request a new quote.
+    es: La oferta ha caducado. Solicita una nueva.
+    de: Angebot abgelaufen. Fordere ein neues Angebot an.
+  belowMinimum:
+    .id: RELQ0003
+    ^en: Below minimum
+    es: Importe inferior al mínimo
+    de: Unter dem Mindestbestellwert
+  lowCash:
+    .id: RELQ0004
+    ^en: Insufficient funds
+    es: Saldo insuficiente
+    de: Guthaben reicht nicht aus
+  quoted:
+    .id: RELQ0005
+    ^en: Quoted total
+    es: Total según oferta
+    de: Angebotssumme
+  afterOrder:
+    .id: RELQ0006
+    ^en: After purchase
+    es: Saldo tras la compra
+    de: Nach dem Kauf
+  objective:
+    .id: RELC0001
+    .inputs:
+      - $days :integer
+    ^en: "Finish day {$days} with the most money in the bank."
+    es: "Termina el día {$days} con el mayor saldo bancario posible."
+    de: "Beende Tag {$days} mit einem möglichst hohen Kontostand."
+  noRivals:
+    .id: RELC0002
+    ^en: No published AI run matches this challenge yet.
+    es: Aún no hay partidas de IA publicadas para este desafío.
+    de: Für diese Aufgabe gibt es noch keinen veröffentlichten KI-Lauf.
+  previousBest:
+    .id: RELC0003
+    ^en: Previous best
+    es: Récord anterior
+    de: Bisheriger Rekord
+  cashEvents:
+    .id: RELC0004
+    ^en: Cash movements
+    es: Movimientos de caja
+    de: Kontobewegungen
+  cashChange:
+    .id: RELC0005
+    ^en: Change in balance
+    es: Cambio en el saldo
+    de: Kontoänderung
+  saveConflict:
+    .id: RELC0006
+    ^en: Another tab changed this run. Its saved commands are now loaded. Your last command was not applied.
+    es: Otra pestaña cambió la partida. Se han cargado sus comandos. Tu último comando no se aplicó.
+    de: Ein anderer Tab hat den Lauf geändert. Seine Befehle sind jetzt geladen. Dein letzter Befehl wurde nicht ausgeführt.
+  saveFailed:
+    .id: RELC0007
+    ^en: Could not save. The run was restored to the last saved command.
+    es: No se pudo guardar. La partida se ha restaurado al último comando guardado.
+    de: Speichern fehlgeschlagen. Der Lauf wurde bis zum letzten gespeicherten Befehl wiederhergestellt.
   standings:
     .id: VBSCR001
     ^en: Scorecard
@@ -135,11 +412,6 @@ operator:
     ^en: "execute"
     es: "ejecutar"
     de: "ausführen"
-  original:
-    .id: OPS00007
-    ^en: "Original report"
-    es: "Informe original"
-    de: "Originalbericht"
   results:
     .id: OPS00008
     ^en: "Results"

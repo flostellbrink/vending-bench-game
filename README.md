@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open <http://localhost:5173>. Type `help` or press Tab at the empty prompt. Use `find snacks` to search for suppliers. Inspect a machine with `inspect lounge.snack`. The map follows the address you type; no map clicks are necessary.
+Open <http://localhost:5173>. Type `help` or press Tab at the empty prompt. `brief` opens the operating rules. Use `find snacks` to search for suppliers, or open the depot and use its supplier directory. A supplier’s quote doubles as an order slip. Its price applies to the quoted quantity; placing the order pays immediately. The map follows the address you type; no map clicks are necessary.
 
 Use `balance` to review daily balances, `tabs` to list receipts, or `view <result>` to reopen one. The office remains visible above the report. After day 30, `scores` compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
 
@@ -22,9 +22,11 @@ Run `pnpm build`. Serve the contents of `out/` with a static web server, or use 
 
 ## Benchmark versions
 
-The complete [Vending Bench repository](https://github.com/ProsusAI/vending-bench) is a Git submodule. Each entry in `releases.json` selects a revision, engine directory, browser adapter, seed, challenge length and rivals. The build reads the selected revision from Git. Updating the submodule does not change existing entries. Keep each released entry and its adapter unchanged so saved commands replay under the original rules.
+The full [Vending Bench repository](https://github.com/ProsusAI/vending-bench) is a Git submodule. The `submodule` entry in `releases.json` selects its checked-out commit. Retain each released commit hash in the same list so its saves remain playable after an update. Two commits with the same upstream version get distinct entries.
 
-For each rival, supply daily bank balances from the same revision, seed and challenge length, starting with the opening balance. Set `kind` to `script` for a scripted operator or `model` for a named AI model. Do not infer a daily balance from a final score. The [historical model scores](https://github.com/ProsusAI/vending-bench/tree/main/results/baselines/models-30d) are separate from the active challenge.
+The build reads each selected Git snapshot, not local edits to the submodule. It generates the engine archive, challenge conditions, briefing and tool descriptions. It runs the upstream scripted operator to obtain daily balances and checks the result against the published calibration when one exists. A new major version needs a compatible browser adapter. No native Python installation is required.
+
+Published model trials must match the engine, configuration, seed and horizon to count as rivals. Recorded daily balances form a trace; a final score alone gives only an endpoint. The [archived model scores](https://github.com/ProsusAI/vending-bench/tree/main/results/baselines/models-30d) do not become targets under different rules.
 
 ## Languages
 

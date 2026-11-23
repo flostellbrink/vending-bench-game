@@ -1,13 +1,1 @@
-[
-  {
-    "id": "3.0.0",
-    "revision": "60794b49932294a0fcb3fcf9a5ca3aaaa0c8a282",
-    "engine": "tasks/vending-bench/environment/sim-server",
-    "adapter": "v3.py",
-    "rivals": [
-      {"kind":"script","balances":"3.0.0-reference.json","color":"#e99864"}
-    ],
-    "seed": 1,
-    "days": 30
-  }
-]
+[{ "revision": "submodule" }, { "revision": "60794b49932294a0fcb3fcf9a5ca3aaaa0c8a282" }]
