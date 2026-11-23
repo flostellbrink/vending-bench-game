@@ -1,6 +1,7 @@
 import { assertValue } from "games-common/language";
 import { memo } from "react";
 
+import { concourse } from "./Atrium";
 import { ContactShadow, Shelves } from "./Furniture";
 import { Box, Front, Line, Polygon, project, repeat } from "./geometry";
 
@@ -92,11 +93,13 @@ export function Sunlight({
   x,
   light,
   phase,
+  atrium,
 }: {
   id: string;
   x: number;
   light: number;
   phase: number;
+  atrium: boolean;
 }) {
   return (
     <>
@@ -113,8 +116,16 @@ export function Sunlight({
           />
         ))}
       </g>
-      <ContactShadow x={125} y={13} w={68} d={21} amount={4 + 15 * Math.cos(phase * Math.PI)} />
-      <ContactShadow x={67} y={6} w={31} d={12} amount={2 + 9 * Math.cos(phase * Math.PI)} />
+      <ContactShadow
+        x={atrium ? concourse.machineX : 125}
+        y={13}
+        w={68}
+        d={21}
+        amount={4 + 15 * Math.cos(phase * Math.PI)}
+      />
+      {!atrium && (
+        <ContactShadow x={67} y={6} w={31} d={12} amount={2 + 9 * Math.cos(phase * Math.PI)} />
+      )}
       <WallClock phase={phase} />
     </>
   );

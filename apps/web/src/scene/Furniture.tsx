@@ -264,21 +264,13 @@ export function Shelves({ x, y, stock = false }: Position & { stock?: boolean })
   );
 }
 export const Furniture = memo(function Furniture({ site }: { site: string }) {
-  const depot = site === "depot",
-    communal = site === "main-lounge";
+  const depot = site === "depot";
   return (
     <>
       {depot ? (
         <g>
           <Pallet x={33} y={68} />
           <Pallet x={95} y={92} />
-        </g>
-      ) : communal ? (
-        <g>
-          <Table x={50} y={55} w={85} d={33} h={24} />
-          {repeat(3, (i) => (
-            <Sofa x={48 + i * 32} y={99} w={26} />
-          ))}
         </g>
       ) : (
         <g>

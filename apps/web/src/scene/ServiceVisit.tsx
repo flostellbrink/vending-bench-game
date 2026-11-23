@@ -1,5 +1,6 @@
 import type { Optional } from "games-common/language";
 
+import { concourse } from "./Atrium";
 import { Box, Line, project, steel, wood, type Position } from "./geometry";
 
 export interface ServiceMotion {
@@ -39,11 +40,22 @@ export function Person({
     </g>
   );
 }
-export function ServiceVisit({ service }: { service: Optional<ServiceMotion> }) {
+export function ServiceVisit({
+  service,
+  atrium,
+}: {
+  service: Optional<ServiceMotion>;
+  atrium: boolean;
+}) {
   if (!service) return null;
-  const x = service.drink ? 177 : 141;
   const offset = Math.max(0, 1 - Math.min(service.progress, 1 - service.progress) * 5);
-  const y = 49 + offset * 37;
+  const cabinetX = (atrium ? concourse.machineX : 126) + (service.drink ? 51 : 15);
+  const x = atrium
+    ? cabinetX + (concourse.entry - cabinetX) * Math.min(1, offset * 1.25)
+    : cabinetX;
+  const y = atrium
+    ? concourse.aisle - 6 + Math.max(0, offset - 0.8) * 5 * (concourse.depth - concourse.aisle)
+    : 49 + offset * 37;
   return (
     <g>
       <Box x={x + 8} y={y + 4} w={13} d={8} z={2} h={2} c={steel} />
