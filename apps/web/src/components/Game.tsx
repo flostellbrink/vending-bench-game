@@ -8,7 +8,14 @@ import type { Lang } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
-import { createRun, isSlotId, legacySlot, readSlotSnapshot, slotSnapshot } from "@/game/runs";
+import {
+  createRun,
+  isSlotId,
+  legacySlot,
+  readSlotSnapshot,
+  recordedClosings,
+  slotSnapshot,
+} from "@/game/runs";
 
 import { Station } from "./Station";
 export default function Game({ lang }: { lang: Lang }) {
@@ -87,7 +94,7 @@ function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot:
       runNumber={index + 1}
       parentBalance={
         parent && !parent.damaged && parent.cash !== null
-          ? { run: parentIndex + 1, values: parent.checkpoints.map((morning) => morning.cash) }
+          ? { run: parentIndex + 1, values: recordedClosings(parent) }
           : undefined
       }
       lang={lang}

@@ -11,6 +11,7 @@ import {
   listRuns,
   readRun,
   readSlotSnapshot,
+  recordedClosings,
   recordKey,
   runKey,
   runTimeline,
@@ -63,6 +64,15 @@ await test("morning checkpoints include the closing action, not later work", () 
   );
   const ended = runTimeline(release, [{ day: 2, endDay: 3, closingCash: 20 }], true, timeline);
   assert.equal(ended.checkpoints.at(-1)?.day, 2);
+  assert.deepEqual(recordedClosings({ ...timeline, finished: false }), [
+    release.startingBalance,
+    firstCash,
+  ]);
+  assert.deepEqual(recordedClosings({ ...ended, finished: true }), [
+    release.startingBalance,
+    firstCash,
+    20,
+  ]);
 });
 
 await test("new slots and nested forks leave earlier journals and their records unchanged", () => {

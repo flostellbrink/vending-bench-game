@@ -65,6 +65,13 @@ export interface ParentBalance {
   run: number;
   values: number[];
 }
+export function recordedClosings(slot: Pick<RunSlot, "checkpoints" | "finished" | "day" | "cash">) {
+  const values = slot.checkpoints.map((morning) => morning.cash);
+  const lastMorning = slot.checkpoints.at(-1);
+  if (slot.finished && slot.cash !== null && lastMorning && slot.day === lastMorning.day + 1)
+    values.push(slot.cash);
+  return values;
+}
 const slotSchema = v.object({
   ...lineageSchema.entries,
   id: v.pipe(v.string(), v.check(isSlotId)),
