@@ -49,6 +49,7 @@ function Dossier({
   const batches = cohorts(r);
   const featured = batches[0],
     leader = featured?.scores.toSorted((a, b) => b[1] - a[1])[0];
+  const reference = r.rivals.find((rival) => rival.kind === "script");
   const repository = "https://github.com/ProsusAI/vending-bench";
   const source = repository + "/tree/" + r.revision;
   return (
@@ -57,9 +58,14 @@ function Dossier({
         <article className="bench-paper">
           <header className="bench-intro">
             <h1>
-              {leader
+              {featured?.matching && leader
                 ? msg.landing.lead({ model: leader[0] }, opts)
-                : msg.landing.fallback({}, opts)}
+                : reference
+                  ? msg.landing.referenceChallenge(
+                      { score: money(reference.score), days: r.days },
+                      opts,
+                    )
+                  : msg.landing.fallback({}, opts)}
             </h1>
             <p>{msg.landing.context({}, opts)}</p>
           </header>

@@ -1060,6 +1060,14 @@ commands:
     es: "Recordatorios"
     de: "Erinnerungen"
 landing:
+  referenceChallenge:
+    .id: HN000017
+    .inputs:
+      - $score :string
+      - $days :integer
+    ^en: "The reference bot closed at {$score}. Can you beat it in {$days} days?"
+    es: "El bot de referencia terminó con {$score}. ¿Puedes superarlo en {$days} días?"
+    de: "Der Referenzbot schloss mit {$score} ab. Schaffst du in {$days} Tagen mehr?"
   lead:
     .id: HN000001
     .inputs:
