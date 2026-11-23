@@ -208,3 +208,20 @@
   outline: 2px solid #ecbc6c;
   outline-offset: 1px;
 }
+@media (forced-colors: active) {
+  .save-graph [aria-pressed="true"],
+  .save-lanes .chosen {
+    border: 2px solid Highlight;
+    font-weight: bold;
+  }
+  .save-graph svg path {
+    stroke: CanvasText;
+  }
+  .save-graph svg .chosen path {
+    stroke: Highlight;
+  }
+  .save-library :focus-visible {
+    outline: 2px dashed Highlight;
+    outline-offset: 2px;
+  }
+}

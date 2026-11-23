@@ -324,6 +324,16 @@ footer button[aria-pressed="true"] {
 .command-line textarea:focus {
   caret-shape: block;
 }
+@media (forced-colors: active) {
+  .station .command-line textarea:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 1px;
+  }
+  .shell .completion .active {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
 .terminal-keys {
   padding: 0.35rem 0.9rem;
   background: #202728;
