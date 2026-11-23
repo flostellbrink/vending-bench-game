@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open <http://localhost:5173>. Select a machine to prepare an inspection. Run the command to spend the time. To buy stock, search for a supplier, check its offers and place an order. Inspect the depot before you fill a machine.
+Open <http://localhost:5173>. Type `help` or press Tab at the empty prompt. Use `find snacks` to search for suppliers. Inspect a machine with `inspect lounge.snack`. The map follows the address you type; no map clicks are necessary.
 
 ## Static export
 

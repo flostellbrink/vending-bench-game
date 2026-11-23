@@ -20,6 +20,8 @@ function Report({report,lang,t}) {
   },[report,lang,sort]);
   return <section className="report">
     <h2>{report.line}</h2><small>{t('seen')} · {t('day')} {report.day} / {clock(report.minute)}</small>
+    {report.terms?.minimum!=null&&<p className="terms">{t('minimum')}: {money(report.terms.minimum,lang)} · {t('day')} ≤ {report.terms.until} · ×{report.terms.quantity}</p>}
+    {report.terms?.order&&<p className="terms">{report.terms.order} · −{money(report.terms.paid,lang)} · ETA {t('day')} {report.terms.eta}</p>}
     {rows.length>0 && <table><thead><tr>{report.columns.map((c,i)=><th key={c}>
       <button onClick={()=>setSort({index:i,dir:sort?.index===i?-sort.dir:1})}>{msg.fields[c]?translate(msg.fields[c],lang):t(c)} {sort?.index===i?(sort.dir===1?'↑':'↓'):'↕'}</button>
     </th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={i}>{r.map((c,j)=><td key={j}>{c}</td>)}</tr>)}</tbody></table>}
@@ -30,14 +32,14 @@ function Report({report,lang,t}) {
 function Graph({history,rivals,release,lang,t}) {
   const [cursor,setCursor]=useState(null);
   const d=Math.min(cursor??Math.max(0,history.length-1),release.days);
-  const series=[{name:translate(msg.fields.player,lang),color:'#283ea6',values:history},
-    ...rivals.map(r=>({name:r.kind==='script'?translate(msg.fields.bot,lang):r.name,color:r.color,values:r.values}))];
+  const series=[{name:translate(msg.fields.player,lang),color:'#235d46',values:history},
+    ...rivals.map(r=>({name:r.kind==='script'?translate(msg.fields.bot,lang):r.name,color:'#65706c',values:r.values,dashed:true}))];
   const all=series.flatMap(s=>s.values),lo=Math.min(0,...all),hi=Math.max(1,...all);
   return <section className="scope"><header><b>{t('bank')} / EUR</b><small>{t('day')} {d} / {release.days}</small></header>
     <div className="plot" aria-hidden="true">{series.flatMap(s=>s.values.slice(1).map((v,i)=>{
       const height=(v-lo)/(hi-lo)*100,prev=(s.values[i]-lo)/(hi-lo)*100;
       return <i key={s.name+i} style={{left:(i*100/release.days)+'%',width:100/release.days+'%',bottom:Math.min(prev,height)+'%',
-        height:'max(2px,'+Math.abs(height-prev)+'%)',color:s.color,borderTop:height<prev?'2px solid':'none',borderBottom:height>=prev?'2px solid':'none'}}/>;
+        height:'max(2px,'+Math.abs(height-prev)+'%)',color:s.color,borderTop:height<prev?'2px '+(s.dashed?'dashed':'solid'):'none',borderBottom:height>=prev?'2px '+(s.dashed?'dashed':'solid'):'none'}}/>;
     }))}</div>
     <input aria-label={t('day')} type="range" min="0" max={release.days} value={d} onChange={e=>setCursor(+e.target.value)}/>
     <div className="legend">{series.map(s=><span key={s.name} style={{'--ink':s.color}}>{s.name} <b>{s.values[d]==null?'—':money(s.values[d],lang)}</b></span>)}</div>
@@ -53,7 +55,7 @@ function Station({release,lang,changeLang,changeRelease}) {
   const [history,setHistory]=useState([]),[rivals,setRivals]=useState([]);
   const [busy,setBusy]=useState(true),[error,setError]=useState(''),[epoch,reset]=useState(0);
   const [boot,setBoot]=useState(null),[crt,setCrt]=useState(true);
-  const [browse,setBrowse]=useState(false);
+  const [browse,setBrowse]=useState(false),[caret,setCaret]=useState(0);
   const worker=useRef(null),pending=useRef(null),journal=useRef([]),prompt=useRef(null),log=useRef(null),follow=useRef(true);
   const key='vending:'+release.revision+':'+release.seed;
   const time=useClock(state);
@@ -80,7 +82,7 @@ function Station({release,lang,changeLang,changeRelease}) {
         setReports(old=>[...old,...results]);setHistory(old=>[...old,...data.history.slice(1)]);
         setLines(old=>[...old,...results]);
         const r=results[0];
-        setTab(r.id);
+        setTab(r.tool==='restock_machine' && Object.keys(r.slots).length?'world':r.id);
       } else {
         setReports(results);setLines(results);setHistory(data.history);
         if(first){setBoot(old=>[...(old||[]),'ready']);localStorage.setItem('vendix.booted','1');}
@@ -97,13 +99,19 @@ function Station({release,lang,changeLang,changeRelease}) {
   },[release,key,epoch]);
   useEffect(()=>{if(follow.current && log.current)log.current.scrollTop=log.current.scrollHeight;},[lines]);
   const verb=line.trim().split(/\s+/)[0],tool=toolFor(verb);
-  const choices=state?completions(line,state,actions,reports):[];
+  const prefix=line.slice(0,caret);
+  const choices=state?completions(prefix,state,actions,reports):[];
+  const observations=useMemo(()=>Object.assign({},...reports.map(r=>
+    Object.fromEntries(Object.entries(r.slots).map(([k,v])=>[k.toLowerCase().replace(/^ai-/,'').replaceAll(':','.'),{...v,day:r.day,minute:r.minute}])))),[reports]);
   const selected=reports.find(r=>r.id===tab);
   const recent=reports.slice(-3);
-  function edit(s){setLine(s);setBrowse(Boolean(s));setPick(0);setRecall(-1);setError('');}
+  function edit(s,pos=s.length){setLine(s);setCaret(pos);setBrowse(Boolean(s));setPick(0);setRecall(-1);setError('');}
   function complete(value){
     if(!value)return;
-    edit(line.replace(/\S*$/,value+' '));prompt.current?.focus();
+    const left=prefix.replace(/\S*$/,value+' ');
+    edit(left+line.slice(caret).replace(/^\S*\s*/,''),left.length);
+    prompt.current?.focus();
+    requestAnimationFrame(()=>prompt.current?.setSelectionRange(left.length,left.length));
   }
   function execute(e){
     e?.preventDefault();
@@ -132,12 +140,12 @@ function Station({release,lang,changeLang,changeRelease}) {
   }
   const resultButton=(id,label)=><button key={id} className={tab===id?'selected':''} onClick={()=>{setTab(id);prompt.current?.focus();}}>{label}</button>;
   return <main className={'station'+(crt?' crt':'')}><header className="mast">
-    <h1>Vending Bench</h1><span className="operator">{t('operator')}</span>
+    <h1><i className="brand-mark" aria-hidden="true"/>Vending Bench</h1><span className="operator">{t('operator')}</span><i className="vent" aria-hidden="true"/>
     <select aria-label="Benchmark" value={release.id} onChange={e=>changeRelease(e.target.value)}>{releases.map(r=><option key={r.id}>{r.id}</option>)}</select>
     <select aria-label="Language / Idioma / Sprache" value={lang} onChange={e=>changeLang(e.target.value)}>{['en','es','de'].map(l=><option key={l} value={l}>{l.toUpperCase()}</option>)}</select>
     <strong>{state?money(state.cash,lang):'—'}</strong>
   </header><div className="desk"><aside className="shell">
-    <header><b>{t('terminal')}</b><span>TTY / 01</span></header>
+    <header><b>{t('terminal')}</b><span className={'lamp'+(busy?' working':'')}>TTY / 01</span></header>
     <div className="scrollback" ref={log} onScroll={e=>{const n=e.currentTarget;follow.current=n.scrollHeight-n.clientHeight-n.scrollTop<24;}}>
       {boot && <div className="boot"><pre aria-label="VENDIX/OS">{` .-------.    VENDIX/OS
  | o o o |    Unattended Retail Systems
@@ -145,18 +153,18 @@ function Station({release,lang,changeLang,changeRelease}) {
  | [___] |
  '-------'`}</pre><div role="status">{boot.map(stage=><div key={stage}>{t(stage)}</div>)}</div></div>}
       {!lines.length&&<p>{t('hint')}</p>}
-      {lines.map(r=><div className="receipt" key={r.id}><small>{t('day')} {r.day} · {clock(r.minute)}</small><div>› {r.line}</div>
+      {lines.map(r=><div className="receipt" key={r.id}><small>{t('day')} {r.day} · {clock(r.minute)}</small><div><b className="prompt-char">$</b> {r.line}</div>
         <button onClick={()=>setTab(r.id)}>#{r.id} {r.rows.length?r.rows.length+' '+t('results'):r.output.split('\n')[0].slice(0,110)}</button></div>)}
     </div><div className="input-zone">
-      {browse && choices.length>0 && <div className="completion">{choices.slice(Math.floor(pick/5)*5,Math.floor(pick/5)*5+5).map(s=><button key={s} className={choices[pick]===s?'active':''} onClick={()=>complete(s)}>{s}</button>)}</div>}
+      {browse && choices.length>0 && <div className="completion">{choices.slice(Math.floor(pick/5)*5,Math.floor(pick/5)*5+5).map(s=><button key={s} className={choices[pick]===s?'active':''} onClick={()=>complete(s)}>{s}<small>{observations[s]?observations[s].qty+'/'+observations[s].capacity+' · '+t('day')+' '+observations[s].day+' '+clock(observations[s].minute):msg.commands[toolFor(s)]?translate(msg.commands[toolFor(s)],lang):''}</small></button>)}</div>}
       <small>{tool?syntax(verb)+' · '+(verb==='close'?t('next'):(state?.costs?.[tool]??state?.defaultCost)+' min'):t('local')}</small>
-      <form onSubmit={execute}><label htmlFor="prompt">›</label><input autoFocus id="prompt" ref={prompt} value={line} autoComplete="off" spellCheck="false" autoCapitalize="none" placeholder={t('query')} onChange={e=>edit(e.target.value)} onKeyDown={keys}/><button disabled={busy} aria-label={t('execute')}>↵</button></form>
+      <form onSubmit={execute}><label htmlFor="prompt" aria-label={t('query')}>op@vendix<span>:~$</span></label><input autoFocus id="prompt" ref={prompt} value={line} autoComplete="off" spellCheck="false" autoCapitalize="none" onChange={e=>edit(e.target.value,e.target.selectionStart)} onSelect={e=>setCaret(e.target.selectionStart)} onKeyDown={keys}/><button disabled={busy} aria-label={t('execute')}>↵</button></form>
       {error&&<p role="alert">{error}</p>}<small>{busy?screen('loading'):'Tab '+t('completeKey')+' · Enter '+t('execute')+' · ↑ '+t('history')}</small>
     </div></aside><section className="workspace"><nav className="tabs">
       {resultButton('world',t('world'))}{resultButton('tabs',t('results')+' '+reports.length)}{resultButton('help',t('help'))}{resultButton('scores',t('archive'))}
       {recent.map(r=>resultButton(r.id,'#'+r.id))}</nav>
     <div className="surface">
-    {tab==='world'?<World value={time} state={state} line={line} t={t}/>:selected?<Report key={selected.id} report={selected} t={t} lang={lang}/>:tab==='help'?<section className="sheet"><h2>{t('help')}</h2><p>{t('first')}</p>{vocabulary(actions).map(([v,[action]])=><div className="manual" key={v}><code>{syntax(v)}</code><span>{translate(msg.commands[action],lang)}</span></div>)}<p>{local.join(' · ')} — {t('local')}</p></section>:tab==='scores'?<section className="sheet"><h2>{screen('archive')}</h2><p>{screen('note')}</p>{archive.scores.map(([name,score])=><div className="manual" key={name}>{name}<b>{money(score,lang)}</b></div>)}</section>:<section className="sheet"><h2>{t('results')}</h2>{!reports.length&&t('empty')}{reports.slice().reverse().map(r=><button className="catalog" key={r.id} onClick={()=>setTab(r.id)}>#{r.id} · {clock(r.minute)} · {r.line}</button>)}</section>}
+    {tab==='world'?<World value={time} state={state} line={line} t={t} reports={reports}/>:selected?<Report key={selected.id} report={selected} t={t} lang={lang}/>:tab==='help'?<section className="sheet"><h2>{t('help')}</h2><p>{t('first')}</p>{vocabulary(actions).map(([v,[action]])=><div className="manual" key={v}><code>{syntax(v)}</code><span>{translate(msg.commands[action],lang)}</span></div>)}<p>{local.join(' · ')} — {t('local')}</p></section>:tab==='scores'?<section className="sheet"><h2>{screen('archive')}</h2><p>{screen('note')}</p>{archive.scores.map(([name,score])=><div className="manual" key={name}>{name}<b>{money(score,lang)}</b></div>)}</section>:<section className="sheet"><h2>{t('results')}</h2>{!reports.length&&t('empty')}{reports.slice().reverse().map(r=><button className="catalog" key={r.id} onClick={()=>setTab(r.id)}>#{r.id} · {clock(r.minute)} · {r.line}</button>)}</section>}
     </div><div className="transport"><b>{t('day')} {Math.min(release.days,Math.floor(time/1440)+1)} / {release.days}</b><span>{state?.startDate && new Intl.DateTimeFormat(lang,{day:'numeric',month:'short',timeZone:'UTC'}).format(Date.parse(state.startDate+'T00:00Z')+Math.floor(time/1440)*86400000)}</span><strong>{clock(time)}</strong></div>
     <Graph history={history} rivals={rivals} release={release} t={t} lang={lang}/></section></div>
     <footer><span>{state?.over?t('score')+' · '+money(state.failed?0:Math.max(0,state.cash),lang):'Vending Bench / '+release.id+' · Seed '+release.seed}</span>

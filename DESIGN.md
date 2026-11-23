@@ -8,7 +8,11 @@ You are the remote operator, not a person walking between machines. Finish the c
 
 Keep one persistent command buffer on the left. Pin the prompt below the transcript. On the right, show the winter office campus as an orthographic drawing. It is a view, not a control surface. Typing a machine address identifies it in the drawing. No action requires a map click. Use the same prompt on small screens.
 
-Use ink-blue controls against the warm paper of the office survey. Keep the clocks and bank balance in the instrument strip. The daily balance graph stays separate from the minute-scale operating clock.
+Use a graphite enclosure and slate keys. Show depth through the light and shadow on a key, not a different background hue for each panel. Reserve pale green phosphor for live readings and keyboard focus. Keep daylight and material colors in the office drawing. Separate comparison traces by line pattern as well as tone.
+
+Use a real shell prompt, command echo and a receipt after execution. On first launch, print the VENDIX/OS mark while the runtime starts. Do not delay the prompt for an animation. Later launches restore scrollback. Keep the completion list closed on an empty prompt until the player presses Tab.
+
+Show each cabinet as a separate display over the office drawing. A cabinet with no observation is not an empty cabinet. Only inspections and successful operations change its known slot state. Operating time and the daily balance graph have different scales.
 
 ## Decisions the interface must support
 

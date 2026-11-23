@@ -26,7 +26,7 @@ const verbs = {
 export const local = ['help', 'world', 'tabs', 'view', 'scores'];
 export const address = id => id.toLowerCase().replace(/^ai-/, '').replaceAll(':', '.');
 export const vocabulary = actions => Object.entries(verbs).filter(([, [tool]])=>tool in actions);
-export const syntax = verb => [verb, verbs[verb]?.[1] || ''].join(' ').trim();
+export const syntax = verb => verb==='order'?'order supplier_id product_id quantity …':[verb, verbs[verb]?.[1] || ''].join(' ').trim();
 export const toolFor = verb => verbs[verb]?.[0];
 
 export function parse(line, state, actions) {

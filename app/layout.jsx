@@ -1,4 +1,5 @@
 import '../web/style.css';
+import '../web/instrument.css';
 
 export const metadata = { title: 'Vending Bench' };
 
