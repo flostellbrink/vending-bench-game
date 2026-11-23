@@ -58,11 +58,13 @@ export default function SessionSetup({
   compact = false,
   renderPage,
 }: Props) {
-  const urlRevision = useSyncExternalStore(
+  const search = useSyncExternalStore(
     subscribeToNavigation,
-    () => new URL(location.href).searchParams.get("bench"),
-    () => null,
+    () => location.search,
+    () => "",
   );
+  const params = new URLSearchParams(search);
+  const urlRevision = params.get("bench");
   const [choice, setChoice] = useState<string>();
   const revision = choice ?? initialRevision ?? urlRevision;
   const current =
@@ -172,7 +174,11 @@ export default function SessionSetup({
         slots={slots}
         lang={lang}
         compact={compact}
-        activeSlot={current.revision === initialRevision ? activeSlot : undefined}
+        activeSlot={
+          current.revision === (initialRevision ?? urlRevision)
+            ? (activeSlot ?? params.get("slot") ?? undefined)
+            : undefined
+        }
         initialDay={current.revision === initialRevision ? initialDay : undefined}
         disabled={disabled}
         branch={branch}
