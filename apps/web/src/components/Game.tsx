@@ -8,7 +8,7 @@ import type { Lang } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
-import { createRun, isSlotId, legacySlot, listRuns } from "@/game/runs";
+import { createRun, isSlotId, legacySlot, readSlotSnapshot, slotSnapshot } from "@/game/runs";
 
 import { Station } from "./Station";
 export default function Game({ lang }: { lang: Lang }) {
@@ -60,26 +60,36 @@ function OpenNewRun({ lang, release }: { lang: Lang; release: Release }) {
 }
 
 function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot: string }) {
-  const index = useSyncExternalStore(
+  const snapshot = useSyncExternalStore(
     subscribe,
     () => {
-      if (!isSlotId(slot)) return -1;
+      if (!isSlotId(slot)) return "[]";
       try {
-        return listRuns(localStorage, release).findIndex((run) => run.id === slot);
+        return slotSnapshot(localStorage, release);
       } catch {
-        return -1;
+        return "[]";
       }
     },
     () => undefined,
   );
-  if (index === undefined) return <main className="run-loading">VENDIX/OS</main>;
+  if (snapshot === undefined) return <main className="run-loading">VENDIX/OS</main>;
+  const slots = readSlotSnapshot(snapshot);
+  const index = slots.findIndex((run) => run.id === slot);
   if (index < 0) redirect("/" + lang + "/");
+  const parentId = slots[index]?.parent?.slot;
+  const parentIndex = slots.findIndex((run) => run.id === parentId);
+  const parent = slots[parentIndex];
   return (
     <Station
       key={release.revision + ":" + slot}
       release={release}
       slot={slot}
       runNumber={index + 1}
+      parentBalance={
+        parent && !parent.damaged && parent.cash !== null
+          ? { run: parentIndex + 1, values: parent.checkpoints.map((morning) => morning.cash) }
+          : undefined
+      }
       lang={lang}
       changeLang={(l) => {
         localStorage.language = l;

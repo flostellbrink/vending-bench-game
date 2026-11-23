@@ -61,6 +61,10 @@ type StorageWriter = Pick<Storage, "getItem" | "setItem">;
 type StorageReader = Pick<Storage, "getItem" | "length" | "key">;
 
 export type RunSlot = v.InferOutput<typeof slotSchema>;
+export interface ParentBalance {
+  run: number;
+  values: number[];
+}
 const slotSchema = v.object({
   ...lineageSchema.entries,
   id: v.pipe(v.string(), v.check(isSlotId)),

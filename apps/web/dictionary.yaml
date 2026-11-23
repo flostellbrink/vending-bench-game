@@ -1162,6 +1162,13 @@ landing:
     es: "Modelo"
     de: "Modell"
 session:
+  parentRun:
+    .id: SLTR0013
+    .inputs:
+      - $run :integer
+    ^en: "Original run {$run}"
+    es: "Partida de origen {$run}"
+    de: "Ursprünglicher Lauf {$run}"
   parentDifference:
     .id: SLTR0012
     .inputs:

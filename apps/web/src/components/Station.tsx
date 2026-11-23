@@ -2,6 +2,8 @@ import type { Release } from "games-common/benchmark";
 
 import { useMemo } from "react";
 
+import type { ParentBalance } from "@/game/runs";
+
 import { msg } from "@/dictionary";
 import { locales } from "@/dictionary/runtime";
 import { useCommandLine } from "@/hooks/useCommandLine";
@@ -17,10 +19,11 @@ interface Props {
   release: Release;
   slot: string;
   runNumber: number;
+  parentBalance?: ParentBalance;
   lang: Lang;
   changeLang: (locale: Lang) => void;
 }
-export function Station({ release, slot, runNumber, lang, changeLang }: Props) {
+export function Station({ release, slot, runNumber, parentBalance, lang, changeLang }: Props) {
   const nav = useNavigation(),
     run = useRun(release, slot, nav.setTab);
   const t = useMemo(() => operatorLabels(lang), [lang]),
@@ -40,7 +43,8 @@ export function Station({ release, slot, runNumber, lang, changeLang }: Props) {
     rivalClose = opponent?.values?.[day];
   const gap =
     day > 0 && closing !== undefined && rivalClose !== undefined ? closing - rivalClose : null;
-  if (state?.over) return <Settlement {...{ run, release, slot, lang, t, screen, money }} />;
+  if (state?.over)
+    return <Settlement {...{ run, release, slot, lang, t, screen, money, parentBalance }} />;
   return (
     <main className="station">
       <header className="mast">
@@ -87,7 +91,7 @@ export function Station({ release, slot, runNumber, lang, changeLang }: Props) {
           {...{ release, lang, t, screen, money, run, shell }}
           setTab={nav.setTab}
         />
-        <Workspace {...{ run, nav, shell, release, lang, t, screen, money }} />
+        <Workspace {...{ run, nav, shell, release, lang, t, screen, money, parentBalance }} />
       </div>
       <footer>
         <span>

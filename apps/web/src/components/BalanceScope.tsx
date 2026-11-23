@@ -3,51 +3,62 @@ import type { CSSProperties, PointerEvent } from "react";
 
 import { assertValue, hasValue } from "games-common/language";
 
+import type { ParentBalance } from "@/game/runs";
 import type { Lang, Translate } from "@/localization/messages";
+
+import { msg } from "@/dictionary";
 const ink = ["#1d5941", "#6b496b", "#536879", "#765e39"];
 
 interface BalanceScopeProps {
+  parentBalance?: ParentBalance;
   history: number[];
   rivals: Rival[];
   best: PersonalBest | null;
   release: Release;
   lang: Lang;
   t: Translate;
-  playerName: string;
-  scriptName: string;
   selected: number | null;
   setSelected: (day: number) => void;
   showReceipts: (day: number) => void;
 }
 interface Trace {
+  color?: string;
   name: string;
   values?: number[];
   endDay?: number | null;
   finalBalance?: number | null;
 }
 export function BalanceScope({
+  parentBalance,
   history,
   rivals,
   best,
   release,
   lang,
   t,
-  playerName,
-  scriptName,
   selected,
   setSelected,
   showReceipts,
 }: BalanceScopeProps) {
   const day = Math.min(selected ?? Math.max(0, history.length - 1), release.days);
   const series: Trace[] = [
-    { name: playerName, values: history },
+    { name: msg.fields.player({}, { locale: lang }), values: history },
     ...(best ? [{ name: t("previousBest"), values: best.values }] : []),
     ...rivals.map((r) => ({
-      name: r.kind === "script" ? scriptName : assertValue(r.name),
+      name: r.kind === "script" ? msg.fields.bot({}, { locale: lang }) : assertValue(r.name),
       values: r.values,
       endDay: r.endDay,
       finalBalance: r.finalBalance,
     })),
+    ...(parentBalance
+      ? [
+          {
+            name: msg.session.parentRun({ run: parentBalance.run }, { locale: lang }),
+            values: parentBalance.values,
+            color: "#9a431c",
+          },
+        ]
+      : []),
   ];
   const known = series
     .flatMap((s) => [...(s.values ?? []), s.finalBalance])
@@ -108,7 +119,7 @@ export function BalanceScope({
               .map((v, d) => (d ? `H${x(d)} V${y(v)}` : `M${x(0)} ${y(v)}`))
               .join(" ");
             return (
-              <g key={s.name} stroke={ink[index % ink.length]} fill="none">
+              <g key={s.name} stroke={s.color ?? ink[index % ink.length]} fill="none">
                 {path && (
                   <path
                     d={path}
@@ -140,7 +151,7 @@ export function BalanceScope({
       <div className="legend">
         {series.map((s, i) => {
           const style: CSSProperties & { "--ink": string } = {
-            "--ink": assertValue(ink[i % ink.length]),
+            "--ink": s.color ?? assertValue(ink[i % ink.length]),
           };
           const value = valueAt(s);
           return (

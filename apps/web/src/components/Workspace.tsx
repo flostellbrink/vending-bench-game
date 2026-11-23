@@ -2,6 +2,7 @@ import type { Release } from "games-common/benchmark";
 
 import { useMemo, useState } from "react";
 
+import type { ParentBalance } from "@/game/runs";
 import type { CommandLine, Run } from "@/hooks/useCommandLine";
 import type { Navigation } from "@/hooks/useNavigation";
 import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
@@ -21,6 +22,7 @@ export interface WorkspaceProps {
   t: Translate;
   screen: ScreenTranslate;
   money: Money;
+  parentBalance?: ParentBalance;
 }
 
 export function Workspace(props: WorkspaceProps) {

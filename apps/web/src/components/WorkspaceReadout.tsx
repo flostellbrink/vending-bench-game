@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { inspectionCommand, type ReadoutContext } from "@/game/readout-route";
 import { knownOrders } from "@/game/reports";
 import { timeLabel } from "@/game/time-label";
-import { stationMessages as msg } from "@/localization/station-messages";
 
 import type { WorkspaceProps } from "./Workspace";
 
@@ -30,6 +29,7 @@ export function WorkspaceReadout({
   screen,
   money,
   context,
+  parentBalance,
 }: Props) {
   const { state, reports } = run;
   const { tab, setTab } = nav;
@@ -63,12 +63,11 @@ export function WorkspaceReadout({
     return (
       <BalanceScope
         history={run.history}
+        parentBalance={parentBalance}
         rivals={run.rivals}
         best={run.best}
         release={release}
         {...{ lang, t }}
-        playerName={msg.fields.player({}, { locale: lang })}
-        scriptName={msg.fields.bot({}, { locale: lang })}
         selected={nav.balanceDay}
         setSelected={nav.setBalanceDay}
         showReceipts={(day) => {

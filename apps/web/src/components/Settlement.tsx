@@ -2,16 +2,19 @@ import type { Release } from "games-common/benchmark";
 
 import { useState } from "react";
 
+import type { ParentBalance } from "@/game/runs";
 import type { Run } from "@/hooks/useCommandLine";
 import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
 
 import { clock } from "@/scene/clock";
 
+import { BalanceScope } from "./BalanceScope";
 import { Scorecard } from "./Scorecard";
 import SessionSetup from "./SessionSetup";
 import { StationFrame } from "./StationFrame";
 
 interface Props {
+  parentBalance?: ParentBalance;
   slot: string;
   run: Run;
   release: Release;
@@ -20,8 +23,9 @@ interface Props {
   screen: ScreenTranslate;
   money: Money;
 }
-export function Settlement({ run, release, slot, lang, t, screen, money }: Props) {
+export function Settlement({ run, release, slot, lang, t, screen, money, parentBalance }: Props) {
   const [day, setDay] = useState<number | null>(null),
+    [balanceDay, setBalanceDay] = useState<number | null>(null),
     [receipt, setReceipt] = useState<number | null>(null);
   const { state, rivals, best, reports, history } = run;
   const selected = reports.find((r) => r.id === receipt);
@@ -47,6 +51,17 @@ export function Settlement({ run, release, slot, lang, t, screen, money }: Props
               setDay(reports.find((r) => r.id === id)?.day ?? null);
             }}
           />
+          {parentBalance && (
+            <BalanceScope
+              {...{ history, rivals, best, parentBalance, release, lang, t }}
+              selected={balanceDay ?? Math.min(parentBalance.values.length, history.length) - 1}
+              setSelected={setBalanceDay}
+              showReceipts={(closingDay) => {
+                setDay(closingDay);
+                setReceipt(null);
+              }}
+            />
+          )}
           {day !== null && (
             <section className="finish-evidence">
               <h2>
