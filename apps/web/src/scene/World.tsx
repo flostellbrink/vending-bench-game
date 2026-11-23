@@ -22,14 +22,28 @@ interface WorldProps {
   onSiteSelect: (id: string) => void;
 }
 
-function observedStock(reports: readonly Report[]): Record<string, Record<string, CabinetStock>> {
-  const sites: Record<string, Record<string, CabinetStock>> = {};
+function cabinetObservations(reports: readonly Report[], closes: number) {
+  type Reading = { time: number; stock: CabinetStock };
+  const sites: Record<string, Record<string, Reading[]>> = {};
   for (const report of reports) {
+    const start = (report.day - 1) * minutesPerDay + report.minute;
+    const loading = report.tool === "restock_machine" || report.tool === "swap_item";
+    const duration = Math.max(
+      0,
+      (report.endDay > report.day ? closes : report.endMinute) - report.minute,
+    );
+    const time = loading ? start + duration / 2 : start;
     for (const [slot, item] of Object.entries(report.slots)) {
       const [site, machine, shelf] = address(slot).split(".");
       if (!site || !machine || !shelf) throw new Error("Invalid observed slot: " + slot);
       const machines = (sites[site] ??= {});
-      (machines[machine] ??= {})[shelf.toUpperCase()] = item;
+      const readings = (machines[machine] ??= []);
+      let reading = readings.at(-1);
+      if (reading?.time !== time) {
+        reading = { time, stock: { ...reading?.stock } };
+        readings.push(reading);
+      }
+      reading.stock[shelf.toUpperCase()] = item;
     }
   }
   return sites;
@@ -49,7 +63,8 @@ function daylight(value: number, startDate: string): number {
 export function World({ value, state, line, t, reports, selectedSite, onSiteSelect }: WorldProps) {
   const depot = { id: "depot", name: t("depot") };
   const sites = [...(state?.sites ?? []).map((s) => ({ id: address(s.id), name: s.name })), depot];
-  const stock = useMemo(() => observedStock(reports), [reports]);
+  const closes = state?.closes ?? 0;
+  const cabinets = useMemo(() => cabinetObservations(reports, closes), [reports, closes]);
   const inventories = useMemo(() => depotObservations(reports), [reports]);
   const depotCases = inventories.findLast((inventory) => inventory.time <= value)?.cases ?? null;
   const last = reports.at(-1);
@@ -79,6 +94,11 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
       sites[0] ??
       depot);
   const active = sites.find((site) => site.id === selectedSite) ?? commandSite;
+  const stock: Record<string, CabinetStock> = {};
+  for (const [cabinet, readings] of Object.entries(cabinets[active.id] ?? {})) {
+    const reading = readings.findLast((entry) => entry.time <= value);
+    if (reading) stock[cabinet] = reading.stock;
+  }
   const visibleFocus = active === commandSite && !showDepot ? focus : undefined;
   const start = last ? (last.day - 1) * minutesPerDay + last.minute : 0;
   const end = last
@@ -123,7 +143,7 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
           service={service}
           focus={visibleFocus?.split(":")[1]}
           visit={cabinetVisit ? { drink: destination.endsWith("DRINKS"), progress } : null}
-          stock={stock[active.id]}
+          stock={stock}
         />
         <figcaption>
           {active.name}
