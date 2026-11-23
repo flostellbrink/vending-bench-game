@@ -45,10 +45,10 @@ export function Workspace(props: WorkspaceProps) {
         state={run.state}
         release={release}
         lang={lang}
-        line={shell.line}
+        line={shell.line || shell.steps[0]?.line || ""}
         reports={run.reports}
         t={t}
-        previewVerb={preview || shell.verb}
+        previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
         selectedSite={nav.site}
         onSiteSelect={nav.openSite}
       />

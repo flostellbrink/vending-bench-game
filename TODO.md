@@ -1,5 +1,12 @@
 # Player experience queue
 
+## Concept test: the last working hour
+
+- Baseline: the clock previews one action. The player must calculate a sequence in their head.
+- Test: use one real 16:00 save to compare checking a slot first with dispatching immediately. Stage, reorder and discard without paying; dispatch one real action at a time.
+- Evidence: attach the dated observations behind the plan. Do not estimate future demand or invent a rival's decisions.
+- Decision: keep the interaction only if an independent player can identify what would be postponed before executing. Do not treat a passing build as design approval.
+
 ## Release candidate
 
 1. [x] Baseline: two independent cold players; stress-test typing and day transitions on the M4 laptop.

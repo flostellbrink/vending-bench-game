@@ -1,3 +1,4 @@
+import {opensInstrument} from "@/game/receipt-routing";
 "use client";
 
 import {
@@ -195,7 +196,7 @@ export function useRun(release: Release, onView: (id: View) => void) {
         boot: !entry ? (first ? [...(old.boot ?? []), "ready"] : null) : old.boot,
       }));
       if (data.state.over) onView("scores");
-      else if (entry && reports[0]) onView(reports[0].id);
+      else if (entry && reports[0] && opensInstrument(reports[0])) onView(reports[0].id);
     }
 
     current.addEventListener("error", (e) => fail(e.message), { signal: abort.signal });

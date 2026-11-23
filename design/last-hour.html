@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vending Bench — The last hour</title>
+  <style>
+    :root {
+      font:
+        100%/1.5 system-ui,
+        sans-serif;
+      color: #23362d;
+      background: #eeeee4;
+    }
+    body {
+      max-width: 76rem;
+      margin: auto;
+      padding: clamp(1rem, 3vw, 3rem);
+    }
+    header {
+      border-block: 1px solid #758575;
+      padding: 1rem 0;
+    }
+    h1 {
+      font:
+        600 2.4rem/1.1 Georgia,
+        serif;
+      margin: 0.35rem 0;
+    }
+    header p {
+      max-width: 60ch;
+    }
+    small,
+    time,
+    dt {
+      font-family: monospace;
+    }
+    section {
+      margin-block: 1.5rem;
+    }
+    h2 {
+      margin-bottom: 0.35rem;
+    }
+    video {
+      display: block;
+      width: 100%;
+      max-width: 70rem;
+      background: #14211c;
+    }
+    summary {
+      cursor: pointer;
+    }
+    a {
+      color: #225343;
+    }
+  </style>
+  <header>
+    <small>Vending Bench · seed 1 · day 6</small>
+    <h1>The last hour</h1>
+    <p>
+      At <time>16:00</time>, the depot has stock for Main Lounge. A fresh inspection takes 25
+      minutes, a refill takes 45, and setting the price takes 5. Sales settle at closing. Which
+      action would you postpone?
+    </p>
+  </header>
+  <section>
+    <h2>Dispatch first</h2>
+    <video
+      controls
+      preload="metadata"
+      src="dispatch-take2.mp4"
+      aria-label="Remove the inspection, refill the slot and set its price"
+    ></video>
+  </section>
+  <section>
+    <h2>Inspect first</h2>
+    <video
+      controls
+      preload="metadata"
+      src="inspect-take2.mp4"
+      aria-label="Inspect, then refill across closing and price the next morning"
+    ></video>
+  </section>
+  <details>
+    <summary>Compare the receipts</summary>
+    <p>
+      Dispatching first left ten working minutes after the price change. Three sales brought in
+      €4.50. Inspecting first pushed the price change to the next day; the same stock earned €0 that
+      night. Settlement left €1,328.60 and €1,325.60 respectively. Gross sales and money banked are
+      different measures.
+    </p>
+    <p>
+      These are two recordings of the real simulator from the same starting position, not AI scores
+      or a new game mode.
+    </p>
+  </details>
+</html>

@@ -16,7 +16,9 @@ import {
 } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
+import { PlanEvidence } from "./PlanEvidence";
 import { Receipts } from "./Receipts";
+import { ShiftPlan } from "./ShiftPlan";
 interface Props {
   release: Release;
   lang: Lang;
@@ -101,9 +103,19 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             <p>{t("hint")}</p>
           </>
         )}
-        <Receipts lines={lines} lang={lang} openReport={setTab} />
+        <Receipts lines={lines} lang={lang} openReport={setTab} money={money}/>
       </div>
       <div className="input-zone">
+        {state && shell.steps.length > 0 && <ShiftPlan {...{ state, shell, busy, t }} />}
+        {state && shell.steps.length > 0 && (
+          <PlanEvidence
+            line={shell.line || shell.steps[0]?.line || ""}
+            reports={reports}
+            state={state}
+            openReport={setTab}
+            t={t}
+          />
+        )}
         {browse && choices.length > 0 && (
           <div className="completion">
             {choices.slice(Math.floor(pick / 5) * 5, Math.floor(pick / 5) * 5 + 5).map((s) => (
@@ -131,9 +143,22 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
           </div>
         )}
         {tool && (
-          <small>
-            {syntax(verb)} · {estimate}
-          </small>
+          <div className="plan-edit">
+            <small>
+              {syntax(verb)} · {estimate}
+            </small>
+            {!state?.over && (
+              <button onClick={shell.stage} disabled={busy} title={"Ctrl+Enter · " + t("noCharge")}>
+                {shell.editing === null ? t("addPlan") : t("savePlan")}
+              </button>
+            )}
+          </div>
+        )}
+        {shell.editing !== null && (
+          <div className="plan-edit">
+            <small>{t("editPlan")} · Enter / Esc</small>
+            <button onClick={shell.cancelEdit}>{t("cancelPlan")}</button>
+          </div>
         )}
         {orderEstimate && (
           <div className="order-estimate">

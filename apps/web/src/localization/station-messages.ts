@@ -2,6 +2,19 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    priceAfterClose: msg.operator.priceAfterClose,
+    planHelp: msg.operator.planHelp,
+    shiftPlan: msg.operator.shiftPlan,
+    dispatchNext: msg.operator.dispatchNext,
+    editPlan: msg.operator.editPlan,
+    planEarlier: msg.operator.planEarlier,
+    planLater: msg.operator.planLater,
+    removePlan: msg.operator.removePlan,
+    afterFinal: msg.operator.afterFinal,
+    addPlan: msg.operator.addPlan,
+    savePlan: msg.operator.savePlan,
+    cancelPlan: msg.operator.cancelPlan,
+    shiftEnds: msg.operator.shiftEnds,
     setup: msg.operator.setup,
     network: msg.operator.network,
     dispatchDesk: msg.operator.dispatchDesk,

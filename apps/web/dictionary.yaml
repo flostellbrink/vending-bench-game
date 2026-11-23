@@ -1,5 +1,70 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  priceAfterClose:
+    .id: PLCA0001
+    ^en: A successful refill loads before overnight sales. This price change comes afterward.
+    es: Si la reposición tiene éxito, el producto entra antes de las ventas nocturnas. Este cambio de precio llega después.
+    de: Bei erfolgreicher Befüllung liegt die Ware vor dem Nachtverkauf im Fach. Diese Preisänderung erfolgt erst danach.
+  planHelp:
+    .id: SP000011
+    ^en: "Ctrl+Enter: add the prompt to the shift strip without spending time. Shift+Tab reaches the plan controls. Execute first sends one command."
+    es: "Ctrl+Enter: añade el comando al plan sin gastar tiempo. Mayús+Tab accede a los controles. Ejecutar primera envía un solo comando."
+    de: "Strg+Enter: Befehl ohne Zeitverbrauch einplanen. Mit Umschalt+Tab erreichst du die Plansteuerung. Ersten Befehl ausführen sendet nur diesen Befehl."
+  shiftPlan:
+    .id: SP000000
+    ^en: "Shift strip"
+    es: "Plan de turno"
+    de: "Schichtplan"
+  dispatchNext:
+    .id: SP000001
+    ^en: "Execute first"
+    es: "Ejecutar primera"
+    de: "Ersten Befehl ausführen"
+  editPlan:
+    .id: SP000002
+    ^en: "Edit planned command"
+    es: "Editar comando previsto"
+    de: "Geplanten Befehl bearbeiten"
+  planEarlier:
+    .id: SP000003
+    ^en: "Move earlier"
+    es: "Adelantar"
+    de: "Vorziehen"
+  planLater:
+    .id: SP000004
+    ^en: "Move later"
+    es: "Aplazar"
+    de: "Nach hinten"
+  removePlan:
+    .id: SP000005
+    ^en: "Remove from plan"
+    es: "Quitar del plan"
+    de: "Aus Plan entfernen"
+  afterFinal:
+    .id: SP000006
+    ^en: "After final settlement"
+    es: "Después del cierre final"
+    de: "Nach der Endabrechnung"
+  addPlan:
+    .id: SP000007
+    ^en: "Plan · Ctrl+Enter"
+    es: "Planificar · Ctrl+Enter"
+    de: "Einplanen · Strg+Enter"
+  savePlan:
+    .id: SP000008
+    ^en: "Save change"
+    es: "Guardar cambio"
+    de: "Änderung speichern"
+  cancelPlan:
+    .id: SP000009
+    ^en: "Cancel edit"
+    es: "Cancelar edición"
+    de: "Bearbeitung abbrechen"
+  shiftEnds:
+    .id: SP000010
+    ^en: "Shift closes"
+    es: "Cierre del turno"
+    de: "Schichtende"
   setup:
     .id: DSTR0002
     ^en: Session setup

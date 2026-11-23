@@ -4,9 +4,17 @@ import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { priceOrder, timing } from "../src/game/commands.ts";
+import { draftMachine, priceOrder, timing } from "../src/game/commands.ts";
 import { observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
+import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
+
+await test("a Main Lounge slot does not select the similarly named AI Lounge cabinet", () => {
+  const network = ["AI-LOUNGE:SNACK", "MAIN-LOUNGE:SNACK"];
+  assert.equal(draftMachine("refill main-lounge.snack.a1 stroopwafel-2pk 18", network), network[1]);
+  assert.equal(draftMachine("inspect AI-LOUNGE:SNACK", network), network[0]);
+  assert.equal(draftMachine("note reminder main-lounge.snack", network), undefined);
+});
 
 await test("a replay retains its pre-run opponent even after setting a better record", () => {
   const entries = new Map<string, string>();
@@ -24,6 +32,47 @@ await test("a replay retains its pre-run opponent even after setting a better re
     assertValue(readRun(JSON.stringify([move.move]), original).moves[0]).move,
     move.move,
   );
+});
+
+await test("a 16:00 inspection pushes pricing into tomorrow without executing the plan", () => {
+  const state = {
+    day: 6,
+    days: 30,
+    minute: 960,
+    opens: 540,
+    closes: 1020,
+    defaultCost: 5,
+    costs: { get_machine_inventory: 25, restock_machine: 45, set_price: 5 },
+  };
+  const inspect: PlannedCommand = {
+    id: 1,
+    line: "inspect",
+    verb: "inspect",
+    move: ["get_machine_inventory", {}],
+  };
+  const refill: PlannedCommand = {
+    id: 2,
+    line: "refill lounge.snack.a1 wafer 18",
+    verb: "refill",
+    move: ["restock_machine", { slot: "AI-LOUNGE:SNACK:A1", product_id: "wafer", quantity: 18 }],
+  };
+  const price: PlannedCommand = {
+    id: 3,
+    line: "price lounge.snack.a1 1.50",
+    verb: "price",
+    move: ["set_price", { slot: "AI-LOUNGE:SNACK:A1", price: 1.5 }],
+  };
+  const direct = projectPlan([refill, price], state);
+  const checked = projectPlan([inspect, refill, price], state);
+  assert.equal(direct.at(-1)?.span?.to, 1010);
+  assert.equal(checked[1]?.span?.rolls, true);
+  assert.equal(checked[2]?.span?.day, 7);
+  assert.equal(checked[2]?.span?.from, 540);
+  assert.equal(projectPlan([inspect, refill, price], { ...state, day: 30 }).at(-1)?.span, null);
+  assert.equal(state.minute, 960);
+  const pending = { ...inspect, dispatchedAt: 0 };
+  assert.deepEqual(remainingPlan([pending, refill], []), [pending, refill]);
+  assert.deepEqual(remainingPlan([pending, refill], [inspect]), [refill]);
 });
 
 await test("an order estimate uses only a matching, unexpired observed quantity", () => {

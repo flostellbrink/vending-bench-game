@@ -3,7 +3,7 @@ import type { Report, Snapshot } from "games-common/benchmark";
 import { msPerDay, type Optional } from "games-common/language";
 import { useMemo, type CSSProperties } from "react";
 
-import { address } from "@/game/commands";
+import { address, draftMachine } from "@/game/commands";
 
 import type { CabinetStock } from "./Cabinet";
 
@@ -50,6 +50,14 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
   const sites = [...(state?.sites ?? []).map((s) => ({ id: address(s.id), name: s.name })), depot];
   const stock = useMemo(() => observedStock(reports), [reports]);
   const last = reports.at(-1);
+  const addressed = reports.findLast(
+    (report) =>
+      Boolean(report.args.slot || report.args.machine_id) ||
+      report.tool === "get_storage_inventory" ||
+      report.tool === "order_goods",
+  );
+  const lastMachine =
+    addressed?.args.machine_id ?? addressed?.args.slot?.split(":").slice(0, 2).join(":");
   const slot = last?.args.slot;
   const machine = last?.args.machine_id;
   const destination =
@@ -58,11 +66,10 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
       : typeof machine === "string"
         ? machine
         : undefined;
-  const focus =
-    state?.machines.find((id) => line.toLowerCase().includes(address(id))) ?? destination;
+  const focus = draftMachine(line, state?.machines ?? []) ?? lastMachine;
   const showDepot =
     /^(depot|order)\b/i.test(line) ||
-    (!line && !focus && (last?.tool === "get_storage_inventory" || last?.tool === "order_goods"));
+    (!focus && (addressed?.tool === "get_storage_inventory" || addressed?.tool === "order_goods"));
   const commandSite = showDepot
     ? depot
     : (sites.find((site) => focus && address(focus).startsWith(site.id + ".")) ??

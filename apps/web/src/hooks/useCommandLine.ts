@@ -13,6 +13,7 @@ import {
   syntax,
   toolFor,
 } from "@/game/commands";
+import { remainingPlan, type PlannedCommand } from "@/game/shift-plan";
 import { timeLabel } from "@/game/time-label";
 import {
   commandLabel,
@@ -38,6 +39,10 @@ export function useCommandLine(
     [pick, setPick] = useState(0),
     [recall, setRecall] = useState(-1);
   const prompt = useRef<HTMLTextAreaElement>(null);
+  const sequence = useRef(0);
+  const [plan, setPlan] = useState<PlannedCommand[]>([]);
+  const [editing, setEditing] = useState<number | null>(null);
+  const steps = remainingPlan(plan, run.journal);
   const { state, actions, reports } = run;
   const verb = line.trim().split(/\s+/)[0] ?? "",
     tool = toolFor(verb),
@@ -59,6 +64,59 @@ export function useCommandLine(
     edit(left + line.slice(caret).replace(/^\S*\s*/, ""), left.length);
     prompt.current?.focus();
     requestAnimationFrame(() => prompt.current?.setSelectionRange(left.length, left.length));
+  }
+  function stage() {
+    if (!state || state.over || run.busy) return;
+    const raw = line.trim();
+    try {
+      const move = parse(raw, state, actions);
+      const command = { line: raw, move, verb: raw.split(/\s+/, 1)[0]?.toLowerCase() ?? "" };
+      if (editing === null) {
+        sequence.current++;
+        setPlan([...steps, { ...command, id: sequence.current }]);
+      } else {
+        setPlan(steps.map((step) => (step.id === editing ? { ...command, id: editing } : step)));
+      }
+      setEditing(null);
+      edit("");
+      prompt.current?.focus();
+    } catch (error) {
+      run.setError(error instanceof Error ? error.message : String(error));
+    }
+  }
+  function editStep(step: PlannedCommand) {
+    setEditing(step.id);
+    edit(step.line);
+    setBrowse(false);
+    prompt.current?.focus();
+  }
+  function cancelEdit() {
+    setEditing(null);
+    edit("");
+    prompt.current?.focus();
+  }
+  function moveStep(id: number, delta: number) {
+    const index = steps.findIndex((step) => step.id === id);
+    const step = steps[index],
+      target = index + delta;
+    if (!step || target < 0 || target >= steps.length) return;
+    setPlan(steps.toSpliced(index, 1).toSpliced(target, 0, step));
+  }
+  function removeStep(id: number) {
+    setPlan(steps.filter((step) => step.id !== id));
+    if (editing === id) cancelEdit();
+  }
+  function dispatchFirst() {
+    const first = steps[0];
+    if (!first || !state || state.over || run.busy || editing !== null) return;
+    if (run.submit({ move: first.move, line: first.line })) {
+      setPlan(
+        steps.map((step) =>
+          step === first ? { ...step, dispatchedAt: run.journal.length } : step,
+        ),
+      );
+      nav.setSite(null);
+    }
   }
   function runCommand(command: string, fromPrompt = false) {
     const raw = command.trim(),
@@ -86,7 +144,7 @@ export function useCommandLine(
                 ([group, names]) =>
                   t(group) + ": " + names.filter((v) => (toolFor(v) ?? "") in actions).join("  "),
               )
-              .concat(t("local") + ": " + local.join("  "), syntax("help"))
+              .concat(t("local") + ": " + local.join("  "), syntax("help"), t("planHelp"))
               .join("\n");
         run.appendLocal(raw, text);
       } else if (commandName === "balance" || commandName === "tabs") {
@@ -129,10 +187,15 @@ export function useCommandLine(
     if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      runCommand(line, true);
+      if (e.ctrlKey || e.metaKey || editing !== null) stage();
+      else runCommand(line, true);
       return;
     }
     if (e.key === "Escape") {
+      if (editing !== null) {
+        cancelEdit();
+        return;
+      }
       setBrowse(false);
       setPick(0);
       return;
@@ -180,6 +243,14 @@ export function useCommandLine(
     runCommand,
     keys,
     setCaret,
+    steps,
+    editing,
+    stage,
+    editStep,
+    cancelEdit,
+    moveStep,
+    removeStep,
+    dispatchFirst,
   };
 }
 export type CommandLine = ReturnType<typeof useCommandLine>;
