@@ -120,6 +120,11 @@ export function WorkspaceReadout({
   if (tab === "scores")
     return (
       <Scorecard
+        history={run.history}
+        reviewDay={(day) => {
+          nav.setBalanceDay(day);
+          setTab("day:" + day);
+        }}
         {...{ state, lang, t, screen, reports, money }}
         rivals={run.rivals}
         best={run.best}

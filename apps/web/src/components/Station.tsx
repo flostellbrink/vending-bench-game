@@ -54,6 +54,12 @@ export function Station({ release, lang, changeLang }: Props) {
             <Scorecard
               {...{ state, rivals, best, lang, t, screen, reports, money }}
               archives={release.archives}
+              history={history}
+              reviewDay={(d) => {
+                setReviewing(true);
+                nav.setBalanceDay(d);
+                nav.setTab("day:" + d);
+              }}
               openReport={(id) => {
                 setReviewing(true);
                 nav.setTab(id);

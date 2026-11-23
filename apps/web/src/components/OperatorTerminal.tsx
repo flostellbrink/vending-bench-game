@@ -103,7 +103,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             <p>{t("hint")}</p>
           </>
         )}
-        <Receipts lines={lines} lang={lang} openReport={setTab} money={money}/>
+        <Receipts lines={lines} lang={lang} openReport={setTab} money={money} />
       </div>
       <div className="input-zone">
         {state && shell.steps.length > 0 && <ShiftPlan {...{ state, shell, busy, t }} />}

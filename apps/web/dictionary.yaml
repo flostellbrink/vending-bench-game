@@ -1,5 +1,35 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  paceReview:
+    .id: PC000000
+    ^en: "Pace review"
+    es: "Comparación diaria"
+    de: "Tagesvergleich"
+  opponent:
+    .id: PC000001
+    ^en: "Opponent"
+    es: "Rival"
+    de: "Gegner"
+  largestPaceLoss:
+    .id: PC000002
+    ^en: "Largest daily loss of ground"
+    es: "Mayor retroceso en un día"
+    de: "Größter Tagesrückstand im Vergleich"
+  reviewThisDay:
+    .id: PC000003
+    ^en: "Read this day’s receipts"
+    es: "Ver los recibos de este día"
+    de: "Tagesbelege ansehen"
+  noDailyComparison:
+    .id: PC000004
+    ^en: "Only the final result is available. There is no daily comparison."
+    es: "Solo se dispone del resultado final. No hay comparación diaria."
+    de: "Nur der Endstand liegt vor. Ein Tagesvergleich ist nicht möglich."
+  noPaceLoss:
+    .id: PC000005
+    ^en: "No loss of ground on the recorded days."
+    es: "No perdiste terreno en los días registrados."
+    de: "An den erfassten Tagen hast du keinen Boden verloren."
   priceAfterClose:
     .id: PLCA0001
     ^en: A successful refill loads before overnight sales. This price change comes afterward.

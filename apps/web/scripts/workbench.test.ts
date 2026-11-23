@@ -5,9 +5,21 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { draftMachine, priceOrder, timing } from "../src/game/commands.ts";
+import { largestPaceLoss } from "../src/game/pace.ts";
 import { observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
+
+await test("pace review uses daily change, not widest absolute gap or unrecorded rival days", () => {
+  assert.deepEqual(largestPaceLoss([100, 90, 95, 101, 200], [100, 105, 111, 120]), {
+    day: 1,
+    player: -10,
+    rival: 5,
+    difference: -15,
+  });
+  assert.equal(largestPaceLoss([100, 120], [100]), undefined);
+  assert.equal(largestPaceLoss([100, 120], [100, 110]), undefined);
+});
 
 await test("a Main Lounge slot does not select the similarly named AI Lounge cabinet", () => {
   const network = ["AI-LOUNGE:SNACK", "MAIN-LOUNGE:SNACK"];

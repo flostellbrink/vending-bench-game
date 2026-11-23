@@ -1,12 +1,12 @@
 import { memo, useState } from "react";
 
 import type { LogLine } from "@/hooks/useRun";
+import type { Money } from "@/localization/messages";
 
+import { opensInstrument } from "@/game/receipt-routing";
 import { translate, type Lang } from "@/localization/messages";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
-import {opensInstrument} from "@/game/receipt-routing";
-import type {Money} from "@/localization/messages";
 export const Receipts = memo(function Receipts({
   lines,
   lang,
@@ -16,7 +16,7 @@ export const Receipts = memo(function Receipts({
   lines: LogLine[];
   lang: Lang;
   openReport: (id: number) => void;
-  money:Money;
+  money: Money;
 }) {
   const [peek, setPeek] = useState<number | null>(null);
   const day = translate(msg.operator.day, lang),
@@ -45,13 +45,29 @@ export const Receipts = memo(function Receipts({
                   : (r.display.split("\n")[0] ?? "").slice(0, 110))}
         </button>
       )}
-      {!("localText" in r)&&!opensInstrument(r)&&<div className="write-ack">
-        <small>{clock(r.minute)} → {clock(r.endMinute)} · {r.minutes} min
-          {r.closingCash!==r.openingCash&&" · "+money(r.closingCash-r.openingCash)}</small>
-        {r.terms?.order&&<span>{translate(msg.operator.expectedClose,lang)} {r.terms.eta}</span>}
-        {r.tool==="restock_machine"&&r.display.split("\n").slice(1).map((note,index)=><span key={index}>{note}</span>)}
-        {r.notices.filter(note=>/Yesterday sold |arrived in storage|arrived short/.test(note)).map((note,index)=><span key={index}>{note}</span>)}
-      </div>}
+      {!("localText" in r) && !opensInstrument(r) && (
+        <div className="write-ack">
+          <small>
+            {clock(r.minute)} → {clock(r.endMinute)} · {r.minutes} min
+            {r.closingCash !== r.openingCash && " · " + money(r.closingCash - r.openingCash)}
+          </small>
+          {r.terms?.order && (
+            <span>
+              {translate(msg.operator.expectedClose, lang)} {r.terms.eta}
+            </span>
+          )}
+          {r.tool === "restock_machine" &&
+            r.display
+              .split("\n")
+              .slice(1)
+              .map((note, index) => <span key={index}>{note}</span>)}
+          {r.notices
+            .filter((note) => /Yesterday sold |arrived in storage|arrived short/.test(note))
+            .map((note, index) => (
+              <span key={index}>{note}</span>
+            ))}
+        </div>
+      )}
       {peek === r.id && !("localText" in r) && (
         <div className="receipt-peek">
           <small>

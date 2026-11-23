@@ -2,6 +2,12 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    paceReview: msg.operator.paceReview,
+    opponent: msg.operator.opponent,
+    largestPaceLoss: msg.operator.largestPaceLoss,
+    reviewThisDay: msg.operator.reviewThisDay,
+    noDailyComparison: msg.operator.noDailyComparison,
+    noPaceLoss: msg.operator.noPaceLoss,
     priceAfterClose: msg.operator.priceAfterClose,
     planHelp: msg.operator.planHelp,
     shiftPlan: msg.operator.shiftPlan,

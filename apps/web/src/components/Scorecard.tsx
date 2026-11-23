@@ -9,6 +9,8 @@ import {
 } from "@/localization/messages";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
+
+import { PaceReview } from "./PaceReview";
 interface Props {
   state: Snapshot | null;
   rivals: Rival[];
@@ -20,6 +22,8 @@ interface Props {
   reports: Report[];
   openReport: (id: number) => void;
   money: Money;
+  history: number[];
+  reviewDay: (day: number) => void;
 }
 export function Scorecard({
   state,
@@ -32,6 +36,8 @@ export function Scorecard({
   reports,
   openReport,
   money,
+  history,
+  reviewDay,
 }: Props) {
   const score = state?.final?.reward ?? null;
   return (
@@ -83,8 +89,13 @@ export function Scorecard({
           ))}
         </tbody>
       </table>
+      <PaceReview
+        {...{ history, rivals, best, t, money, reviewDay }}
+        playerName={translate(msg.fields.player, lang)}
+        scriptName={translate(msg.fields.bot, lang)}
+      />
       {reports.some((r) => r.openingCash !== r.closingCash) && (
-        <details open={state?.over}>
+        <details>
           <summary>{t("cashEvents")}</summary>
           <table>
             <thead>

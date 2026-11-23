@@ -1,4 +1,3 @@
-import {opensInstrument} from "@/game/receipt-routing";
 "use client";
 
 import {
@@ -17,6 +16,7 @@ import { errorToString } from "games-common/language";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as v from "valibot";
 
+import { opensInstrument } from "@/game/receipt-routing";
 import { observation } from "@/game/reports";
 import { recordKey, runKey, readRecord, readRun, saveRun, withRunLock } from "@/game/runs";
 
