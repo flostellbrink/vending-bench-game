@@ -51,8 +51,15 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
   const observations = useMemo(() => {
     const bySlot: Record<string, SlotObservation & { day: number; minute: number }> = {};
     for (const r of reports) {
-      for (const [key, v] of Object.entries(r.slots))
-        bySlot[address(key)] = { ...v, day: r.day, minute: r.minute };
+      for (const [key, v] of Object.entries(r.slots)) {
+        const id = address(key);
+        bySlot[id] = {
+          ...v,
+          capacity: v.capacity ?? bySlot[id]?.capacity ?? null,
+          day: r.day,
+          minute: r.minute,
+        };
+      }
     }
     return bySlot;
   }, [reports]);
@@ -129,7 +136,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
                   {observations[s]
                     ? observations[s].qty +
                       "/" +
-                      observations[s].capacity +
+                      (observations[s].capacity ?? "—") +
                       " · " +
                       t("day") +
                       " " +

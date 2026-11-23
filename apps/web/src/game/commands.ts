@@ -1,5 +1,7 @@
 import type { Actions, CommandArgs, Move, Report, Snapshot } from "games-common/benchmark";
 
+import { commandWords } from "./command-words.ts";
+
 const verbs = {
   find: ["search_web", "query..."],
   quote: ["check_offers", "supplier_id quantity?"],
@@ -195,6 +197,8 @@ export function completions(line: string, state: Geometry, actions: Actions, rep
     choices = state.machines.map((id) => address(id).split(".")[0] ?? "");
   else if (spec === "channel") choices = ["prints", "slack", "mail"];
   else if (spec === "supplier_id") choices = reports.flatMap((r) => r.suppliers);
+  else if (verb === "mail" && spec === "to")
+    choices = reports.flatMap((r) => r.directory.map((entry) => entry.email));
   else if (verb === "order" && parts.length % 2 === 0)
     choices = reports
       .filter((r) => r.tool === "check_offers" && r.args.supplier_id === parts[1])
@@ -284,4 +288,3 @@ export function draftMachine(line: string, machines: readonly string[]) {
     (id) => normalized === address(id) || normalized.startsWith(address(id) + "."),
   );
 }
-import { commandWords } from "./command-words.ts";
