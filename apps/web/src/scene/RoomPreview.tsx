@@ -1,11 +1,23 @@
 import { memo } from "react";
 
 import { AtriumShell, AtriumRail, AtriumFurniture, concourse } from "./Atrium";
-import { Carton, Sofa, Table } from "./Furniture";
-import { Box, Front, Line, Polygon, repeat, wood, pine } from "./geometry";
+import { Depot } from "./Depot";
+import { Sofa, Table } from "./Furniture";
+import { Box, Front, Line, Polygon, repeat, pine } from "./geometry";
 
-export const RoomPreview = memo(function RoomPreview({ site }: { site: string }) {
-  const depot = site === "depot";
+export const RoomPreview = memo(function RoomPreview({
+  site,
+  depotCases,
+}: {
+  site: string;
+  depotCases: number | null;
+}) {
+  if (site === "depot")
+    return (
+      <svg className="office-drawing" viewBox="75 4 408 285" aria-hidden="true">
+        <Depot cases={depotCases} />
+      </svg>
+    );
   const atrium = site === "main-lounge";
   return (
     <svg
@@ -33,58 +45,48 @@ export const RoomPreview = memo(function RoomPreview({ site }: { site: string })
           <Line a={[1, 64, 19]} b={[1, 64, 62]} color="#637b72" width="2" />
         </>
       )}
-      {depot ? (
-        <>
-          {repeat(3, (i) => (
-            <Box x={64 + 42 * i} y={5} w={34} d={16} h={52} c={wood} />
-          ))}
-          <Carton x={35} y={68} w={36} d={22} h={20} />
-          <Carton x={97} y={96} w={40} d={25} h={27} />
-        </>
-      ) : (
-        <>
-          {repeat(2, (i) => (
-            <>
-              <Box
-                x={(atrium ? concourse.machineX : 126) + 36 * i}
-                y={6}
-                w={31}
-                d={23}
-                h={58}
-                c={pine}
-              />
-              <Front
-                x={(atrium ? concourse.machineX : 126) + 3 + 36 * i}
-                y={29.2}
-                z={23}
-                w={20}
-                h={29}
-                fill="#98aaa1"
-              />
-              <Front
-                x={(atrium ? concourse.machineX : 126) + 6 + 36 * i}
-                y={29.2}
-                z={8}
-                w={17}
-                h={4}
-                fill="#263f37"
-              />
-            </>
-          ))}
-          {atrium ? (
-            <>
-              <AtriumFurniture />
-              <AtriumRail />
-            </>
-          ) : (
-            <>
-              <Sofa x={28} y={43} w={70} orange={site === "lounge"} />
-              <Table x={47} y={83} w={43} d={16} h={12} />
-              {site === "house" && <Table x={135} y={77} w={52} d={28} h={23} />}
-            </>
-          )}
-        </>
-      )}
+      <>
+        {repeat(2, (i) => (
+          <>
+            <Box
+              x={(atrium ? concourse.machineX : 126) + 36 * i}
+              y={6}
+              w={31}
+              d={23}
+              h={58}
+              c={pine}
+            />
+            <Front
+              x={(atrium ? concourse.machineX : 126) + 3 + 36 * i}
+              y={29.2}
+              z={23}
+              w={20}
+              h={29}
+              fill="#98aaa1"
+            />
+            <Front
+              x={(atrium ? concourse.machineX : 126) + 6 + 36 * i}
+              y={29.2}
+              z={8}
+              w={17}
+              h={4}
+              fill="#263f37"
+            />
+          </>
+        ))}
+        {atrium ? (
+          <>
+            <AtriumFurniture />
+            <AtriumRail />
+          </>
+        ) : (
+          <>
+            <Sofa x={28} y={43} w={70} orange={site === "lounge"} />
+            <Table x={47} y={83} w={43} d={16} h={12} />
+            {site === "house" && <Table x={135} y={77} w={52} d={28} h={23} />}
+          </>
+        )}
+      </>
     </svg>
   );
 });

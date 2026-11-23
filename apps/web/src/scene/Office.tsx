@@ -2,7 +2,7 @@ import type { Optional } from "games-common/language";
 
 import { useId, memo } from "react";
 
-import { RoomShell, Sunlight, BackWall } from "./Architecture";
+import { RoomShell, Sunlight, BackWall, WallClock } from "./Architecture";
 import {
   AtriumForecourt,
   AtriumShell,
@@ -12,6 +12,7 @@ import {
   concourse,
 } from "./Atrium";
 import { Machine, type CabinetStock } from "./Cabinet";
+import { Depot } from "./Depot";
 import { Furniture } from "./Furniture";
 import { Polygon } from "./geometry";
 import { Plant } from "./Plant";
@@ -19,6 +20,7 @@ import { ServiceVisit, Person, type ServiceMotion } from "./ServiceVisit";
 import { StreetTree, Outside } from "./Street";
 
 interface OfficeProps {
+  depotCases: number | null;
   site: string;
   phase: number;
   light: number;
@@ -31,6 +33,7 @@ interface OfficeProps {
 
 export default function Office({
   site,
+  depotCases,
   light,
   phase,
   service,
@@ -77,9 +80,18 @@ export default function Office({
           coat={depot ? "#877861" : "#6f7c86"}
         />
       )}
-      {communal ? <AtriumShell /> : <RoomShell id={id} />}
-      <Sunlight {...{ id, x, light, phase }} atrium={communal} />
-      {communal ? <AtriumFurniture /> : <BackWall depot={depot} />}
+      {depot ? (
+        <>
+          <Depot cases={depotCases} />
+          <WallClock phase={phase} />
+        </>
+      ) : (
+        <>
+          {communal ? <AtriumShell /> : <RoomShell id={id} />}
+          <Sunlight {...{ id, x, light, phase }} atrium={communal} />
+          {communal ? <AtriumFurniture /> : <BackWall />}
+        </>
+      )}
       {!depot &&
         [false, true].map((drink, i) => (
           <Machine
@@ -92,7 +104,7 @@ export default function Office({
             progress={visit?.drink === drink ? visit.progress : null}
           />
         ))}
-      {!communal && <CornerPlant />}
+      {!communal && !depot && <CornerPlant />}
       <ServiceVisit service={service} atrium={communal} />
       {communal ? (
         <>
@@ -101,7 +113,7 @@ export default function Office({
         </>
       ) : (
         <>
-          <Furniture site={site} />
+          {!depot && <Furniture site={site} />}
           <StreetTree x={-17} y={151} phase={phase} light={light} />
         </>
       )}

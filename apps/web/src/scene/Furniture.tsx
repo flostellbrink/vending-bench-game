@@ -181,29 +181,6 @@ export function Carton({
     </g>
   );
 }
-function Pallet({ x, y }: Position) {
-  return (
-    <g>
-      {repeat(3, (i) => (
-        <Box x={x} y={y + i * 10} w={44} d={4} h={3} c={wood} />
-      ))}
-      {repeat(6, (i) => (
-        <Box x={x + i * 7.2} y={y} z={3} w={6.1} d={25} h={1.5} c={wood} />
-      ))}
-      {repeat(4, (i) => (
-        <Carton
-          x={x + 1 + (i % 2) * 20}
-          y={y + 1 + Math.floor(i / 2) * 12}
-          z={4.5}
-          w={19}
-          d={11}
-          h={13}
-        />
-      ))}
-      <Carton x={x + 1} y={y + 1} z={17.5} w={19} d={11} h={12} />
-    </g>
-  );
-}
 export function ContactShadow({
   x,
   y,
@@ -224,7 +201,7 @@ export function ContactShadow({
     />
   );
 }
-export function Shelves({ x, y, stock = false }: Position & { stock?: boolean }) {
+export function Shelves({ x, y }: Position) {
   return (
     <g>
       {repeat(2, (i) => (
@@ -233,62 +210,50 @@ export function Shelves({ x, y, stock = false }: Position & { stock?: boolean })
       {repeat(4, (r) => (
         <g>
           <Box x={x} y={y} z={3 + r * 14} w={32} d={12} h={2} c={wood} />
-          {stock
-            ? repeat(3, (i) => (
-                <Carton x={x + 2 + i * 9} y={y + 2} z={5 + r * 14} w={8} d={9} h={9} />
-              ))
-            : repeat(7, (i) => (
-                <g>
-                  <Box
-                    x={x + 2 + i * 3.8}
-                    y={y + 2}
-                    z={5 + r * 14}
-                    w={2.8}
-                    d={6}
-                    h={7 + (i % 4)}
-                    c={assertValue([steel, pine, wood][(i + r) % 3])}
-                  />
-                  <Front
-                    x={x + 2.3 + i * 3.8}
-                    y={y + 8.1}
-                    z={7 + r * 14}
-                    w={2}
-                    h={0.65}
-                    fill="#dfd6bc"
-                  />
-                </g>
-              ))}
+          {repeat(7, (i) => (
+            <g>
+              <Box
+                x={x + 2 + i * 3.8}
+                y={y + 2}
+                z={5 + r * 14}
+                w={2.8}
+                d={6}
+                h={7 + (i % 4)}
+                c={assertValue([steel, pine, wood][(i + r) % 3])}
+              />
+              <Front
+                x={x + 2.3 + i * 3.8}
+                y={y + 8.1}
+                z={7 + r * 14}
+                w={2}
+                h={0.65}
+                fill="#dfd6bc"
+              />
+            </g>
+          ))}
         </g>
       ))}
     </g>
   );
 }
 export const Furniture = memo(function Furniture({ site }: { site: string }) {
-  const depot = site === "depot";
   return (
     <>
-      {depot ? (
-        <g>
-          <Pallet x={33} y={68} />
-          <Pallet x={95} y={92} />
-        </g>
-      ) : (
-        <g>
-          <Floor x={24} y={47} w={97} d={60} fill="#a4ad98" />
-          {repeat(16, (i) => (
-            <Line
-              a={[25, 48 + i * 3.6, 0.2]}
-              b={[120, 48 + i * 3.6, 0.2]}
-              color="#b8bba6"
-              width=".6"
-            />
-          ))}
-          <ContactShadow x={27} y={44} w={72} d={23} amount={5} />
-          <Sofa x={28} y={43} w={70} orange={site === "lounge"} />
-          <ContactShadow x={45} y={81} w={44} d={17} amount={2} />
-          <Table x={47} y={83} w={43} d={16} h={12} />
-        </g>
-      )}
+      <g>
+        <Floor x={24} y={47} w={97} d={60} fill="#a4ad98" />
+        {repeat(16, (i) => (
+          <Line
+            a={[25, 48 + i * 3.6, 0.2]}
+            b={[120, 48 + i * 3.6, 0.2]}
+            color="#b8bba6"
+            width=".6"
+          />
+        ))}
+        <ContactShadow x={27} y={44} w={72} d={23} amount={5} />
+        <Sofa x={28} y={43} w={70} orange={site === "lounge"} />
+        <ContactShadow x={45} y={81} w={44} d={17} amount={2} />
+        <Table x={47} y={83} w={43} d={16} h={12} />
+      </g>
       {site === "house" && (
         <g>
           <Table x={135} y={77} w={52} d={28} h={23} />

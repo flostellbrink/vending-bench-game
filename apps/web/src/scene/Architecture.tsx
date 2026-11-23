@@ -33,7 +33,7 @@ function Window({ id }: { id: string }) {
     </g>
   );
 }
-function WallClock({ phase }: { phase: number }) {
+export function WallClock({ phase }: { phase: number }) {
   const [x, y] = project([35, 1, 62]);
   return (
     <g transform={`matrix(1 .5 0 1 ${x} ${y})`}>
@@ -131,7 +131,7 @@ export function Sunlight({
   );
 }
 
-export const BackWall = memo(function BackWall({ depot }: { depot: boolean }) {
+export const BackWall = memo(function BackWall() {
   return (
     <>
       <Front x={22} y={0.5} z={22} w={26} h={23} fill="#a89577" />
@@ -155,13 +155,7 @@ export const BackWall = memo(function BackWall({ depot }: { depot: boolean }) {
           />
         </g>
       ))}
-      <Shelves x={66} y={3} stock={depot} />
-      {depot && (
-        <g>
-          <Shelves x={118} y={6} stock />
-          <Shelves x={162} y={6} stock />
-        </g>
-      )}
+      <Shelves x={66} y={3} />
     </>
   );
 });

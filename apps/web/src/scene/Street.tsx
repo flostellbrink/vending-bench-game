@@ -9,7 +9,6 @@ import {
   repeat,
   project,
   steel,
-  wood,
   type Position,
 } from "./geometry";
 
@@ -184,7 +183,7 @@ export function Outside({
       <Box x={19} y={-21} w={2} d={2} h={46} c={steel} />
       <Box x={17} y={-21} z={45} w={9} d={4} h={2} c={steel} />
       <Front x={18} y={-17} z={44.7} w={7} h={1.3} fill={light < 0.25 ? "#fff3ba" : "#c5caba"} />
-      {depot ? <Box x={143} y={-24} w={20} d={14} h={10} c={wood} /> : <Bicycle x={145} y={-16} />}
+      {!depot && <Bicycle x={145} y={-16} />}
     </g>
   );
 }

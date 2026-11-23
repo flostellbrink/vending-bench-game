@@ -7,6 +7,7 @@ import { address, draftMachine } from "@/game/commands";
 
 import type { CabinetStock } from "./Cabinet";
 
+import { depotObservations } from "./Depot";
 import Office from "./Office";
 import { RoomPreview } from "./RoomPreview";
 import { minutesPerDay } from "./useClock";
@@ -49,6 +50,8 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
   const depot = { id: "depot", name: t("depot") };
   const sites = [...(state?.sites ?? []).map((s) => ({ id: address(s.id), name: s.name })), depot];
   const stock = useMemo(() => observedStock(reports), [reports]);
+  const inventories = useMemo(() => depotObservations(reports), [reports]);
+  const depotCases = inventories.findLast((inventory) => inventory.time <= value)?.cases ?? null;
   const last = reports.at(-1);
   const addressed = reports.findLast(
     (report) =>
@@ -113,6 +116,7 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
       <figure className="live-room">
         <Office
           site={active.id}
+          depotCases={depotCases}
           phase={(value % minutesPerDay) / minutesPerDay}
           light={light}
           weather={state?.weather}
@@ -132,7 +136,7 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
           .map((site) => (
             <figure key={site.id}>
               <button type="button" className="room-selector" onClick={() => onSiteSelect(site.id)}>
-                <RoomPreview site={site.id} />
+                <RoomPreview site={site.id} depotCases={depotCases} />
                 <span>{site.name}</span>
               </button>
             </figure>
