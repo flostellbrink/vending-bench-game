@@ -34,7 +34,8 @@ export default function ObservationView({
   disabled,
   commandLine,
   stageCommand,
-}: ObservationProps) {
+  openReport,
+}: ObservationProps & { openReport: (id: number) => void }) {
   const text = report.display;
   const letterProps = {
     line: commandLine,
@@ -105,6 +106,7 @@ export default function ObservationView({
           {report.terms?.minimum !== undefined ? (
             <OrderSlip
               terms={report.terms}
+              openReport={openReport}
               {...{
                 report,
                 reports,

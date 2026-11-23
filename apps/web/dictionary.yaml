@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  newerQuote:
+    .id: MQ000002
+    ^en: Open newer quote
+    es: Abrir oferta más reciente
+    de: Neueres Angebot öffnen
   sizeMatches:
     .id: DP000003
     ^en: Matching size only

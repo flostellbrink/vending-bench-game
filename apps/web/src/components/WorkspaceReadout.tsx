@@ -78,7 +78,9 @@ export function WorkspaceReadout({
       />
     );
   if (context.selected && state)
-    return <ObservationView {...controls} report={context.selected} state={state} />;
+    return (
+      <ObservationView {...controls} report={context.selected} state={state} openReport={setTab} />
+    );
   if (typeof tab === "string" && tab.startsWith("past:"))
     return (
       <ReportList

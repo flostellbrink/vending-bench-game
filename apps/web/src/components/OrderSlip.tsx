@@ -9,6 +9,7 @@ import { clock } from "@/scene/clock";
 import type { ObservationProps } from "./panel-props";
 interface Props extends ObservationProps {
   terms: QuoteTerms;
+  openReport: (id: number) => void;
 }
 function orderItems(
   line: string,
@@ -46,11 +47,19 @@ export function OrderSlip({
   disabled,
   commandLine,
   stageCommand,
+  openReport,
 }: Props) {
   const supplier = assertValue(report.args.supplier_id);
   const previous = reports.findLast(
     (r) =>
       r.id < report.id &&
+      r.tool === report.tool &&
+      r.args.supplier_id === supplier &&
+      r.terms?.quantity === terms.quantity,
+  );
+  const newer = reports.findLast(
+    (r) =>
+      r.id > report.id &&
       r.tool === report.tool &&
       r.args.supplier_id === supplier &&
       r.terms?.quantity === terms.quantity,
@@ -195,13 +204,19 @@ export function OrderSlip({
           )}
           {!complete && selection.length > 0 && <small>{syntax("order")}</small>}
         </div>
-        <button
-          data-clock-verb="order"
-          disabled={disabled || !complete || !selection.length || Boolean(invalid)}
-          onClick={() => runCommand(commandLine.trim(), true)}
-        >
-          {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
-        </button>
+        {newer ? (
+          <button onClick={() => openReport(newer.id)}>
+            {t("newerQuote")} #{newer.id} · {t("noCharge")}
+          </button>
+        ) : (
+          <button
+            data-clock-verb="order"
+            disabled={disabled || !complete || !selection.length || Boolean(invalid)}
+            onClick={() => runCommand(commandLine.trim(), true)}
+          >
+            {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
+          </button>
+        )}
       </div>
       <small>{t("latestQuote")}</small>
     </div>
