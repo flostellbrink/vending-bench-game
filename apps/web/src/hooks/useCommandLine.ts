@@ -40,6 +40,8 @@ export function useCommandLine(
     [pick, setPick] = useState(0),
     [recall, setRecall] = useState(-1);
   const prompt = useRef<HTMLTextAreaElement>(null);
+  const beforeRecall = useRef({ line: "", caret: 0 });
+  const leavePrompt = useRef(false);
   const sequence = useRef(0);
   const [plan, setPlan] = useState<PlannedCommand[]>([]);
   const [editing, setEditing] = useState<number | null>(null);
@@ -51,6 +53,7 @@ export function useCommandLine(
   const choices = state ? completions(prefix, state, actions, reports) : [];
   const orderEstimate = state ? priceOrder(line, state, actions, reports) : null;
   function edit(value: string, pos = value.length) {
+    leavePrompt.current = false;
     if (state && draftMachine(value, state.machines)) nav.setSite(null);
     setLine(value);
     setCaret(pos);
@@ -205,7 +208,12 @@ export function useCommandLine(
       }
       setBrowse(false);
       setPick(0);
+      leavePrompt.current = true;
       return;
+    }
+    if (leavePrompt.current) {
+      leavePrompt.current = false;
+      if (e.key === "Tab") return;
     }
     if (e.key === "Tab" && choices.length && !e.shiftKey) {
       e.preventDefault();
@@ -229,11 +237,15 @@ export function useCommandLine(
       setPick((pick + delta + choices.length) % choices.length);
       return;
     }
-    const index = Math.max(-1, Math.min(run.journal.length - 1, recall - delta));
-    const value = index < 0 ? "" : (run.journal.at(-index - 1)?.line ?? "");
+    const index = Math.max(-1, Math.min(run.lines.length - 1, recall - delta));
+    if (index === recall) return;
+    if (recall < 0) beforeRecall.current = { line, caret };
+    const value = index < 0 ? beforeRecall.current.line : (run.lines.at(-index - 1)?.line ?? "");
+    const position = index < 0 ? beforeRecall.current.caret : value.length;
     setRecall(index);
     setLine(value);
-    setCaret(value.length);
+    setCaret(position);
+    requestAnimationFrame(() => prompt.current?.setSelectionRange(position, position));
     setPick(0);
   }
   return {

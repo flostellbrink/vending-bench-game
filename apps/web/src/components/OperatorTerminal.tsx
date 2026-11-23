@@ -195,6 +195,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             ref={prompt}
             value={line}
             aria-label={t("query")}
+            aria-description={t("hint")}
             enterKeyHint="send"
             autoComplete="off"
             spellCheck="false"

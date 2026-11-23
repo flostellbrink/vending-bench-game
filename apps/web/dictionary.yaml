@@ -584,9 +584,9 @@ operator:
     de: Simulation wird geladen…
   hint:
     .id: VBBOOT03
-    ^en: Type help for commands, or press Tab to browse.
-    es: Escribe help para ver los comandos o pulsa Tab para explorarlos.
-    de: Mit help Befehle anzeigen oder mit Tab durchsuchen.
+    ^en: Type help for commands. Tab browses suggestions. Press Esc, then Tab to leave the console.
+    es: Escribe help para ver los comandos. Tab muestra sugerencias. Para salir de la consola, pulsa Esc y luego Tab.
+    de: Mit help Befehle anzeigen. Tab öffnet Vorschläge. Mit Esc und dann Tab die Konsole verlassen.
   world:
     .id: OPS00000
     ^en: "World"
