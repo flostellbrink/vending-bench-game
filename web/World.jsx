@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Office from "./Office.jsx";
+import Office, { RoomPreview } from "./Office.jsx";
 import { address } from "./commands.js";
 
 export const clock = (minutes) =>
@@ -38,13 +38,8 @@ export function useClock(state) {
   return value;
 }
 
-const sites = [
-  { id: "lounge", name: "AI Lounge" },
-  { id: "house", name: "AI House" },
-  { id: "main-lounge", name: "Main Lounge" },
-  { id: "depot", name: "Depot" },
-];
-export function World({ value, state, line, t, reports }) {
+export function World({ value, state, line, t, reports, selectedSite, onSiteSelect }) {
+  const sites=useMemo(()=>[...(state?.sites??[]).map(s=>({id:address(s.id),name:s.name})),{id:"depot",name:t("depot")}],[state?.sites,t]);
   const phase = (value % 1440) / 1440;
   const date = new Date(
     Date.parse((state?.startDate || "2026-01-05") + "T00:00Z") +
@@ -70,9 +65,11 @@ export function World({ value, state, line, t, reports }) {
   const isDepot =
     /^(depot|order)\b/i.test(line) ||
     (!line && !focus && ["get_storage_inventory", "order_goods"].includes(last?.tool));
-  const site = isDepot
+  const commandSite = isDepot
     ? "depot"
-    : sites.find((s) => focus && address(focus).startsWith(s.id + "."))?.id || "lounge";
+    : sites.find((s) => focus && address(focus).startsWith(s.id + "."))?.id || sites[0].id;
+  const site = sites.some(s=>s.id===selectedSite)?selectedSite:commandSite;
+  const visibleFocus = site === commandSite && !isDepot ? focus : null;
   const start = last ? (last.day - 1) * 1440 + last.minute : 0;
   const end = last ? (last.endDay - 1) * 1440 + last.endMinute : 0;
   const servicing =
@@ -103,12 +100,12 @@ export function World({ value, state, line, t, reports }) {
           light={light}
           weather={state?.weather}
           service={service}
-          focus={focus?.split(":")[1]}
+          focus={visibleFocus?.split(":")[1]}
           stock={stock[site]}
         />
         <figcaption>
           {label(active)}
-          {focus && !isDepot && " / " + address(focus)}
+          {visibleFocus && " / " + address(visibleFocus)}
         </figcaption>
       </figure>
       <div className="remote-rooms">
@@ -116,8 +113,10 @@ export function World({ value, state, line, t, reports }) {
           .filter((s) => s !== active)
           .map((s) => (
             <figure key={s.id}>
-              <Office site={s.id} phase={phase} light={light} weather={state?.weather} stock={stock[s.id]} />
-              <figcaption>{label(s)}</figcaption>
+              <button type="button" className="room-selector" onClick={() => onSiteSelect?.(s.id)}>
+                <RoomPreview site={s.id} />
+                <span>{label(s)}</span>
+              </button>
             </figure>
           ))}
       </div>

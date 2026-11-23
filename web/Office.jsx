@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { Fragment, memo, useId } from "react";
 
 // The drawing uses one 2:1 axonometric projection. All lengths are in drawing units.
 const project = ([x, y, z]) => [238 + x - y, 98 + (x + y) / 2 - z];
@@ -11,7 +11,7 @@ function L({ a, b, color, width = 0.7, ...props }) {
     [x2, y2] = project(b);
   return <line {...{ x1, y1, x2, y2 }} stroke={color} strokeWidth={width} {...props} />;
 }
-const run = (n, draw) => Array.from({ length: n }, (_, i) => <g key={i}>{draw(i)}</g>);
+const run = (n, draw) => Array.from({ length: n }, (_, i) => <Fragment key={i}>{draw(i)}</Fragment>);
 const wood = ["#c5a47f", "#a87f60", "#856449"];
 const pine = ["#70867b", "#405b52", "#314b43"];
 const steel = ["#b1b5a2", "#707e74", "#58685f"];
@@ -281,7 +281,7 @@ function Bicycle({ x, y }) {
     </g>
   );
 }
-function Outside({ phase, light, depot, weather }) {
+const Pavement = memo(function Pavement({ weather }) {
   return (
     <g>
       <Box x={-43} y={-45} z={-5} w={285} d={223} h={3} c={["#d8dbd0", "#a4ac9e", "#929f93"]} />
@@ -316,6 +316,14 @@ function Outside({ phase, light, depot, weather }) {
         ]}
         fill="#e6eada"
       />
+    </g>
+  );
+});
+
+function Outside({ phase, light, depot, weather }) {
+  return (
+    <g>
+      <Pavement weather={weather} />
       {[
         [-23, 26],
         [91, -18],
@@ -655,6 +663,74 @@ export default function Office({ site, light, phase, service, focus, stock, weat
           coat={depot ? "#877861" : "#6f7c86"}
         />
       )}
+      <RoomShell id={id} />
+      <Sunlight {...{ id, x, light, phase }} />
+      <BackWall depot={depot} />
+      {!depot && [false, true].map((drink, i) => (
+        <Machine
+          key={i}
+          x={126 + i * 36}
+          drink={drink}
+          stock={stock?.[drink ? "drinks" : "snack"]}
+          open={service?.drink === drink ? service.open : 0}
+          selected={focus === (drink ? "DRINKS" : "SNACK")}
+        />
+      ))}
+      <CornerPlant />
+      <ServiceVisit service={service} />
+      <Furniture site={site} />
+      <StreetTree x={-17} y={151} phase={phase} light={light}/>
+    </svg>
+  );
+}
+
+const Machine = memo(Cabinet);
+const CornerPlant = memo(() => <Plant x={209} y={18} size={1.05} />);
+
+export const RoomPreview = memo(function RoomPreview({ site }) {
+  const depot = site === "depot";
+  return (
+    <svg className="office-drawing" viewBox="75 4 408 285" aria-hidden="true">
+      <Box x={0} y={0} z={-5} w={222} d={145} h={5} c={["#d2d0b9", "#a6ad9d", "#929f93"]} />
+      <Box x={-3} y={0} w={3} d={145} h={76} c={["#e3dac5", "#bdbba9", "#dfd8c2"]} />
+      <Box x={0} y={-3} w={222} d={3} h={76} c={["#f0e9d6", "#e8dfca", "#b4b9a8"]} />
+      <P v={[[1,35,19],[1,92,19],[1,92,62],[1,35,62]]} fill="#a1b6b2" stroke="#657e77" />
+      <L a={[1,64,19]} b={[1,64,62]} color="#637b72" width="2" />
+      {depot ? (
+        <>
+          {run(3, i => <Box x={64 + 42*i} y={5} w={34} d={16} h={52} c={wood} />)}
+          <Carton x={35} y={68} w={36} d={22} h={20} />
+          <Carton x={97} y={96} w={40} d={25} h={27} />
+        </>
+      ) : (
+        <>
+          {run(2, i => (
+            <>
+              <Box x={126 + 36*i} y={6} w={31} d={23} h={58} c={pine} />
+              <Front x={129 + 36*i} y={29.2} z={23} w={20} h={29} fill="#98aaa1" />
+              <Front x={132 + 36*i} y={29.2} z={8} w={17} h={4} fill="#263f37" />
+            </>
+          ))}
+          {site === "main-lounge" ? (
+            <>
+              <Table x={49} y={53} w={87} d={32} h={24} />
+              {run(3, i => <Box x={49 + 32*i} y={100} w={22} d={18} h={17} c={wood} />)}
+            </>
+          ) : (
+            <>
+              <Sofa x={28} y={43} w={70} orange={site === "lounge"} />
+              <Table x={47} y={83} w={43} d={16} h={12} />
+              {site === "house" && <Table x={135} y={77} w={52} d={28} h={23} />}
+            </>
+          )}
+        </>
+      )}
+    </svg>
+  );
+});
+
+const RoomShell = memo(function RoomShell({ id }) {
+  return <>
       <Box x={0} y={0} z={-4} w={222} d={145} h={4} c={["#d2d0b9", "#9a9e8d", "#7f8c81"]} />
       {run(11, (i) => (
         <L a={[i * 21, 0, 0]} b={[i * 21, 145, 0]} color="#afb3a0" width=".55" />
@@ -672,6 +748,11 @@ export default function Office({ site, light, phase, service, focus, stock, weat
       <Window id={id + "window"} />
       <L a={[0, 0, 4]} b={[222, 0, 4]} color="#95a38e" width="2" />
       <L a={[0, 0, 4]} b={[0, 145, 4]} color="#98a490" width="2" />
+  </>;
+});
+
+function Sunlight({ id, x, light, phase }) {
+  return <>
       <g clipPath={"url(#" + id + "floor)"} opacity={light * 0.64}>
         {run(5, (i) => (
           <P
@@ -688,6 +769,11 @@ export default function Office({ site, light, phase, service, focus, stock, weat
       <ContactShadow x={125} y={13} w={68} d={21} amount={4 + 15 * Math.cos(phase * Math.PI)} />
       <ContactShadow x={67} y={6} w={31} d={12} amount={2 + 9 * Math.cos(phase * Math.PI)} />
       <WallClock phase={phase} />
+  </>;
+}
+
+const BackWall = memo(function BackWall({ depot }) {
+  return <>
       <Front x={22} y={0.5} z={22} w={26} h={23} fill="#a89577" />
       {run(5, (i) => (
         <g>
@@ -710,25 +796,18 @@ export default function Office({ site, light, phase, service, focus, stock, weat
         </g>
       ))}
       <Shelves x={66} y={3} stock={depot} />
-      {depot ? (
+      {depot && (
         <g>
           <Shelves x={118} y={6} stock />
           <Shelves x={162} y={6} stock />
         </g>
-      ) : (
-        [false, true].map((drink, i) => (
-          <Cabinet
-            key={i}
-            x={126 + i * 36}
-            drink={drink}
-            stock={stock?.[drink ? "drinks" : "snack"]}
-            open={service?.drink === drink ? service.open : 0}
-            selected={focus === (drink ? "DRINKS" : "SNACK")}
-          />
-        ))
       )}
-      <Plant x={209} y={18} size={1.05} />
-      <ServiceVisit service={service} />
+  </>;
+});
+
+const Furniture = memo(function Furniture({ site }) {
+  const depot = site === "depot", communal = site === "main-lounge";
+  return <>
       {depot ? (
         <g>
           <Pallet x={33} y={68} />
@@ -775,7 +854,5 @@ export default function Office({ site, light, phase, service, focus, stock, weat
       <Box x={220} y={0} w={2} d={145} h={9} c={["#e6ddc5","#c5c4b0","#a4ae9d"]}/>
       <BorderPlanting x={77} y={160}/>
       <BorderPlanting x={215} y={157}/>
-      <StreetTree x={-17} y={151} phase={phase} light={light}/>
-    </svg>
-  );
-}
+  </>;
+});
