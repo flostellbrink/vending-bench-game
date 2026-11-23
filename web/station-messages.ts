@@ -2,6 +2,17 @@ import { msg } from "../src/dictionary/index.ts";
 
 export const stationMessages = {
   operator: {
+    displayOn: msg.operator.displayOn,
+    displayOff: msg.operator.displayOff,
+    standings: msg.operator.standings,
+    best: msg.operator.best,
+    difference: msg.operator.difference,
+    unfinished: msg.operator.unfinished,
+    bankrupt: msg.operator.bankrupt,
+    date: msg.operator.dated,
+    weather: msg.operator.weather,
+    units: msg.operator.units,
+    revenue: msg.operator.revenue,
     supply: msg.operator.supply,
     machines: msg.operator.machines,
     business: msg.operator.business,

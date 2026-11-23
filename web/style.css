@@ -12,11 +12,6 @@ button, select, input { font: inherit; color: inherit; }
 button, select { cursor: pointer; }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #f08b3c; outline-offset: -2px; }
 .station { min-height: 100svh; padding: 8px; background: #c5ccbb; }
-.crt::after {
-  content: ""; position: fixed; z-index: 20; inset: 0; pointer-events: none;
-  background: repeating-linear-gradient(0deg, #172b4610 0 1px, transparent 1px 3px);
-  box-shadow: inset 0 0 5vw #20364d18;
-}
 .mast, .shell header, .scope header, .transport, footer { display: flex; align-items: center; gap: 1rem; }
 .mast { background: #dde4cd; border: 1px solid #677664; padding: .45rem .8rem; }
 h1 { font: bold 1.4rem/1 Georgia, serif; margin: 0; }

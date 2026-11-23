@@ -15,4 +15,10 @@
 
 ## Acceptance
 
+- [x] Finish a run in the browser and start another run with the best trace intact.
+- [x] Replace the command form with a multiline terminal input.
+- [x] Check viewport height as well as width on desktop and phone.
+- [x] Give the CRT switch visible on/off states.
+- [x] Keep the campus mounted while switching the lower display between graph and reports.
+
 The player can complete the first sale without touching the map. Observations remain timestamped. Only executed business commands spend time. The shell remains usable when a report is open. Visual emphasis identifies focus, not decoration.

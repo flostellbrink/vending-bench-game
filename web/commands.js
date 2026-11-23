@@ -23,7 +23,7 @@ const verbs = {
   close: ['wait_for_next_day', '']
 };
 
-export const local = ['help', 'world', 'tabs', 'view', 'scores'];
+export const local = ['help', 'balance', 'world', 'tabs', 'view', 'scores'];
 export const commandGroups = {
   supply: ['find','quote','order','depot'],
   machines: ['inspect','refill','price','swap','clear'],
@@ -96,7 +96,9 @@ export function completions(line, state, actions, reports) {
   else if (spec === 'machine_id') choices = state.machines.map(address);
   else if (spec === 'slot') choices = state.slots.map(address);
   else if (spec === 'supplier_id') choices = reports.flatMap(r=>r.suppliers);
-  else if (spec === 'product_id' || (verb==='order' && parts.length%2===0)) choices = reports.flatMap(r=>r.products);
+  else if (verb==='order' && parts.length%2===0) {
+    choices=reports.filter(r=>r.tool==='check_offers' && r.args.supplier_id===parts[1]).flatMap(r=>r.products);
+  } else if (spec === 'product_id') choices = reports.flatMap(r=>r.products);
   else if (verb === 'view') choices = reports.map(r=>String(r.id));
   else if (verb === 'find') choices = ['snacks','coffee','wholesalers'];
   return [...new Set(choices)].filter(s=>s.toLowerCase().startsWith(partial) && s!==partial);

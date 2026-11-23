@@ -47,5 +47,8 @@ export function observation(receipt, move, id) {
   }
   const loaded=/Loaded \d+ x (.+?) into slot (\S+) \((\d+)\/(\d+)\)/.exec(output);
   if(loaded) slots[loaded[2]]={item:loaded[1],qty:Number(loaded[3]),capacity:Number(loaded[4])};
+  if(move[0]==='clear_slot' && /was already empty\.|to storage\./.test(output)) {
+    slots[move[1].slot]={item:null,qty:0,capacity:null};
+  }
   return {...receipt, id, columns, rows, products, suppliers,slots,terms,tool:move[0],args:move[1]};
 }

@@ -1,5 +1,60 @@
 $schema: ./packages/localize/dictionary.schema.json
 operator:
+  displayOn:
+    .id: VBDSP001
+    ^en: "On"
+    es: "Sí"
+    de: "Ein"
+  displayOff:
+    .id: VBDSP002
+    ^en: "Off"
+    es: "No"
+    de: "Aus"
+  standings:
+    .id: VBSCR001
+    ^en: Scorecard
+    es: Puntuación
+    de: Wertung
+  best:
+    .id: VBSCR002
+    ^en: Personal best
+    es: Récord personal
+    de: Persönlicher Rekord
+  difference:
+    .id: VBSCR003
+    ^en: Difference
+    es: Diferencia
+    de: Abstand
+  unfinished:
+    .id: VBSCR004
+    ^en: Finish the run to record a score.
+    es: Termina la partida para registrar tu puntuación.
+    de: Beende den Lauf, um eine Wertung zu erhalten.
+  bankrupt:
+    .id: VBSCR005
+    ^en: Business closed
+    es: Negocio cerrado
+    de: Betrieb geschlossen
+  dated:
+    .id: VBSCR006
+    ^en: Date
+    es: Fecha
+    de: Datum
+  weather:
+    .id: VBSCR007
+    ^en: Weather
+    es: Tiempo
+    de: Wetter
+  units:
+    .id: VBSCR008
+    ^en: Units sold
+    es: Unidades vendidas
+    de: Verkaufte Einheiten
+  revenue:
+    .id: VBSCR009
+    ^en: Revenue
+    es: Ingresos
+    de: Umsatz
   supply:
     .id: VHGRP001
     ^en: Suppliers and depot

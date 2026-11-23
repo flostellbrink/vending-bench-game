@@ -14,6 +14,8 @@ pnpm dev
 
 Open <http://localhost:5173>. Type `help` or press Tab at the empty prompt. Use `find snacks` to search for suppliers. Inspect a machine with `inspect lounge.snack`. The map follows the address you type; no map clicks are necessary.
 
+Use `balance` to review daily balances, `tabs` to list receipts, or `view <result>` to reopen one. The office remains visible above the report. After day 30, `scores` compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
+
 ## Static export
 
 Run `pnpm build`. Serve the contents of `out/` with a static web server, or use it as the output directory for Cloudflare Pages. The export includes the Python runtime and the simulation. Play needs no server code, external service or API key. Each browser stores its own run.

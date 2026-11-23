@@ -1,6 +1,6 @@
 'use client';
 
-import {useEffect,useMemo,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {locales} from '../src/dictionary/runtime.ts';
 import {stationMessages as msg} from './station-messages.ts';
 import {commandGroups,completions,local,parse,syntax,toolFor} from './commands.js';
@@ -30,10 +30,11 @@ function Report({report,lang,t}) {
   </section>;
 }
 
-function Graph({history,rivals,release,lang,t}) {
+function Graph({history,rivals,best,release,lang,t}) {
   const [cursor,setCursor]=useState(null);
   const d=Math.min(cursor??Math.max(0,history.length-1),release.days);
   const series=[{name:translate(msg.fields.player,lang),color:'#235d46',values:history},
+    ...(best?[{name:t('best'),color:'#324655',values:best.values,dashed:true}]:[]),
     ...rivals.map(r=>({name:r.kind==='script'?translate(msg.fields.bot,lang):r.name,color:'#65706c',values:r.values,dashed:true}))];
   const all=series.flatMap(s=>s.values),lo=Math.min(0,...all),hi=Math.max(1,...all);
   return <section className="scope"><header><b>{t('bank')} / EUR</b><small>{t('day')} {d} / {release.days}</small></header>
@@ -44,6 +45,23 @@ function Graph({history,rivals,release,lang,t}) {
     }))}</div>
     <input aria-label={t('day')} type="range" min="0" max={release.days} value={d} onChange={e=>setCursor(+e.target.value)}/>
     <div className="legend">{series.map(s=><span key={s.name} style={{'--ink':s.color}}>{s.name} <b>{s.values[d]==null?'—':money(s.values[d],lang)}</b></span>)}</div>
+  </section>;
+}
+
+function Scorecard({state,rivals,best,lang,t,screen}) {
+  const score=state?.over?(state.failed?0:Math.max(0,state.cash)):null;
+  return <section className="sheet scorecard">
+    <h2>{state?.over?(state.failed?t('bankrupt'):screen('complete')):t('standings')}</h2>
+    {score===null?<p>{t('unfinished')}</p>:<strong className="final-score">{money(score,lang)}</strong>}
+    <table><thead><tr><th>{t('standings')}</th><th>{t('score')}</th><th>{t('difference')}</th></tr></thead>
+      <tbody>{[...(best?[{name:t('best'),score:best.score}]:[]),...rivals.map(r=>({
+        name:r.kind==='script'?translate(msg.fields.bot,lang):r.name,score:r.values.at(-1)
+      }))].map(row=><tr key={row.name}><td>{row.name}</td><td>{money(row.score,lang)}</td>
+        <td>{score===null?'—':money(score-row.score,lang)}</td></tr>)}</tbody></table>
+    <details><summary>{screen('archive')}</summary><p>{screen('note')}</p>
+      {archive.scores.map(([name,value])=><div className="manual" key={name}>{name}<b>{money(value,lang)}</b></div>)}
+      <a href={archive.source}>Prosus Vending Bench v{archive.version}</a>
+    </details>
   </section>;
 }
 
@@ -64,14 +82,18 @@ function Station({release,lang,changeLang,changeRelease}) {
   const [reports,setReports]=useState([]),[lines,setLines]=useState([]),[tab,setTab]=useState('world');
   const [line,setLine]=useState(''),[pick,setPick]=useState(0),[recall,setRecall]=useState(-1);
   const [history,setHistory]=useState([]),[rivals,setRivals]=useState([]);
+  const [best,setBest]=useState(null);
   const [busy,setBusy]=useState(true),[error,setError]=useState(''),[epoch,reset]=useState(0);
   const [boot,setBoot]=useState(null),[crt,setCrt]=useState(true);
   const [browse,setBrowse]=useState(false),[caret,setCaret]=useState(0);
   const worker=useRef(null),pending=useRef(null),journal=useRef([]),prompt=useRef(null),log=useRef(null),follow=useRef(true);
   const key='vending:'+release.revision+':'+release.seed;
+  const recordKey=key+':'+release.days+':record';
   const time=useClock(state);
   useEffect(()=>{
     let live=true;
+    let balances=[];
+    setBest(JSON.parse(localStorage.getItem(recordKey)||'null'));
     const first=!localStorage.getItem('vendix.booted');
     setBoot(first?[]:null);
     setCrt(localStorage.getItem('vendix.crt')!=='off');
@@ -87,16 +109,30 @@ function Station({release,lang,changeLang,changeRelease}) {
       const entries=run?[run]:journal.current;
       const offset=run?journal.current.length:0;
       const results=data.receipts.map((r,i)=>({...observation(r,entries[i].move,offset+i+1),line:entries[i].line}));
+      balances=run?[...balances,...data.history.slice(1)]:data.history;
+      setHistory(balances);
       if(run) {
         journal.current.push(run);
         try{localStorage.setItem(key,JSON.stringify(journal.current));}catch{setError('Storage unavailable');}
-        setReports(old=>[...old,...results]);setHistory(old=>[...old,...data.history.slice(1)]);
+        setReports(old=>[...old,...results]);
         setLines(old=>[...old,...results]);
         const r=results[0];
-        setTab(r.tool==='restock_machine' && Object.keys(r.slots).length?'world':r.id);
+        setTab(r.id);
       } else {
-        setReports(results);setLines(results);setHistory(data.history);
+        setReports(results);setLines(results);
         if(first){setBoot(old=>[...(old||[]),'ready']);localStorage.setItem('vendix.booted','1');}
+      }
+      if(data.state.over) {
+        setTab('scores');
+        if(!data.state.failed && balances.length===release.days+1) {
+          const previous=JSON.parse(localStorage.getItem(recordKey)||'null');
+          const score=Math.max(0,data.state.cash);
+          if(!previous || score>previous.score){
+            const record={score,values:balances};
+            try{localStorage.setItem(recordKey,JSON.stringify(record));setBest(record);}
+            catch{setError('Storage unavailable');}
+          }
+        }
       }
       pending.current=null;setState(data.state);setActions(data.actions);setBusy(false);
     }
@@ -107,8 +143,24 @@ function Station({release,lang,changeLang,changeRelease}) {
     } catch(e){fail(e.message);}
     Promise.all(release.rivals.map(async r=>({...r,values:await(await fetch('/'+r.balances)).json()}))).then(rs=>{if(live)setRivals(rs);}).catch(e=>fail(e.message));
     return ()=>{live=false;w.terminate();};
-  },[release,key,epoch]);
+  },[release,key,recordKey,epoch]);
   useEffect(()=>{if(follow.current && log.current)log.current.scrollTop=log.current.scrollHeight;},[lines]);
+  useLayoutEffect(()=>{
+    const input=prompt.current;
+    if(!input)return;
+    const fit=()=>{
+      input.style.height='auto';
+      input.style.height=input.scrollHeight+'px';
+    };
+    fit();
+    if(document.activeElement===input && (line || browse)){
+      const surface=log.current;
+      if(surface && input.getBoundingClientRect().bottom>surface.getBoundingClientRect().bottom)
+        surface.scrollTop=surface.scrollHeight;
+    }
+    window.addEventListener('resize',fit);
+    return ()=>window.removeEventListener('resize',fit);
+  },[line,browse]);
   const verb=line.trim().split(/\s+/)[0],tool=toolFor(verb);
   const cost=state?.costs?.[tool]??state?.defaultCost;
   const tomorrow=verb==='close'||state?.minute+cost>=state?.closes;
@@ -135,7 +187,7 @@ function Station({release,lang,changeLang,changeRelease}) {
     if(local.includes(verb)){
       const id=Number(raw.split(/\s+/)[1]);
       if(verb==='view' && !reports.some(r=>r.id===id)){setError('view <1…'+reports.length+'>');return;}
-      setTab(verb==='view'?id:verb);edit('');return;
+      setTab(verb==='view'?id:verb==='balance'?'world':verb);edit('');return;
     }
     if(state.over){setError(screen('complete'));return;}
     try{
@@ -144,8 +196,14 @@ function Station({release,lang,changeLang,changeRelease}) {
     }catch(err){setError(err.message);}
   }
   function keys(e){
+    if(e.nativeEvent.isComposing)return;
+    if(e.key==='Enter' && !e.shiftKey){e.preventDefault();execute();return;}
     if(e.key==='Tab' && choices.length && !e.shiftKey){e.preventDefault();if(browse)complete(choices[pick]);else setBrowse(true);}
     if(['ArrowDown','ArrowUp'].includes(e.key)){
+      if(!browse && line.includes('\n')){
+        const before=line.slice(0,e.currentTarget.selectionStart),after=line.slice(e.currentTarget.selectionEnd);
+        if((e.key==='ArrowUp' && before.includes('\n')) || (e.key==='ArrowDown' && after.includes('\n')))return;
+      }
       const delta=e.key==='ArrowUp'?-1:1;e.preventDefault();
       if(browse && choices.length && recall<0){setPick((pick+delta+choices.length)%choices.length);return;}
       const i=Math.max(-1,Math.min(journal.current.length-1,recall-delta));
@@ -161,7 +219,9 @@ function Station({release,lang,changeLang,changeRelease}) {
     <strong>{state?money(state.cash,lang):'—'}</strong>
   </header><div className="desk"><aside className="shell">
     <header><b>{t('terminal')}</b><span className={'lamp'+(busy?' working':'')}>TTY / 01</span></header>
-    <div className="scrollback" ref={log} onScroll={e=>{const n=e.currentTarget;follow.current=n.scrollHeight-n.clientHeight-n.scrollTop<24;}}>
+    <div className="scrollback" ref={log} onClick={e=>{
+      if(!e.target.closest('button,textarea,select,a')&&!window.getSelection()?.toString())prompt.current?.focus();
+    }} onScroll={e=>{const n=e.currentTarget;follow.current=n.scrollHeight-n.clientHeight-n.scrollTop<24;}}>
       {boot && <div className="boot"><pre aria-label="VENDIX/OS">{` .-------.    VENDIX/OS
  | o o o |    Unattended Retail Systems
  | o o o |
@@ -170,20 +230,29 @@ function Station({release,lang,changeLang,changeRelease}) {
       {!lines.length&&<p>{t('hint')}</p>}
       {lines.map(r=><div className="receipt" key={r.id}><small>{t('day')} {r.day} · {clock(r.minute)}</small><div><b className="prompt-char">$</b> {r.line}</div>
         <button onClick={()=>setTab(r.id)}>#{r.id} {r.rows.length?r.rows.length+' '+t('results'):r.output.split('\n')[0].slice(0,110)}</button></div>)}
-    </div><div className="input-zone">
+    <div className="input-zone">
       {browse && choices.length>0 && <div className="completion">{choices.slice(Math.floor(pick/5)*5,Math.floor(pick/5)*5+5).map(s=><button key={s} className={choices[pick]===s?'active':''} onClick={()=>complete(s)}>{s}<small>{observations[s]?observations[s].qty+'/'+observations[s].capacity+' · '+t('day')+' '+observations[s].day+' '+clock(observations[s].minute):msg.commands[toolFor(s)]?translate(msg.commands[toolFor(s)],lang):''}</small></button>)}</div>}
-      <small>{tool?syntax(verb)+' · '+estimate:t('local')}</small>
-      <form onSubmit={execute}><label htmlFor="prompt" aria-label={t('query')}>op@vendix<span>:~$</span></label><input autoFocus id="prompt" ref={prompt} value={line} autoComplete="off" spellCheck="false" autoCapitalize="none" onChange={e=>edit(e.target.value,e.target.selectionStart)} onSelect={e=>setCaret(e.target.selectionStart)} onKeyDown={keys}/><button disabled={busy} aria-label={t('execute')}>↵</button></form>
-      {error&&<p role="alert">{error}</p>}<small>{busy?screen('loading'):'Tab '+t('completeKey')+' · Enter '+t('execute')+' · ↑ '+t('history')}</small>
-    </div></aside><section className="workspace"><nav className="tabs">
-      {resultButton('world',t('world'))}{resultButton('tabs',t('results')+' '+reports.length)}{resultButton('help',t('help'))}{resultButton('scores',t('archive'))}
-      {recent.map(r=>resultButton(r.id,'#'+r.id))}</nav>
-    <div className="surface">
-    {tab==='world'?<World value={time} state={state} line={line} t={t} reports={reports}/>:selected?<Report key={selected.id} report={selected} t={t} lang={lang}/>:tab==='help'?<CommandIndex actions={actions} lang={lang} t={t}/>:tab==='scores'?<section className="sheet"><h2>{screen('archive')}</h2><p>{screen('note')}</p>{archive.scores.map(([name,score])=><div className="manual" key={name}>{name}<b>{money(score,lang)}</b></div>)}</section>:<section className="sheet"><h2>{t('results')}</h2>{!reports.length&&t('empty')}{reports.slice().reverse().map(r=><button className="catalog" key={r.id} onClick={()=>setTab(r.id)}>#{r.id} · {clock(r.minute)} · {r.line}</button>)}</section>}
-    </div><div className="transport"><b>{t('day')} {Math.min(release.days,Math.floor(time/1440)+1)} / {release.days}</b><span>{state?.startDate && new Intl.DateTimeFormat(lang,{day:'numeric',month:'short',timeZone:'UTC'}).format(Date.parse(state.startDate+'T00:00Z')+Math.floor(time/1440)*86400000)}</span><strong>{clock(time)}</strong></div>
-    <Graph history={history} rivals={rivals} release={release} t={t} lang={lang}/></section></div>
+      <div className="command-line"><span aria-hidden="true">›</span><textarea autoFocus rows={1} id="prompt" ref={prompt} value={line} aria-label={t('query')} enterKeyHint="send" autoComplete="off" spellCheck="false" autoCapitalize="none" onChange={e=>edit(e.target.value,e.target.selectionStart)} onSelect={e=>setCaret(e.target.selectionStart)} onKeyDown={keys}/></div>
+      {tool&&<small>{syntax(verb)} · {estimate}</small>}
+      {error&&<p role="alert">{error}</p>}
+    </div></div><div className="terminal-keys"><small>{busy?screen('loading'):'Tab '+t('completeKey')+' · Enter '+t('execute')+' · ↑ '+t('history')}</small></div>
+    </aside><section className="workspace">
+      <div className="surface"><World value={time} state={state} line={line} t={t} reports={reports}/></div>
+      <div className="transport"><b>{t('day')} {Math.min(release.days,Math.floor(time/1440)+1)} / {release.days}</b><span>{state?.startDate && new Intl.DateTimeFormat(lang,{day:'numeric',month:'short',timeZone:'UTC'}).format(Date.parse(state.startDate+'T00:00Z')+Math.floor(time/1440)*86400000)}</span><strong>{clock(time)}</strong></div>
+      <nav className="tabs">
+        {resultButton('world',t('bank'))}{resultButton('tabs',t('results')+' '+reports.length)}
+        {resultButton('help',t('help'))}{resultButton('scores',t('standings'))}
+        {recent.map(r=>resultButton(r.id,'#'+r.id+' '+r.line.split(' ')[0]))}
+      </nav>
+      <div className="readout" key={tab}>
+        {tab==='world'?<Graph key={epoch} history={history} rivals={rivals} best={best} release={release} t={t} lang={lang}/>
+          :selected?<Report report={selected} t={t} lang={lang}/>
+          :tab==='help'?<CommandIndex actions={actions} lang={lang} t={t}/>
+          :tab==='scores'?<Scorecard state={state} rivals={rivals} best={best} lang={lang} t={t} screen={screen}/>
+          :<section className="sheet"><h2>{t('results')}</h2>{!reports.length&&t('empty')}{reports.slice().reverse().map(r=><button className="catalog" key={r.id} onClick={()=>setTab(r.id)}>#{r.id} · {clock(r.minute)} · {r.line}</button>)}</section>}
+      </div></section></div>
     <footer><span>{state?.over?t('score')+' · '+money(state.failed?0:Math.max(0,state.cash),lang):'Vending Bench / '+release.id+' · Seed '+release.seed}</span>
-    <button aria-pressed={crt} onClick={()=>{setCrt(!crt);localStorage.setItem('vendix.crt',crt?'off':'on');}}>CRT</button>
+    <button className="crt-switch" aria-label="CRT" aria-pressed={crt} onClick={()=>{setCrt(!crt);localStorage.setItem('vendix.crt',crt?'off':'on');}}>CRT · {t(crt?'displayOn':'displayOff')}</button>
     <button onClick={()=>{if(confirm(screen('discard'))){localStorage.removeItem(key);reset(n=>n+1);}}}>{screen('reset')}</button></footer></main>;
 }
 
