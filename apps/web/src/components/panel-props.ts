@@ -8,7 +8,7 @@ export interface ObservationProps {
   lang: Lang;
   t: Translate;
   money: Money;
-  runCommand: (command: string, fromPrompt?: boolean) => void;
+  runCommand: (command: string, fromPrompt?: boolean, keepInstrument?: boolean) => void;
   disabled: boolean;
   commandLine: string;
   stageCommand: (command: string) => void;

@@ -7,7 +7,7 @@
 - [x] Put a letter composer beside an observed supplier or quote. Make it share its draft and time cost with the terminal.
 - [x] Remove the landing page’s dependency on save-list hydration for starting a new slot.
 - [x] Check a fresh supplier inquiry through its overnight response and compare the next paid quote at the same quantity.
-- [ ] Check the next highest-impact desktop friction with a fresh reviewer before committing to another design pass.
+- [x] A fresh reviewer inspected A1 in the AI Lounge and reached an empty Product ID field. The slot gave no way to check depot stock. Test the cabinet-to-depot lookup at this point.
 
 ## Reference checks
 

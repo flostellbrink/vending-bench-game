@@ -1,5 +1,25 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  sizeMatches:
+    .id: DP000003
+    ^en: Matching size only
+    es: Solo del mismo tamaño
+    de: Nur passende Größe
+  noSizeMatches:
+    .id: DP000004
+    ^en: No stock of this size in this receipt.
+    es: Este informe no muestra existencias de este tamaño.
+    de: Laut diesem Beleg kein Bestand in dieser Größe.
+  depotStock:
+    .id: DP000001
+    ^en: Depot stock
+    es: Existencias del almacén
+    de: Lagerbestand
+  checkDepot:
+    .id: DP000002
+    ^en: Check depot
+    es: Consultar almacén
+    de: Lager prüfen
   versusQuote:
     .id: MQ000001
     ^en: Unit price change since quote

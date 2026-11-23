@@ -9,6 +9,8 @@ import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
+
+import { DirectorySearch } from "./DirectorySearch";
 type Props = Omit<ObservationProps, "money"> & { slot: CabinetSlot; targeted: boolean };
 export function SlotInstrument({
   report,
@@ -29,7 +31,8 @@ export function SlotInstrument({
   const product = targeted && verb === "refill" ? (args[0] ?? "") : "";
   const quantity = targeted && verb === "refill" ? (args[1] ?? "") : "";
   const price = targeted && verb === "price" ? (args[0] ?? "") : "";
-  const depot = reports?.findLast((r) => r.tool === "get_storage_inventory");
+  const depot = reports.findLast((r) => r.tool === "get_storage_inventory");
+  const sizeMatches = depot?.rows.filter((row) => row[2] === slot.size && Number(row[3]) > 0);
   const changes = slotChanges(reports, slot.id, report.id);
   const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   function canDispatch(action: "refill" | "price") {
@@ -89,6 +92,39 @@ export function SlotInstrument({
           ))}
         </div>
       )}
+      <section className="slot-depot">
+        <header>
+          <b>{t("depotStock")}</b>
+          {depot && (
+            <small>
+              #{depot.id} · {t("day")} {depot.day} · {clock(depot.minute)}
+            </small>
+          )}
+        </header>
+        {depot && depot.rows.length > 0 && (
+          <small>{sizeMatches?.length ? t("sizeMatches") : t("noSizeMatches")}</small>
+        )}
+        {sizeMatches?.map(([id, name, size, count]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => stageCommand("refill " + slot.id + " " + id + " ")}
+          >
+            {name} · {size} × {count}
+          </button>
+        ))}
+        {depot && !depot.rows.length && <p>{depot.display}</p>}
+        {depot && sizeMatches?.length === 0 && (
+          <DirectorySearch {...{ state, t, disabled, commandLine, stageCommand, runCommand }} />
+        )}
+        <button
+          disabled={disabled}
+          data-clock-verb="depot"
+          onClick={() => runCommand("depot", false, true)}
+        >
+          {t("checkDepot")} · {timeLabel("depot", state, t)}
+        </button>
+      </section>
       <form onSubmit={(event) => submit(event, "refill")}>
         <label>
           {field("product_id")}
@@ -106,7 +142,7 @@ export function SlotInstrument({
           />
         </label>
         <datalist id={productList}>
-          {depot?.rows.map((r) => (
+          {sizeMatches?.map((r) => (
             <option key={r[0]} value={r[0]}>
               {r[1]} · {r[3]}
             </option>

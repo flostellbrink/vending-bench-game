@@ -133,3 +133,18 @@
 .slot-amendment small {
   color: #46584c;
 }
+.slot-depot {
+  border-block: 1px solid #9aaa98;
+  padding-block: 0.35rem;
+  margin-block: 0.5rem;
+}
+.slot-depot header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.slot-depot button {
+  margin: 0.2rem 0.3rem 0 0;
+  font-size: 0.8rem;
+}

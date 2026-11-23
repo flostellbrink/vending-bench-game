@@ -124,7 +124,7 @@ export function useCommandLine(
         nav.setSite(null);
     }
   }
-  function runCommand(command: string, fromPrompt = false) {
+  function runCommand(command: string, fromPrompt = false, keepInstrument = false) {
     const raw = command.trim(),
       [name = "", topic, ...extra] = raw.split(/\s+/);
     if (!raw || !state || run.busy) return;
@@ -181,7 +181,7 @@ export function useCommandLine(
     }
     try {
       const move = parse(raw, state, actions);
-      if (run.submit({ move, line: raw })) {
+      if (run.submit({ move, line: raw }, keepInstrument)) {
         if (draftMachine(raw, state.machines) || commandName === "depot" || commandName === "order")
           nav.setSite(null);
         if (fromPrompt) edit("");

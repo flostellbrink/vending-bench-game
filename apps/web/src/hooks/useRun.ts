@@ -117,7 +117,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   const [saveIssue, setSaveIssue] = useState<SaveIssue>("");
   const [epoch, retry] = useState(0);
   const worker = useRef<Worker | null>(null);
-  const pending = useRef<Entry | null>(null);
+  const pending = useRef<{ entry: Entry; keepInstrument: boolean } | null>(null);
   const saveKey = runKey(release, slot);
   const bestKey = recordKey(release);
   const setError = useCallback((error: string) => setView((old) => ({ ...old, error })), []);
@@ -160,7 +160,8 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     }
 
     async function accept(data: SimulatorResult) {
-      const entry = pending.current;
+      const request = pending.current;
+      const entry = request?.entry;
       const reports = reportsFor(data, entry ? [entry] : entries, entry ? entries.length : 0);
       const previousTimeline = timeline;
       timeline = runTimeline(release, data.receipts, data.state.over, entry ? timeline : undefined);
@@ -232,7 +233,8 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         boot: !entry ? (first ? [...(old.boot ?? []), "ready"] : null) : old.boot,
       }));
       if (data.state.over) onView("scores");
-      else if (entry && reports[0] && opensInstrument(reports[0])) onView(reports[0].id);
+      else if (request && !request.keepInstrument && reports[0] && opensInstrument(reports[0]))
+        onView(reports[0].id);
     }
 
     current.addEventListener("error", (e) => fail(e.message), { signal: abort.signal });
@@ -290,10 +292,10 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     return () => abort.abort();
   }, [release, setError]);
 
-  function submit(entry: Entry): boolean {
+  function submit(entry: Entry, keepInstrument = false): boolean {
     if (view.busy || !view.state || view.state.over || pending.current || !worker.current)
       return false;
-    pending.current = entry;
+    pending.current = { entry, keepInstrument };
     clearSaveIssue();
     setView((old) => ({ ...old, busy: true, error: "" }));
     post(worker.current, { moves: [entry.move] });
