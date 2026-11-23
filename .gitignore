@@ -9,3 +9,5 @@ public/NOTICE
 public/LICENSE
 public/python/
 public/vending-world.png
+next-env.d.ts
+*.tsbuildinfo

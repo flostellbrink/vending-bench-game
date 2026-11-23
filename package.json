@@ -17,6 +17,10 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "pyodide": "0.27.7"
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "pyodide": "0.27.7",
+    "typescript": "7.0.2"
   }
 }

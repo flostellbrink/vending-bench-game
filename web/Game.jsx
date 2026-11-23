@@ -1,7 +1,8 @@
 'use client';
 
 import {useEffect,useMemo,useRef,useState} from 'react';
-import {msg} from '../src/dictionary/index.ts';
+import {locales} from '../src/dictionary/runtime.ts';
+import {stationMessages as msg} from './station-messages.ts';
 import {completions,local,parse,syntax,toolFor,vocabulary} from '../web/commands.js';
 import {observation} from '../web/reports.js';
 import {World,clock,useClock} from '../web/World.jsx';
@@ -142,7 +143,7 @@ function Station({release,lang,changeLang,changeRelease}) {
   return <main className={'station'+(crt?' crt':'')}><header className="mast">
     <h1><i className="brand-mark" aria-hidden="true"/>Vending Bench</h1><span className="operator">{t('operator')}</span><i className="vent" aria-hidden="true"/>
     <select aria-label="Benchmark" value={release.id} onChange={e=>changeRelease(e.target.value)}>{releases.map(r=><option key={r.id}>{r.id}</option>)}</select>
-    <select aria-label="Language / Idioma / Sprache" value={lang} onChange={e=>changeLang(e.target.value)}>{['en','es','de'].map(l=><option key={l} value={l}>{l.toUpperCase()}</option>)}</select>
+    <select aria-label="Language / Idioma / Sprache" value={lang} disabled={busy} onChange={e=>changeLang(e.target.value)}>{locales.map(l=><option key={l} value={l}>{l.toUpperCase()}</option>)}</select>
     <strong>{state?money(state.cash,lang):'—'}</strong>
   </header><div className="desk"><aside className="shell">
     <header><b>{t('terminal')}</b><span className={'lamp'+(busy?' working':'')}>TTY / 01</span></header>
@@ -172,9 +173,7 @@ function Station({release,lang,changeLang,changeRelease}) {
     <button onClick={()=>{if(confirm(screen('discard'))){localStorage.removeItem(key);reset(n=>n+1);}}}>{screen('reset')}</button></footer></main>;
 }
 
-export default function Game(){
-  const [lang,setLang]=useState('en'),[id,setId]=useState(releases[0].id);
-  useEffect(()=>{const l=localStorage.language||navigator.language.slice(0,2);if(['en','de','es'].includes(l))setLang(l);},[]);
-  useEffect(()=>{document.documentElement.lang=lang;},[lang]);
-  return <Station key={id} release={releases.find(r=>r.id===id)} lang={lang} changeRelease={setId} changeLang={l=>{localStorage.language=l;setLang(l);}}/>;
+export default function Game({lang}){
+  const [id,setId]=useState(releases[0].id);
+  return <Station key={id} release={releases.find(r=>r.id===id)} lang={lang} changeRelease={setId} changeLang={l=>{localStorage.language=l;window.location.assign('/'+l+'/'+location.search+location.hash);}}/>;
 }

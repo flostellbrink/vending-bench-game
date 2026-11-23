@@ -23,7 +23,7 @@ const entryPattern = /[\\/]app[\\/](?:.*[\\/])?(?<entry>page|layout|not-found)\.
 const directivePattern = /^(?:\s*(?:\/\/[^\n]*|\/\*[\s\S]*?\*\/|["']use [\w ]+["'];?))*/;
 const messageModulePattern = /[\\/]dictionary[\\/]msg[\\/]/;
 const resolvePattern = /resolveMessage\("(?<dictionary>[^"]+)", "(?<id>[^"]+)"/;
-const localesImportPattern = /import (?<name>\w+) from "\.\/\w+\.locales";/;
+const localesImportPattern = /import (?<name>\w+) from "\.\/\w+\.locales(?:\.ts)?";/;
 const resolveCallPattern = /=>\s*(?<call>resolveMessage\([^;]*\));/;
 
 function loader(this: LoaderContext, source: string) {

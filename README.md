@@ -26,4 +26,4 @@ For each rival, supply daily bank balances from the same revision, seed and chal
 
 ## Languages
 
-English, Spanish and German interface messages use the Games Localize package and its YAML dictionary. The simulator returns its original English mail and command reports.
+The static language routes are `/en/`, `/es/` and `/de/`. The URL selects the language. The entry page uses the saved preference or browser language. All three routes share the same saved run. Games Localize generates message functions and collects the current route’s used translations during export. The simulator returns its original English mail and command reports.

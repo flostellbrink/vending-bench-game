@@ -13,7 +13,7 @@ const files = {
     {
       any: [
         { content: /\b(?:msg|resolveMessage)\b/ },
-        { path: /\/app\/(?:.*\/)?(?:page|layout|not-found)\.tsx$/ },
+        { path: /(?:^|\/)app\/(?:.*\/)?(?:page|layout|not-found)\.tsx$/ },
       ],
     },
   ],
