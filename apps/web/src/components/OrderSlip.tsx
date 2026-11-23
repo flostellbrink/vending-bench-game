@@ -4,9 +4,10 @@ import { assertValue, first } from "games-common/language";
 
 import { parse, syntax, timing } from "@/game/commands";
 import { stationMessages as msg } from "@/localization/station-messages";
+import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
-interface Props extends Omit<ObservationProps, "reports"> {
+interface Props extends ObservationProps {
   terms: QuoteTerms;
 }
 function orderItems(
@@ -36,6 +37,7 @@ function orderItems(
 export function OrderSlip({
   terms,
   report,
+  reports,
   state,
   lang,
   t,
@@ -46,6 +48,18 @@ export function OrderSlip({
   stageCommand,
 }: Props) {
   const supplier = assertValue(report.args.supplier_id);
+  const previous = reports.findLast(
+    (r) =>
+      r.id < report.id &&
+      r.tool === report.tool &&
+      r.args.supplier_id === supplier &&
+      r.terms?.quantity === terms.quantity,
+  );
+  const oldPrices = new Map(
+    previous?.rows.flatMap(([id, value]) =>
+      typeof id === "string" && typeof value === "number" ? [[id, value] as const] : [],
+    ),
+  );
   const rows = report.rows.map((row) => ({
     product: String(assertValue(row[0])),
     price: Number(assertValue(row[1])),
@@ -120,6 +134,11 @@ export function OrderSlip({
       <p>
         {t("expires")} {terms.until} · {t("minimum")} {money(terms.minimum)}
       </p>
+      {previous && (
+        <p className="quote-comparison">
+          {t("versusQuote")} #{previous.id} · {t("day")} {previous.day} · {clock(previous.minute)}
+        </p>
+      )}
       <table>
         <thead>
           <tr>
@@ -146,6 +165,12 @@ export function OrderSlip({
               <td>
                 {money(price)}
                 {discount !== "0%" && <small> (−{discount})</small>}
+                {oldPrices.has(id) && oldPrices.get(id) !== price && (
+                  <small className="unit-delta">
+                    Δ {price > assertValue(oldPrices.get(id)) ? "+" : ""}
+                    {money(price - assertValue(oldPrices.get(id)))}
+                  </small>
+                )}
               </td>
               <td>{items[id] ?? terms.quantity}</td>
               <td>

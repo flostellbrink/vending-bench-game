@@ -18,6 +18,12 @@ The generator reproduced the 30-day, seed-1 scripted result of €3,302.96 from 
 
 These are independent agent playtests of the live game, not human usability studies.
 
+## Follow-up design studies
+
+The [last-hour study](design/CONCEPTS.md) tests whether players can see which action an inspection postpones. A separate replay reviewer correctly predicted that branching from day 2 would retain day 1 and leave the original day 4 save intact. They could not tell which branch was running. The masthead now identifies the run; a selected scorecard day also selects its opening checkpoint in the save tree.
+
+A supplier reviewer could find an offer but needed shell help to send a letter. On the revised slip, drafting cost nothing, sending cost 25 simulated minutes, and the next morning’s letter confirmed improved terms without disclosing new prices. In a seed-1 run, a second paid quote for 20 colas showed €0.96 per unit against the earlier €1.18. The slip compares observed prices at the same quantity; it does not promise an unobserved discount.
+
 ## Engineering checks
 
 The integrated path exercised supplier discovery, offer lookup, purchase, delivery, depot inspection, refill, price setting and sales. A requested refill of 100 packs loaded 18. The receipt showed both the partial fill and the missing price. A matching quote showed a projected €76.80 purchase; after expiry the estimate disappeared. Looking at an existing quote did not spend time.

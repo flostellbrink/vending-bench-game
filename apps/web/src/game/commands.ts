@@ -117,11 +117,10 @@ const textKeys = [
 
 /** Translate a player command to one paid operation. */
 export function parse(line: string, state: Geometry, actions: Actions): Move {
-  const tokens = (line.match(/"[^"]*"|[^\s"]+/g) ?? []).map((s) => s.replace(/^"|"$/g, ""));
+  const tokens = commandWords(line, syntax(line.trim().split(/\s+/, 1)[0] ?? ""));
   const verb = tokens.shift()?.toLowerCase() ?? "";
   const entry = definitionFor(verb),
     usage = syntax(verb);
-  if ((line.match(/"/g)?.length ?? 0) % 2) throw Error(usage);
   if (!entry || !(entry[0] in actions)) throw Error("help");
   const args: CommandArgs = {};
   if (verb === "inbox" || verb === "sales") {
@@ -285,3 +284,4 @@ export function draftMachine(line: string, machines: readonly string[]) {
     (id) => normalized === address(id) || normalized.startsWith(address(id) + "."),
   );
 }
+import { commandWords } from "./command-words.ts";

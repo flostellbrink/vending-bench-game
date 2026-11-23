@@ -4,11 +4,23 @@ import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { commandWords, quotedWord } from "../src/game/command-words.ts";
 import { draftMachine, priceOrder, timing } from "../src/game/commands.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
+
+await test("a letter draft preserves quoted subjects, newlines and literal backslashes", () => {
+  const subject = 'Re: the "small" pack',
+    body = "Can you quote the 2-pack?\nReference: A\\B.";
+  assert.deepEqual(
+    commandWords("mail supplier@example.test " + quotedWord(subject) + " " + quotedWord(body)),
+    ["mail", "supplier@example.test", subject, body],
+  );
+  assert.deepEqual(commandWords('note stock ""'), ["note", "stock", ""]);
+  assert.throws(() => commandWords('mail supplier@example.test "unfinished'), /help/);
+});
 
 await test("pace review uses daily change, not widest absolute gap or unrecorded rival days", () => {
   assert.deepEqual(largestPaceLoss([100, 90, 95, 101, 200], [100, 105, 111, 120]), {

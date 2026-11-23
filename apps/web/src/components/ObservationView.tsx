@@ -9,6 +9,7 @@ import { DayStatement } from "./DayStatement";
 import { Metrics } from "./Metrics";
 import { OrderSlip } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
+import { SupplierLetter } from "./SupplierLetter";
 function ReceiptHeading({ report, t }: Pick<ObservationProps, "report" | "t">) {
   return (
     <header className="receipt-heading">
@@ -35,6 +36,27 @@ export default function ObservationView({
   stageCommand,
 }: ObservationProps) {
   const text = report.display;
+  const letterProps = {
+    line: commandLine,
+    state,
+    t,
+    disabled,
+    stage: stageCommand,
+    send: runCommand,
+  };
+  const contact =
+    report.terms?.minimum === undefined
+      ? undefined
+      : reports.flatMap((r) => r.directory).find((entry) => entry.id === report.args.supplier_id);
+  const from = report.mail?.from.match(/<([^<>\s]+@[^<>\s]+)>$/)?.[1];
+  const sent =
+    report.args.email_id &&
+    reports.some(
+      (r) =>
+        r.tool === "list_emails" &&
+        r.args.folder === "sent" &&
+        r.rows.some((row) => row[0] === report.args.email_id),
+    );
   return (
     <section className="report">
       <ReceiptHeading report={report} t={t} />
@@ -45,6 +67,17 @@ export default function ObservationView({
             {report.mail.from} → {report.mail.to}
           </p>
           <pre>{report.mail.body}</pre>
+          {from && (
+            <SupplierLetter
+              {...letterProps}
+              to={sent ? report.mail.to : from}
+              subject={
+                report.mail.subject.startsWith("Re: ")
+                  ? report.mail.subject
+                  : "Re: " + report.mail.subject
+              }
+            />
+          )}
         </article>
       ) : (
         <>
@@ -57,6 +90,7 @@ export default function ObservationView({
                 <div>
                   {t("minimum")}: <b>{entry.minimum}</b> · {entry.email}
                 </div>
+                <SupplierLetter {...letterProps} to={entry.email} />
               </div>
               <button
                 data-clock-verb="quote"
@@ -67,11 +101,13 @@ export default function ObservationView({
               </button>
             </article>
           ))}
+          {contact && <SupplierLetter {...letterProps} to={contact.email} />}
           {report.terms?.minimum !== undefined ? (
             <OrderSlip
               terms={report.terms}
               {...{
                 report,
+                reports,
                 state,
                 lang,
                 t,

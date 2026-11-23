@@ -1,5 +1,30 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  versusQuote:
+    .id: MQ000001
+    ^en: Unit price change since quote
+    es: Cambio en el precio unitario desde la oferta
+    de: Stückpreisänderung seit Angebot
+  writeLetter:
+    .id: ML000000
+    ^en: "Write a letter"
+    es: "Escribir un correo"
+    de: "Nachricht verfassen"
+  mailSubject:
+    .id: ML000001
+    ^en: "Subject"
+    es: "Asunto"
+    de: "Betreff"
+  sendLetter:
+    .id: ML000002
+    ^en: "Send"
+    es: "Enviar"
+    de: "Senden"
+  supplierMailTerms:
+    .id: ML000003
+    ^en: "Replies arrive overnight. An order with quantities can charge your account immediately."
+    es: "Las respuestas llegan por la noche. Un pedido con cantidades puede cobrarse de inmediato."
+    de: "Antworten kommen über Nacht. Eine Bestellung mit Mengenangaben kann das Konto sofort belasten."
   laterObservations:
     .id: SLCH0001
     ^en: Since this inspection

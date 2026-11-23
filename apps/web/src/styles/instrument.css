@@ -1118,3 +1118,50 @@ footer button[aria-pressed="true"] {
 .pace-pair b {
   font-variant-numeric: tabular-nums;
 }
+.letter-compose form {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 54rem;
+  padding: 0.6rem 0.75rem;
+  background: #f3f0e2;
+  border-left: 3px solid #758771;
+}
+.letter-compose form header,
+.letter-compose form > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.letter-compose label,
+.letter-compose small {
+  font-size: 0.8rem;
+  color: #526053;
+}
+.letter-compose input,
+.letter-compose textarea {
+  font: inherit;
+  width: 100%;
+  min-width: 0;
+  background: #fbfaf3;
+  color: #21322a;
+  border: 1px solid #a0a99a;
+  padding: 0.3rem;
+}
+.letter-compose textarea {
+  resize: vertical;
+}
+.letter-compose form div button {
+  background: #dbe1d3;
+  border: 1px solid #879383;
+  padding: 0.25rem 0.55rem;
+}
+.quote-comparison,
+.order-slip .unit-delta {
+  font-size: 0.85rem;
+  color: #3b5946;
+}
+.order-slip .unit-delta {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
