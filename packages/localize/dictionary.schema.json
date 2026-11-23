@@ -1,0 +1,538 @@
+{
+  "allOf": [
+    {
+      "type": "object",
+      "properties": {
+        "$schema": {
+          "type": "string",
+          "title": "Schema reference",
+          "description": "The JSON Schema used by the editor to validate this dictionary."
+        },
+        ".info": {
+          "type": "string",
+          "title": "Translation information",
+          "description": "Author intent for human or machine translation. Root information gives context to all messages; message information describes specific intent.",
+          "examples": ["The start time tells guests when to arrive."]
+        },
+        ".locales": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^(?:\\^)?(?<language>[a-z]{2,3})(?:-(?<country>[A-Z]{2}))?$",
+            "title": "Locale",
+            "description": "Language code with an optional country code, such as en or en-US. Base locale is prefixed with ^."
+          },
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Language name",
+            "description": "The language name written in the dictionary's base locale."
+          },
+          "minProperties": 1,
+          "title": "Supported locales",
+          "description": "Locale codes paired with language names. Mark exactly one base locale with ^. Codes must be unique with the prefix removed; entry order has no meaning.",
+          "examples": [{ "^en": "English", "de": "German", "es": "Spanish" }]
+        }
+      },
+      "required": ["$schema", ".locales"],
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/$defs/groupSchema" },
+          {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  ".id": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 8,
+                    "pattern": "^(?!\\d)\\w+$",
+                    "title": "Message ID",
+                    "description": "Stable message identifier with 8 characters."
+                  },
+                  ".info": {
+                    "type": "string",
+                    "title": "Translation information",
+                    "description": "Author intent for human or machine translation. Root information gives context to all messages; message information describes specific intent.",
+                    "examples": ["The start time tells guests when to arrive."]
+                  },
+                  ".inputs": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^\\$",
+                          "title": "Input declaration",
+                          "description": "An input variable with its function and options, without outer braces. Shared by all locales.",
+                          "examples": [
+                            "$name :string",
+                            "$date :date year=numeric month=short day=numeric",
+                            "$count :number"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "pattern": "^\\$",
+                            "title": "Variable name",
+                            "description": "A variable reference with a $ prefix, such as $count."
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "title": "Local expression",
+                            "description": "An expression without outer braces. It can refer to inputs or earlier locals.",
+                            "examples": ["$date :time timeStyle=short"]
+                          },
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "title": "Local declaration",
+                          "description": "Binds one variable to an expression. It can use earlier declarations.",
+                          "examples": [{ "$time": "$date :time timeStyle=short" }]
+                        }
+                      ]
+                    },
+                    "title": "Inputs and locals",
+                    "description": "Ordered input and local declarations shared by all locales. Strings declare inputs; single-key objects declare locals.",
+                    "examples": [
+                      [
+                        "$date :date year=numeric month=short day=numeric",
+                        { "$time": "$date :time timeStyle=short" }
+                      ]
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "title": "Pattern",
+                      "description": "Text with optional expressions in braces. Variables use a $ prefix.",
+                      "examples": [
+                        "You're invited!",
+                        "Welcome, {$name}!",
+                        "The party starts on {$date} at {$time}."
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": [
+                        {
+                          "type": "string",
+                          "title": "Selectors",
+                          "description": "Space-separated input or local variables. Their functions determine which variant matches.",
+                          "examples": ["$count", "$hostGender $count"]
+                        },
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "title": "Case keys",
+                            "description": "One key per selector, separated by spaces. * matches any value."
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "title": "Pattern",
+                            "description": "Text with optional expressions in braces. Variables use a $ prefix.",
+                            "examples": [
+                              "You're invited!",
+                              "Welcome, {$name}!",
+                              "The party starts on {$date} at {$time}."
+                            ]
+                          },
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "title": "Match case",
+                          "description": "One combination of selector keys and its pattern."
+                        }
+                      ],
+                      "minItems": 2,
+                      "additionalItems": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "title": "Case keys",
+                          "description": "One key per selector, separated by spaces. * matches any value."
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "title": "Pattern",
+                          "description": "Text with optional expressions in braces. Variables use a $ prefix.",
+                          "examples": [
+                            "You're invited!",
+                            "Welcome, {$name}!",
+                            "The party starts on {$date} at {$time}."
+                          ]
+                        },
+                        "minProperties": 1,
+                        "maxProperties": 1,
+                        "title": "Match case",
+                        "description": "One combination of selector keys and its pattern."
+                      },
+                      "title": "Matcher",
+                      "description": "A selector string followed by single-key case objects. Selects a pattern from runtime values.",
+                      "examples": [
+                        [
+                          "$count",
+                          { "0     ": "No guests yet." },
+                          { "one   ": "One guest so far." },
+                          { "*     ": "So far there are {$count} guests." }
+                        ],
+                        [
+                          "$hostGender $count",
+                          {
+                            "female      one   ": "Deine Gastgeberin {$hostName} erwartet einen Gast."
+                          },
+                          {
+                            "female      *     ": "Deine Gastgeberin {$hostName} erwartet {$count} Gäste."
+                          },
+                          {
+                            "male        one   ": "Dein Gastgeber {$hostName} erwartet einen Gast."
+                          },
+                          {
+                            "male        *     ": "Dein Gastgeber {$hostName} erwartet {$count} Gäste."
+                          },
+                          {
+                            "*           one   ": "Dein*e Gastgeber*in {$hostName} erwartet einen Gast."
+                          },
+                          {
+                            "*           *     ": "Dein*e Gastgeber*in {$hostName} erwartet {$count} Gäste."
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  "title": "Locale message",
+                  "description": "A pattern or matcher. Use the same locale key as .locales, including ^ for the base locale."
+                }
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^(?:\\.id|\\.info|\\.inputs)$|^(?:\\^)?(?<language>[a-z]{2,3})(?:-(?<country>[A-Z]{2}))?$"
+                },
+                "additionalProperties": {}
+              }
+            ],
+            "title": "Message",
+            "description": "Locale patterns or matchers with a stable ID and shared input and local declarations.",
+            "examples": [
+              { ".id": "jnkYXFtF", "^en": "You're invited!" },
+              { ".id": "GHAxFww_", ".inputs": ["$name :string"], "^en": "Welcome, {$name}!" },
+              {
+                ".id": "B8saFlgf",
+                ".info": "The start time tells guests when to arrive.",
+                ".inputs": [
+                  "$date :date year=numeric month=short day=numeric",
+                  { "$time": "$date :time timeStyle=short" }
+                ],
+                "^en": "The party starts on {$date} at {$time}."
+              },
+              {
+                ".id": "aT8gAbWq",
+                ".info": "The count is a non-negative integer and can be zero. It excludes the host.",
+                ".inputs": ["$count :number"],
+                "^en": [
+                  "$count",
+                  { "0     ": "No guests yet." },
+                  { "one   ": "One guest so far." },
+                  { "*     ": "So far there are {$count} guests." }
+                ]
+              },
+              {
+                ".id": "G6XuOR6L",
+                ".info": "The count is a non-negative integer and can be zero. It excludes the host.",
+                ".inputs": ["$hostName :string", "$hostGender :string", "$count :number"],
+                "^en": [
+                  "$count",
+                  { "one   ": "Your host {$hostName} is having one guest over." },
+                  { "*     ": "Your host {$hostName} is having {$count} guests over." }
+                ],
+                "de": [
+                  "$hostGender $count",
+                  { "female      one   ": "Deine Gastgeberin {$hostName} erwartet einen Gast." },
+                  {
+                    "female      *     ": "Deine Gastgeberin {$hostName} erwartet {$count} Gäste."
+                  },
+                  { "male        one   ": "Dein Gastgeber {$hostName} erwartet einen Gast." },
+                  { "male        *     ": "Dein Gastgeber {$hostName} erwartet {$count} Gäste." },
+                  { "*           one   ": "Dein*e Gastgeber*in {$hostName} erwartet einen Gast." },
+                  {
+                    "*           *     ": "Dein*e Gastgeber*in {$hostName} erwartet {$count} Gäste."
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "title": "Child node",
+        "description": "A nested group or a message with locale entries."
+      }
+    },
+    {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(?:\\$schema|\\.info|\\.locales)$|^(?!\\d)\\w+$"
+      },
+      "additionalProperties": {}
+    }
+  ],
+  "title": "Root",
+  "description": "Dictionary metadata and named messages or groups. .locales specifies the languages and base locale.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$defs": {
+    "groupSchema": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^(?!\\d)\\w+$",
+        "title": "Message or group name",
+        "description": "Message or group name. Use lower camel case."
+      },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/$defs/groupSchema" },
+          {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  ".id": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 8,
+                    "pattern": "^(?!\\d)\\w+$",
+                    "title": "Message ID",
+                    "description": "Stable message identifier with 8 characters."
+                  },
+                  ".info": {
+                    "type": "string",
+                    "title": "Translation information",
+                    "description": "Author intent for human or machine translation. Root information gives context to all messages; message information describes specific intent.",
+                    "examples": ["The start time tells guests when to arrive."]
+                  },
+                  ".inputs": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^\\$",
+                          "title": "Input declaration",
+                          "description": "An input variable with its function and options, without outer braces. Shared by all locales.",
+                          "examples": [
+                            "$name :string",
+                            "$date :date year=numeric month=short day=numeric",
+                            "$count :number"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "pattern": "^\\$",
+                            "title": "Variable name",
+                            "description": "A variable reference with a $ prefix, such as $count."
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "title": "Local expression",
+                            "description": "An expression without outer braces. It can refer to inputs or earlier locals.",
+                            "examples": ["$date :time timeStyle=short"]
+                          },
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "title": "Local declaration",
+                          "description": "Binds one variable to an expression. It can use earlier declarations.",
+                          "examples": [{ "$time": "$date :time timeStyle=short" }]
+                        }
+                      ]
+                    },
+                    "title": "Inputs and locals",
+                    "description": "Ordered input and local declarations shared by all locales. Strings declare inputs; single-key objects declare locals.",
+                    "examples": [
+                      [
+                        "$date :date year=numeric month=short day=numeric",
+                        { "$time": "$date :time timeStyle=short" }
+                      ]
+                    ]
+                  }
+                },
+                "required": [],
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "title": "Pattern",
+                      "description": "Text with optional expressions in braces. Variables use a $ prefix.",
+                      "examples": [
+                        "You're invited!",
+                        "Welcome, {$name}!",
+                        "The party starts on {$date} at {$time}."
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": [
+                        {
+                          "type": "string",
+                          "title": "Selectors",
+                          "description": "Space-separated input or local variables. Their functions determine which variant matches.",
+                          "examples": ["$count", "$hostGender $count"]
+                        },
+                        {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "title": "Case keys",
+                            "description": "One key per selector, separated by spaces. * matches any value."
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "title": "Pattern",
+                            "description": "Text with optional expressions in braces. Variables use a $ prefix.",
+                            "examples": [
+                              "You're invited!",
+                              "Welcome, {$name}!",
+                              "The party starts on {$date} at {$time}."
+                            ]
+                          },
+                          "minProperties": 1,
+                          "maxProperties": 1,
+                          "title": "Match case",
+                          "description": "One combination of selector keys and its pattern."
+                        }
+                      ],
+                      "minItems": 2,
+                      "additionalItems": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "title": "Case keys",
+                          "description": "One key per selector, separated by spaces. * matches any value."
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "title": "Pattern",
+                          "description": "Text with optional expressions in braces. Variables use a $ prefix.",
+                          "examples": [
+                            "You're invited!",
+                            "Welcome, {$name}!",
+                            "The party starts on {$date} at {$time}."
+                          ]
+                        },
+                        "minProperties": 1,
+                        "maxProperties": 1,
+                        "title": "Match case",
+                        "description": "One combination of selector keys and its pattern."
+                      },
+                      "title": "Matcher",
+                      "description": "A selector string followed by single-key case objects. Selects a pattern from runtime values.",
+                      "examples": [
+                        [
+                          "$count",
+                          { "0     ": "No guests yet." },
+                          { "one   ": "One guest so far." },
+                          { "*     ": "So far there are {$count} guests." }
+                        ],
+                        [
+                          "$hostGender $count",
+                          {
+                            "female      one   ": "Deine Gastgeberin {$hostName} erwartet einen Gast."
+                          },
+                          {
+                            "female      *     ": "Deine Gastgeberin {$hostName} erwartet {$count} Gäste."
+                          },
+                          {
+                            "male        one   ": "Dein Gastgeber {$hostName} erwartet einen Gast."
+                          },
+                          {
+                            "male        *     ": "Dein Gastgeber {$hostName} erwartet {$count} Gäste."
+                          },
+                          {
+                            "*           one   ": "Dein*e Gastgeber*in {$hostName} erwartet einen Gast."
+                          },
+                          {
+                            "*           *     ": "Dein*e Gastgeber*in {$hostName} erwartet {$count} Gäste."
+                          }
+                        ]
+                      ]
+                    }
+                  ],
+                  "title": "Locale message",
+                  "description": "A pattern or matcher. Use the same locale key as .locales, including ^ for the base locale."
+                }
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^(?:\\.id|\\.info|\\.inputs)$|^(?:\\^)?(?<language>[a-z]{2,3})(?:-(?<country>[A-Z]{2}))?$"
+                },
+                "additionalProperties": {}
+              }
+            ],
+            "title": "Message",
+            "description": "Locale patterns or matchers with a stable ID and shared input and local declarations.",
+            "examples": [
+              { ".id": "jnkYXFtF", "^en": "You're invited!" },
+              { ".id": "GHAxFww_", ".inputs": ["$name :string"], "^en": "Welcome, {$name}!" },
+              {
+                ".id": "B8saFlgf",
+                ".info": "The start time tells guests when to arrive.",
+                ".inputs": [
+                  "$date :date year=numeric month=short day=numeric",
+                  { "$time": "$date :time timeStyle=short" }
+                ],
+                "^en": "The party starts on {$date} at {$time}."
+              },
+              {
+                ".id": "aT8gAbWq",
+                ".info": "The count is a non-negative integer and can be zero. It excludes the host.",
+                ".inputs": ["$count :number"],
+                "^en": [
+                  "$count",
+                  { "0     ": "No guests yet." },
+                  { "one   ": "One guest so far." },
+                  { "*     ": "So far there are {$count} guests." }
+                ]
+              },
+              {
+                ".id": "G6XuOR6L",
+                ".info": "The count is a non-negative integer and can be zero. It excludes the host.",
+                ".inputs": ["$hostName :string", "$hostGender :string", "$count :number"],
+                "^en": [
+                  "$count",
+                  { "one   ": "Your host {$hostName} is having one guest over." },
+                  { "*     ": "Your host {$hostName} is having {$count} guests over." }
+                ],
+                "de": [
+                  "$hostGender $count",
+                  { "female      one   ": "Deine Gastgeberin {$hostName} erwartet einen Gast." },
+                  {
+                    "female      *     ": "Deine Gastgeberin {$hostName} erwartet {$count} Gäste."
+                  },
+                  { "male        one   ": "Dein Gastgeber {$hostName} erwartet einen Gast." },
+                  { "male        *     ": "Dein Gastgeber {$hostName} erwartet {$count} Gäste." },
+                  { "*           one   ": "Dein*e Gastgeber*in {$hostName} erwartet einen Gast." },
+                  {
+                    "*           *     ": "Dein*e Gastgeber*in {$hostName} erwartet {$count} Gäste."
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "title": "Child node",
+        "description": "A nested group or a message with locale entries."
+      },
+      "title": "Group",
+      "description": "Groups named messages and nested groups at any depth."
+    }
+  }
+}

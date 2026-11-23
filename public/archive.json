@@ -1,0 +1,13 @@
+{
+  "version": "2",
+  "seed": 1,
+  "days": 30,
+  "source": "https://github.com/ProsusAI/vending-bench/blob/60794b49932294a0fcb3fcf9a5ca3aaaa0c8a282/results/baselines/models-30d/README.md",
+  "scores": [
+    ["Claude Opus 5",4497.21],
+    ["GPT 5.6 Sol",3357.76],
+    ["Claude Sonnet 5",3289.12],
+    ["GPT 5.6 Luna",1601.59],
+    ["Claude Haiku 4.5",1337.67]
+  ]
+}

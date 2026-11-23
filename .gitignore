@@ -1,0 +1,11 @@
+dist/
+.next/
+out/
+node_modules/
+src/dictionary/
+public/*.zip
+public/releases.json
+public/NOTICE
+public/LICENSE
+public/python/
+public/vending-world.png

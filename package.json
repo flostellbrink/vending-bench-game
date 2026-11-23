@@ -1,0 +1,22 @@
+{
+  "name": "vending-bench-game",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "test": "node scripts/benchmark-assets.js && node --test scripts/benchmark.test.js",
+    "generate:localize": "node packages/localize/src/cli.ts --input dictionary.yaml --output src/dictionary",
+    "generate": "pnpm generate:localize && node scripts/benchmark-assets.js",
+    "dev": "pnpm generate && next dev --port 5173",
+    "build": "pnpm generate && next build"
+  },
+  "dependencies": {
+    "games-localize": "workspace:*",
+    "next": "16.4.0-canary.50",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "pyodide": "0.27.7"
+  }
+}
