@@ -36,6 +36,7 @@ export const vocabulary = actions => Object.entries(verbs).filter(([, [tool]])=>
 const argumentNames={supplier_id:'supplier',product_id:'product',machine_id:'machine',
   email_id:'email',in_days:'days'};
 export function syntax(verb) {
+  if(verb==='help')return 'help [command]';
   if(verb==='view')return 'view <result>';
   if(verb==='order') return 'order <supplier> <product> <quantity> [<product> <quantity>]...';
   const specs=verbs[verb]?.[1].split(' ').filter(Boolean) || [];
@@ -100,6 +101,7 @@ export function completions(line, state, actions, reports) {
     choices=reports.filter(r=>r.tool==='check_offers' && r.args.supplier_id===parts[1]).flatMap(r=>r.products);
   } else if (spec === 'product_id') choices = reports.flatMap(r=>r.products);
   else if (verb === 'view') choices = reports.map(r=>String(r.id));
+  else if (verb === 'help') choices = [...vocabulary(actions).map(([v])=>v),...local];
   else if (verb === 'find') choices = ['snacks','coffee','wholesalers'];
   return [...new Set(choices)].filter(s=>s.toLowerCase().startsWith(partial) && s!==partial);
 }

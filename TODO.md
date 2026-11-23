@@ -1,5 +1,13 @@
 # Player experience queue
 
+## Release pass
+
+1. [x] Check the authored room in motion during a successful refill. Remove unused cutout artwork.
+2. [x] Play the terminal help, purchase and service flow against the release export. Help must not change the selected report.
+3. [x] Compare full-screen CRT curvature on and off. Keep controls readable and clickable at the edges.
+4. [x] Match direction B: retain the full back walls, lower the near walls, and leave two exterior tiles visible on the same ground plane.
+5. [x] Anchor the terminal input at the bottom. Completion must use space above it and leave the input coordinates unchanged.
+
 ## Current pass
 
 - [x] Play a first purchase through delivery, refill, pricing and a sale using only the terminal.

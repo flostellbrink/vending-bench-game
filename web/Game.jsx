@@ -5,7 +5,7 @@ import {locales} from '../src/dictionary/runtime.ts';
 import {stationMessages as msg} from './station-messages.ts';
 import {commandGroups,completions,local,parse,syntax,toolFor} from './commands.js';
 import {observation} from '../web/reports.js';
-import {World,clock,useClock} from '../web/World.jsx';
+import {World,clock,useClock} from './World.jsx';
 import releases from '../releases.json';
 import archive from '../public/archive.json';
 
@@ -75,6 +75,17 @@ function CommandIndex({actions,lang,t}) {
   </section>;
 }
 
+function OfficeDisplay({state,release,lang,line,reports,t}){
+  const time=useClock(state);
+  const day=Math.floor(time/1440);
+  const date=state?.startDate && new Intl.DateTimeFormat(lang,{day:'numeric',month:'short',timeZone:'UTC'})
+    .format(Date.parse(state.startDate+'T00:00Z')+day*86400000);
+  return <>
+    <div className="surface"><World value={time} state={state} line={line} t={t} reports={reports}/></div>
+    <div className="transport"><b>{t('day')} {Math.min(release.days,day+1)} / {release.days}</b><span>{date}</span><strong>{clock(time)}</strong></div>
+  </>;
+}
+
 function Station({release,lang,changeLang,changeRelease}) {
   const t=k=>msg.operator[k]?translate(msg.operator[k],lang):k;
   const screen=k=>translate(msg.screen[k],lang);
@@ -89,7 +100,6 @@ function Station({release,lang,changeLang,changeRelease}) {
   const worker=useRef(null),pending=useRef(null),journal=useRef([]),prompt=useRef(null),log=useRef(null),follow=useRef(true);
   const key='vending:'+release.revision+':'+release.seed;
   const recordKey=key+':'+release.days+':record';
-  const time=useClock(state);
   useEffect(()=>{
     let live=true;
     let balances=[];
@@ -185,6 +195,15 @@ function Station({release,lang,changeLang,changeRelease}) {
     const raw=line.trim();
     if(!raw||!state||pending.current)return;
     if(local.includes(verb)){
+      if(verb==='help'){
+        const topic=raw.split(/\s+/)[1];
+        if(topic && !toolFor(topic) && !local.includes(topic)){setError('help [command]');return;}
+        const text=topic
+          ?syntax(topic)+(msg.commands[toolFor(topic)]?' — '+translate(msg.commands[toolFor(topic)],lang):'')
+          :[...Object.entries(commandGroups).map(([group,vs])=>t(group)+': '+vs.filter(v=>toolFor(v) in actions).join('  ')),t('local')+': '+local.join('  '),'help [command]'].join('\n');
+        setLines(old=>[...old,{id:'help-'+old.length,line:raw,day:state.day,minute:state.minute,localText:text}]);
+        edit('');return;
+      }
       const id=Number(raw.split(/\s+/)[1]);
       if(verb==='view' && !reports.some(r=>r.id===id)){setError('view <1…'+reports.length+'>');return;}
       setTab(verb==='view'?id:verb==='balance'?'world':verb);edit('');return;
@@ -212,7 +231,14 @@ function Station({release,lang,changeLang,changeRelease}) {
     if(e.key==='Escape'){setBrowse(false);setPick(0);}
   }
   const resultButton=(id,label)=><button key={id} className={tab===id?'selected':''} onClick={()=>{setTab(id);prompt.current?.focus();}}>{label}</button>;
-  return <main className={'station'+(crt?' crt':'')}><header className="mast">
+  return <div className={'display-glass'+(crt?' enabled':'')}>
+    <svg className="optics" aria-hidden="true" focusable="false" width="0" height="0">
+      <defs><filter id="tube-optics" x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="sRGB">
+        <feImage href="/glass-map.png" x="0%" y="0%" width="100%" height="100%" preserveAspectRatio="none" result="lens"/>
+        <feDisplacementMap in="SourceGraphic" in2="lens" scale="11" xChannelSelector="R" yChannelSelector="G"/>
+      </filter></defs>
+    </svg>
+    <main className={'station'+(crt?' crt':'')}><header className="mast">
     <h1><i className="brand-mark" aria-hidden="true"/>Vending Bench</h1><span className="operator">{t('operator')}</span><i className="vent" aria-hidden="true"/>
     <select aria-label="Benchmark" value={release.id} onChange={e=>changeRelease(e.target.value)}>{releases.map(r=><option key={r.id}>{r.id}</option>)}</select>
     <select aria-label="Language / Idioma / Sprache" value={lang} disabled={busy} onChange={e=>changeLang(e.target.value)}>{locales.map(l=><option key={l} value={l}>{l.toUpperCase()}</option>)}</select>
@@ -229,16 +255,15 @@ function Station({release,lang,changeLang,changeRelease}) {
  '-------'`}</pre><div role="status">{boot.map(stage=><div key={stage}>{t(stage)}</div>)}</div></div>}
       {!lines.length&&<p>{t('hint')}</p>}
       {lines.map(r=><div className="receipt" key={r.id}><small>{t('day')} {r.day} · {clock(r.minute)}</small><div><b className="prompt-char">$</b> {r.line}</div>
-        <button onClick={()=>setTab(r.id)}>#{r.id} {r.rows.length?r.rows.length+' '+t('results'):r.output.split('\n')[0].slice(0,110)}</button></div>)}
-    <div className="input-zone">
+        {r.localText?<pre className="shell-reply">{r.localText}</pre>:<button onClick={()=>setTab(r.id)}>#{r.id} {r.rows.length?r.rows.length+' '+t('results'):r.output.split('\n')[0].slice(0,110)}</button>}</div>)}
+    </div><div className="input-zone">
       {browse && choices.length>0 && <div className="completion">{choices.slice(Math.floor(pick/5)*5,Math.floor(pick/5)*5+5).map(s=><button key={s} className={choices[pick]===s?'active':''} onClick={()=>complete(s)}>{s}<small>{observations[s]?observations[s].qty+'/'+observations[s].capacity+' · '+t('day')+' '+observations[s].day+' '+clock(observations[s].minute):msg.commands[toolFor(s)]?translate(msg.commands[toolFor(s)],lang):''}</small></button>)}</div>}
-      <div className="command-line"><span aria-hidden="true">›</span><textarea autoFocus rows={1} id="prompt" ref={prompt} value={line} aria-label={t('query')} enterKeyHint="send" autoComplete="off" spellCheck="false" autoCapitalize="none" onChange={e=>edit(e.target.value,e.target.selectionStart)} onSelect={e=>setCaret(e.target.selectionStart)} onKeyDown={keys}/></div>
       {tool&&<small>{syntax(verb)} · {estimate}</small>}
       {error&&<p role="alert">{error}</p>}
-    </div></div><div className="terminal-keys"><small>{busy?screen('loading'):'Tab '+t('completeKey')+' · Enter '+t('execute')+' · ↑ '+t('history')}</small></div>
+      <div className="command-line"><span aria-hidden="true">›</span><textarea autoFocus rows={1} id="prompt" ref={prompt} value={line} aria-label={t('query')} enterKeyHint="send" autoComplete="off" spellCheck="false" autoCapitalize="none" onChange={e=>edit(e.target.value,e.target.selectionStart)} onSelect={e=>setCaret(e.target.selectionStart)} onKeyDown={keys}/></div>
+    </div><div className="terminal-keys"><small>{busy?screen('loading'):'Tab '+t('completeKey')+' · Enter '+t('execute')+' · ↑ '+t('history')}</small></div>
     </aside><section className="workspace">
-      <div className="surface"><World value={time} state={state} line={line} t={t} reports={reports}/></div>
-      <div className="transport"><b>{t('day')} {Math.min(release.days,Math.floor(time/1440)+1)} / {release.days}</b><span>{state?.startDate && new Intl.DateTimeFormat(lang,{day:'numeric',month:'short',timeZone:'UTC'}).format(Date.parse(state.startDate+'T00:00Z')+Math.floor(time/1440)*86400000)}</span><strong>{clock(time)}</strong></div>
+      <OfficeDisplay {...{state,release,lang,line,reports,t}}/>
       <nav className="tabs">
         {resultButton('world',t('bank'))}{resultButton('tabs',t('results')+' '+reports.length)}
         {resultButton('help',t('help'))}{resultButton('scores',t('standings'))}
@@ -253,7 +278,7 @@ function Station({release,lang,changeLang,changeRelease}) {
       </div></section></div>
     <footer><span>{state?.over?t('score')+' · '+money(state.failed?0:Math.max(0,state.cash),lang):'Vending Bench / '+release.id+' · Seed '+release.seed}</span>
     <button className="crt-switch" aria-label="CRT" aria-pressed={crt} onClick={()=>{setCrt(!crt);localStorage.setItem('vendix.crt',crt?'off':'on');}}>CRT · {t(crt?'displayOn':'displayOff')}</button>
-    <button onClick={()=>{if(confirm(screen('discard'))){localStorage.removeItem(key);reset(n=>n+1);}}}>{screen('reset')}</button></footer></main>;
+    <button onClick={()=>{if(confirm(screen('discard'))){localStorage.removeItem(key);reset(n=>n+1);}}}>{screen('reset')}</button></footer></main></div>;
 }
 
 export default function Game({lang}){
