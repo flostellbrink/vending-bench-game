@@ -32,4 +32,5 @@ def snapshot():
                            over=engine.over, failed=s["terminated"],
                            startDate=s["start_date"], slots=config.all_slots(),
                            machines=config.machine_ids(), weather=s["weather"],
-                           costs=config.TOOL_MINUTES, defaultCost=config.DEFAULT_TOOL_MINUTES))
+                           costs=config.TOOL_MINUTES, defaultCost=config.DEFAULT_TOOL_MINUTES,
+                           opens=config.DAY_START_MINUTE, closes=config.DAY_END_MINUTE))

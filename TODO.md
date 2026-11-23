@@ -11,7 +11,7 @@
 - [x] Check static language URLs, direct entry and language switching with a saved run.
 - [x] Check that the browser receives only the used messages in the requested language.
 - [x] Check the revised screen at desktop and phone widths.
-- [ ] Use the same required, optional and repeatable argument notation in the command index and at the prompt.
+- [x] Use the same required, optional and repeatable argument notation in the command index and at the prompt.
 
 ## Acceptance
 

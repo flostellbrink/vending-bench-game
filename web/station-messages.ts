@@ -2,6 +2,12 @@ import { msg } from "../src/dictionary/index.ts";
 
 export const stationMessages = {
   operator: {
+    supply: msg.operator.supply,
+    machines: msg.operator.machines,
+    business: msg.operator.business,
+    correspondence: msg.operator.correspondence,
+    records: msg.operator.records,
+    notation: msg.operator.notation,
     runtime: msg.operator.runtime,
     mount: msg.operator.mount,
     hint: msg.operator.hint,

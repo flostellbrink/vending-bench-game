@@ -3,7 +3,7 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {locales} from '../src/dictionary/runtime.ts';
 import {stationMessages as msg} from './station-messages.ts';
-import {completions,local,parse,syntax,toolFor,vocabulary} from '../web/commands.js';
+import {commandGroups,completions,local,parse,syntax,toolFor} from './commands.js';
 import {observation} from '../web/reports.js';
 import {World,clock,useClock} from '../web/World.jsx';
 import releases from '../releases.json';
@@ -44,6 +44,16 @@ function Graph({history,rivals,release,lang,t}) {
     }))}</div>
     <input aria-label={t('day')} type="range" min="0" max={release.days} value={d} onChange={e=>setCursor(+e.target.value)}/>
     <div className="legend">{series.map(s=><span key={s.name} style={{'--ink':s.color}}>{s.name} <b>{s.values[d]==null?'—':money(s.values[d],lang)}</b></span>)}</div>
+  </section>;
+}
+
+function CommandIndex({actions,lang,t}) {
+  return <section className="sheet"><h2>{t('help')}</h2><p>{t('notation')}</p>
+    {Object.entries(commandGroups).map(([group,names])=><section key={group}>
+      <h3>{t(group)}</h3>{names.filter(v=>toolFor(v) in actions).map(v=><div className="manual" key={v}>
+        <code>{syntax(v)}</code><span>{translate(msg.commands[toolFor(v)],lang)}</span>
+      </div>)}</section>)}
+    <h3>{t('local')}</h3><p>{local.map(syntax).join(' · ')}</p>
   </section>;
 }
 
@@ -100,6 +110,10 @@ function Station({release,lang,changeLang,changeRelease}) {
   },[release,key,epoch]);
   useEffect(()=>{if(follow.current && log.current)log.current.scrollTop=log.current.scrollHeight;},[lines]);
   const verb=line.trim().split(/\s+/)[0],tool=toolFor(verb);
+  const cost=state?.costs?.[tool]??state?.defaultCost;
+  const tomorrow=verb==='close'||state?.minute+cost>=state?.closes;
+  const estimate=state&&tool?(verb==='close'?t('next'):cost+' min')+
+    ' · '+clock(state.minute)+' → '+clock(tomorrow?state.opens:state.minute+cost):'';
   const prefix=line.slice(0,caret);
   const choices=state?completions(prefix,state,actions,reports):[];
   const observations=useMemo(()=>Object.assign({},...reports.map(r=>
@@ -158,14 +172,14 @@ function Station({release,lang,changeLang,changeRelease}) {
         <button onClick={()=>setTab(r.id)}>#{r.id} {r.rows.length?r.rows.length+' '+t('results'):r.output.split('\n')[0].slice(0,110)}</button></div>)}
     </div><div className="input-zone">
       {browse && choices.length>0 && <div className="completion">{choices.slice(Math.floor(pick/5)*5,Math.floor(pick/5)*5+5).map(s=><button key={s} className={choices[pick]===s?'active':''} onClick={()=>complete(s)}>{s}<small>{observations[s]?observations[s].qty+'/'+observations[s].capacity+' · '+t('day')+' '+observations[s].day+' '+clock(observations[s].minute):msg.commands[toolFor(s)]?translate(msg.commands[toolFor(s)],lang):''}</small></button>)}</div>}
-      <small>{tool?syntax(verb)+' · '+(verb==='close'?t('next'):(state?.costs?.[tool]??state?.defaultCost)+' min'):t('local')}</small>
+      <small>{tool?syntax(verb)+' · '+estimate:t('local')}</small>
       <form onSubmit={execute}><label htmlFor="prompt" aria-label={t('query')}>op@vendix<span>:~$</span></label><input autoFocus id="prompt" ref={prompt} value={line} autoComplete="off" spellCheck="false" autoCapitalize="none" onChange={e=>edit(e.target.value,e.target.selectionStart)} onSelect={e=>setCaret(e.target.selectionStart)} onKeyDown={keys}/><button disabled={busy} aria-label={t('execute')}>↵</button></form>
       {error&&<p role="alert">{error}</p>}<small>{busy?screen('loading'):'Tab '+t('completeKey')+' · Enter '+t('execute')+' · ↑ '+t('history')}</small>
     </div></aside><section className="workspace"><nav className="tabs">
       {resultButton('world',t('world'))}{resultButton('tabs',t('results')+' '+reports.length)}{resultButton('help',t('help'))}{resultButton('scores',t('archive'))}
       {recent.map(r=>resultButton(r.id,'#'+r.id))}</nav>
     <div className="surface">
-    {tab==='world'?<World value={time} state={state} line={line} t={t} reports={reports}/>:selected?<Report key={selected.id} report={selected} t={t} lang={lang}/>:tab==='help'?<section className="sheet"><h2>{t('help')}</h2><p>{t('first')}</p>{vocabulary(actions).map(([v,[action]])=><div className="manual" key={v}><code>{syntax(v)}</code><span>{translate(msg.commands[action],lang)}</span></div>)}<p>{local.join(' · ')} — {t('local')}</p></section>:tab==='scores'?<section className="sheet"><h2>{screen('archive')}</h2><p>{screen('note')}</p>{archive.scores.map(([name,score])=><div className="manual" key={name}>{name}<b>{money(score,lang)}</b></div>)}</section>:<section className="sheet"><h2>{t('results')}</h2>{!reports.length&&t('empty')}{reports.slice().reverse().map(r=><button className="catalog" key={r.id} onClick={()=>setTab(r.id)}>#{r.id} · {clock(r.minute)} · {r.line}</button>)}</section>}
+    {tab==='world'?<World value={time} state={state} line={line} t={t} reports={reports}/>:selected?<Report key={selected.id} report={selected} t={t} lang={lang}/>:tab==='help'?<CommandIndex actions={actions} lang={lang} t={t}/>:tab==='scores'?<section className="sheet"><h2>{screen('archive')}</h2><p>{screen('note')}</p>{archive.scores.map(([name,score])=><div className="manual" key={name}>{name}<b>{money(score,lang)}</b></div>)}</section>:<section className="sheet"><h2>{t('results')}</h2>{!reports.length&&t('empty')}{reports.slice().reverse().map(r=><button className="catalog" key={r.id} onClick={()=>setTab(r.id)}>#{r.id} · {clock(r.minute)} · {r.line}</button>)}</section>}
     </div><div className="transport"><b>{t('day')} {Math.min(release.days,Math.floor(time/1440)+1)} / {release.days}</b><span>{state?.startDate && new Intl.DateTimeFormat(lang,{day:'numeric',month:'short',timeZone:'UTC'}).format(Date.parse(state.startDate+'T00:00Z')+Math.floor(time/1440)*86400000)}</span><strong>{clock(time)}</strong></div>
     <Graph history={history} rivals={rivals} release={release} t={t} lang={lang}/></section></div>
     <footer><span>{state?.over?t('score')+' · '+money(state.failed?0:Math.max(0,state.cash),lang):'Vending Bench / '+release.id+' · Seed '+release.seed}</span>

@@ -24,12 +24,32 @@ const verbs = {
 };
 
 export const local = ['help', 'world', 'tabs', 'view', 'scores'];
+export const commandGroups = {
+  supply: ['find','quote','order','depot'],
+  machines: ['inspect','refill','price','swap','clear'],
+  business: ['status','sales','close','advertise','campaigns'],
+  correspondence: ['inbox','read','mail','pay'],
+  records: ['note','notes','remind','reminders'],
+};
 export const address = id => id.toLowerCase().replace(/^ai-/, '').replaceAll(':', '.');
 export const vocabulary = actions => Object.entries(verbs).filter(([, [tool]])=>tool in actions);
-export const syntax = verb => verb==='order'?'order supplier_id product_id quantity …':[verb, verbs[verb]?.[1] || ''].join(' ').trim();
+const argumentNames={supplier_id:'supplier',product_id:'product',machine_id:'machine',
+  email_id:'email',in_days:'days'};
+export function syntax(verb) {
+  if(verb==='view')return 'view <result>';
+  if(verb==='order') return 'order <supplier> <product> <quantity> [<product> <quantity>]...';
+  const specs=verbs[verb]?.[1].split(' ').filter(Boolean) || [];
+  const args=specs.map(spec=>{
+    const key=spec.replace(/[?.]/g,'');
+    const name=argumentNames[key] || key;
+    return spec.endsWith('?')?'['+name+']':'<'+name+'>';
+  });
+  return [verb,...args].join(' ');
+}
 export const toolFor = verb => verbs[verb]?.[0];
 
 export function parse(line, state, actions) {
+  if((line.match(/"/g)||[]).length%2)throw Error(syntax(line.trim().split(/\s+/)[0]));
   const tokens = (line.match(/"[^"]*"|[^\s"]+/g) || []).map(s=>s.replace(/^"|"$/g,''));
   const verb = tokens.shift()?.toLowerCase();
   const entry = verbs[verb];
@@ -44,7 +64,7 @@ export function parse(line, state, actions) {
       while(tokens.length) {
         const product = tokens.shift();
         const count = Number(tokens.shift());
-        if (!Number.isSafeInteger(count) || count < 1) throw Error('order supplier_id product_id quantity …');
+        if (!Number.isSafeInteger(count) || count < 1) throw Error(syntax(verb));
         items[product] = (items[product] || 0) + count;
       }
       args.items = items;

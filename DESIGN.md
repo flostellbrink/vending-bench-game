@@ -26,6 +26,8 @@ Show each cabinet as a separate display over the office drawing. A cabinet with 
 
 Tab completes the current word; Enter executes. History recall edits a copy, not the earlier command. Use short verbs such as `find`, `quote`, `order`, `inspect`, `refill` and `price`. A syntax error costs nothing. A valid command that the simulator refuses can cost time. Show the distinction.
 
+Use the same synopsis in help, completion guidance and syntax errors: `<slot>` is required, `[quantity]` is optional, and `[<product> <quantity>]...` is a repeatable group. Type the values without brackets. For example, `order zuidas-groothandel stroopwafel-2pk 120` orders one product; append another product and quantity to include it in the same order.
+
 Each paid observation has a timestamp and remains readable. Local commands for help, tabs and the world view cost nothing. Grid headings sort displayed rows, not the underlying simulation. Keep the original report with the grid so a summary cannot hide order conditions or overnight notices. The prompt stays usable over any result.
 
 ## Version boundary
