@@ -151,6 +151,10 @@
   border-radius: 3px;
   background: #1a2420;
 }
+/* A growing save tree must scroll with the page rather than pinning its controls below it. */
+.launch-bay:has(.save-library) {
+  position: static;
+}
 .launch-bay .session-setup {
   width: auto;
   max-width: none;

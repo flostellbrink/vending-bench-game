@@ -44,7 +44,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money }: Props
             }}
             openReport={(id) => {
               setReceipt(id);
-              setDay(null);
+              setDay(reports.find((r) => r.id === id)?.day ?? null);
             }}
           />
           {day !== null && (
@@ -99,7 +99,13 @@ export function Settlement({ run, release, slot, lang, t, screen, money }: Props
           )}
         </section>
         <aside className="launch-bay">
-          <SessionSetup lang={lang} initialRevision={release.revision} activeSlot={slot} compact />
+          <SessionSetup
+            lang={lang}
+            initialRevision={release.revision}
+            activeSlot={slot}
+            initialDay={day ?? undefined}
+            compact
+          />
         </aside>
       </div>
     </StationFrame>

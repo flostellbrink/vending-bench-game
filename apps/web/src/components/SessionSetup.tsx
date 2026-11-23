@@ -4,20 +4,13 @@ import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
 import { first } from "games-common/language";
-import { useState, useSyncExternalStore } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 
 import type { Locale } from "@/dictionary/runtime";
 
 import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
-import {
-  createRun,
-  forkRun,
-  readRecord,
-  readSlotSnapshot,
-  recordKey,
-  slotSnapshot,
-} from "@/game/runs";
+import { forkRun, readRecord, readSlotSnapshot, recordKey, slotSnapshot } from "@/game/runs";
 
 import SaveTree from "./SaveTree";
 import "./session-setup.css";
@@ -26,6 +19,7 @@ interface Props {
   lang: Locale;
   initialRevision?: string;
   activeSlot?: string;
+  initialDay?: number;
   compact?: boolean;
   renderPage?: (release: Release, setup: ReactElement) => ReactElement;
 }
@@ -60,6 +54,7 @@ export default function SessionSetup({
   lang,
   initialRevision,
   activeSlot,
+  initialDay,
   compact = false,
   renderPage,
 }: Props) {
@@ -86,18 +81,17 @@ export default function SessionSetup({
   const options = { locale: lang };
   const money = new Intl.NumberFormat(lang, { style: "currency", currency: current.currency });
   const disabled = sending || typeof snapshot !== "string";
-  function begin(parent?: { id: string; day: number }) {
+  const startForm = useId();
+  function branch(id: string, day: number) {
     if (disabled) return;
     setSending(true);
     try {
-      const slot = parent
-        ? forkRun(localStorage, current, parent.id, parent.day)
-        : createRun(localStorage, current);
+      const slot = forkRun(localStorage, current, id, day);
       location.assign(
         "/" + lang + "/run/?" + new URLSearchParams({ bench: current.revision, slot }),
       );
     } catch {
-      setProblem(parent ? "branchFailed" : "unavailable");
+      setProblem("branchFailed");
       setSending(false);
     }
   }
@@ -114,6 +108,8 @@ export default function SessionSetup({
       <label className="session-version">
         {msg.session.version({}, options)}
         <select
+          name="bench"
+          form={startForm}
           value={current.revision}
           disabled={sending}
           onChange={(event) => {
@@ -164,20 +160,22 @@ export default function SessionSetup({
       {!current.rivals.some((r) => r.kind === "model") && (
         <p className="session-note">{msg.session.noAI({}, options)}</p>
       )}
-      <div className="session-actions">
-        <button type="button" disabled={disabled} onClick={() => begin()}>
+      <form id={startForm} className="session-actions" method="get" action={"/" + lang + "/run/"}>
+        <input name="slot" type="hidden" value="new" />
+        <button type="submit" disabled={sending}>
           {slots.length ? msg.session.again({}, options) : msg.session.start({}, options)}
         </button>
-      </div>
+      </form>
       <SaveTree
-        key={current.revision}
+        key={current.revision + ":" + (initialDay ?? "latest")}
         release={current}
         slots={slots}
         lang={lang}
         compact={compact}
         activeSlot={current.revision === initialRevision ? activeSlot : undefined}
+        initialDay={current.revision === initialRevision ? initialDay : undefined}
         disabled={disabled}
-        branch={(id, day) => begin({ id, day })}
+        branch={branch}
       />
       {problem && (
         <p role="alert">

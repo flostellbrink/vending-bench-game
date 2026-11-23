@@ -16,6 +16,7 @@ interface Props {
   slots: RunSlot[];
   lang: Locale;
   activeSlot?: string;
+  initialDay?: number;
   compact: boolean;
   disabled: boolean;
   branch: (slot: string, day: number) => void;
@@ -81,11 +82,14 @@ export default function SaveTree({
   slots,
   lang,
   activeSlot,
+  initialDay,
   compact,
   disabled,
   branch,
 }: Props) {
-  const [selection, select] = useState<Selection>();
+  const [selection, select] = useState<Selection | undefined>(() =>
+    activeSlot && initialDay !== undefined ? { slot: activeSlot, day: initialDay } : undefined,
+  );
   const scroller = useRef<HTMLDivElement>(null);
   const rows = orderSlots(slots);
   const runNumbers = new Map(slots.map((s, i) => [s.id, i + 1]));

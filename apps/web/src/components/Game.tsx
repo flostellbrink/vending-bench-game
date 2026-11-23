@@ -1,11 +1,14 @@
 "use client";
+import type { Release } from "games-common/benchmark";
+
 import { redirect, useSearchParams } from "next/navigation";
-import { Suspense, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import type { Lang } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
-import { isSlotId, legacySlot, runKey } from "@/game/runs";
+import { createRun, isSlotId, legacySlot, listRuns } from "@/game/runs";
 
 import { Station } from "./Station";
 export default function Game({ lang }: { lang: Lang }) {
@@ -21,25 +24,62 @@ function ActiveRun({ lang }: { lang: Lang }) {
   const revision = query.get("bench");
   const slot = query.get("slot") ?? legacySlot;
   const release = releases.find((entry) => entry.revision === revision);
-  const exists = useSyncExternalStore(
+  if (!release) redirect("/" + lang + "/");
+  if (slot === "new") return <OpenNewRun lang={lang} release={release} />;
+  return <SavedRun lang={lang} release={release} slot={slot} />;
+}
+
+function OpenNewRun({ lang, release }: { lang: Lang; release: Release }) {
+  const started = useRef(false),
+    [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    // Commit a new slot only after navigation; merely loading the setup must not write a save.
+    void Promise.resolve()
+      .then(() => {
+        const slot = createRun(localStorage, release);
+        location.replace(
+          "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot }),
+        );
+      })
+      .catch(() => setFailed(true));
+  }, [release, lang]);
+  return (
+    <main className="run-loading">
+      {failed ? (
+        <p role="alert">
+          {msg.session.unavailable({}, { locale: lang })}{" "}
+          <a href={"/" + lang + "/"}>{msg.session.choose({}, { locale: lang })}</a>
+        </p>
+      ) : (
+        "VENDIX/OS"
+      )}
+    </main>
+  );
+}
+
+function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot: string }) {
+  const index = useSyncExternalStore(
     subscribe,
     () => {
-      if (!release || !isSlotId(slot)) return false;
+      if (!isSlotId(slot)) return -1;
       try {
-        return localStorage.getItem(runKey(release, slot)) !== null;
+        return listRuns(localStorage, release).findIndex((run) => run.id === slot);
       } catch {
-        return false;
+        return -1;
       }
     },
     () => undefined,
   );
-  if (exists === undefined) return <main className="run-loading">VENDIX/OS</main>;
-  if (!release || !exists) redirect("/" + lang + "/");
+  if (index === undefined) return <main className="run-loading">VENDIX/OS</main>;
+  if (index < 0) redirect("/" + lang + "/");
   return (
     <Station
       key={release.revision + ":" + slot}
       release={release}
       slot={slot}
+      runNumber={index + 1}
       lang={lang}
       changeLang={(l) => {
         localStorage.language = l;

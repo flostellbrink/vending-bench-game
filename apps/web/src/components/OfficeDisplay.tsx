@@ -56,7 +56,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
       </div>
       <div className="transport">
         <b>
-          {t("day")} {Math.min(release.days, day + 1)} / {release.days}
+          {state ? t("day") + " " + Math.min(release.days, day + 1) + " / " + release.days : "—"}
         </b>
         <span>{date}</span>
         {state && (
@@ -70,7 +70,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
           </div>
         )}
         {estimate && <small className="clock-estimate">+{estimate.minutes} min</small>}
-        <strong>{clock(time)}</strong>
+        <strong>{state ? clock(time) : "—"}</strong>
       </div>
     </>
   );

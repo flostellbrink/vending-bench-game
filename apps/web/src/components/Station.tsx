@@ -2,13 +2,13 @@ import type { Release } from "games-common/benchmark";
 
 import { useMemo } from "react";
 
+import { msg } from "@/dictionary";
 import { locales } from "@/dictionary/runtime";
 import { useCommandLine } from "@/hooks/useCommandLine";
 import { useNavigation } from "@/hooks/useNavigation";
 import { useRun } from "@/hooks/useRun";
 import { isLang } from "@/localization/locale";
 import { operatorLabels, screenLabels, type Lang } from "@/localization/messages";
-import { stationMessages as msg } from "@/localization/station-messages";
 
 import { OperatorTerminal } from "./OperatorTerminal";
 import { Settlement } from "./Settlement";
@@ -16,10 +16,11 @@ import { Workspace } from "./Workspace";
 interface Props {
   release: Release;
   slot: string;
+  runNumber: number;
   lang: Lang;
   changeLang: (locale: Lang) => void;
 }
-export function Station({ release, slot, lang, changeLang }: Props) {
+export function Station({ release, slot, runNumber, lang, changeLang }: Props) {
   const nav = useNavigation(),
     run = useRun(release, slot, nav.setTab);
   const t = useMemo(() => operatorLabels(lang), [lang]),
@@ -47,7 +48,9 @@ export function Station({ release, slot, lang, changeLang }: Props) {
           <i className="brand-mark" aria-hidden />
           Vending Bench
         </h1>
-        <span className="operator">{t("operator")}</span>
+        <span className="operator">
+          {msg.session.runNumber({ index: runNumber }, { locale: lang })}
+        </span>
         <i className="vent" aria-hidden />
         {opponent && (
           <button className="pace-key" onClick={() => nav.setTab("scores")}>
@@ -93,7 +96,7 @@ export function Station({ release, slot, lang, changeLang }: Props) {
             : "Vending Bench / " + release.id + " · Seed " + release.seed}
         </span>
         <a href={"/" + lang + "/?" + new URLSearchParams({ bench: release.revision, slot })}>
-          {t("setup")}
+          {msg.session.library({}, { locale: lang })}
         </a>
       </footer>
     </main>

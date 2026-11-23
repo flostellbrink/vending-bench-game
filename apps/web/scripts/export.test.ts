@@ -26,6 +26,21 @@ await test("each exported page ships only its own localized messages", async () 
       const route = new URL(locale + "/" + segment, directory);
       const html = await readFile(new URL("index.html", route), "utf8");
       assert.ok(html.includes('<html lang="' + locale + '">'));
+      if (segment === "") {
+        const form = html.match(
+          /<form\b(?=[^>]*class="session-actions")[^>]*>[\s\S]*?<\/form>/,
+        )?.[0];
+        assert.ok(form, "Missing native setup form");
+        assert.ok(
+          form.includes('action="/' + locale + '/run/"'),
+          "Start must navigate without landing-page JavaScript",
+        );
+        assert.ok(form.includes('name="slot"') && form.includes('value="new"'));
+        assert.ok(
+          !form.match(/<button\b[^>]*\bdisabled/),
+          "A fresh exported start must not depend on the save tree hydrating",
+        );
+      }
       const flight = await readFile(new URL("index.txt", route), "utf8");
       const line = flight
         .split("\n")
