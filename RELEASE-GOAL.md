@@ -40,10 +40,12 @@ For each review, name the strongest moment worth preserving and the weakest mome
 
 ## Performance and compatibility
 
-Desktop is the design target. A phone gets the same game, not a reduced menu-driven replacement. Support the static export in current Chrome, Firefox and Safari, including Android and iOS. Test a laptop with integrated graphics at native pixel density, a high-density desktop display, and a mid-range phone. Record actual devices, browsers, viewport sizes and gaps in coverage. Emulation is useful but does not prove real-device performance.
+**Non-goal: mobile perfection.** Design for a desktop player using a keyboard. Keep the same game usable on a narrow screen; do not redesign the desktop workbench around touch or build a separate phone interface. Test on physical phones when available. Missing phone hardware or mobile performance measurements are coverage gaps, not release gates.
 
-- Target a visible response to typing or completion within 50 ms at the 95th percentile on desktop and 100 ms on the phone. Measure during a late-game run with a long transcript, not only at an empty prompt.
-- Target 60 frames per second on desktop and at least 30 on the phone during a service visit or overnight transition. Record frame times, CPU time and available GPU measurements with CRT on and off. A steady animation callback rate alone does not establish low rendering cost. When simulated time stops, stop scene work.
+Target current desktop Chrome, Firefox and Safari. Test on an integrated-GPU laptop and a high-density display. Record the devices, browsers and viewport sizes tested. Do not present emulation as physical-device evidence.
+
+- Target a visible response to typing or completion within 50 ms at the 95th percentile on desktop. Measure during a late-game run with a long transcript, not only at an empty prompt.
+- Target 60 frames per second on desktop during a service visit or overnight transition. Record frame times, CPU time and available GPU measurements. A steady animation callback rate alone does not establish low rendering cost. When simulated time stops, stop scene work.
 - Measure cold start to the first usable prompt and to the first executable simulation command separately. Report transfer size, cache state, network and device. Report memory after a full run and several restarts; old workers and detached scenes must not accumulate.
 - Keep input and results reachable at supported sizes, with zoom and the phone keyboard open. Respect reduced motion and high contrast.
 - **CRT is optional.** Keep it only if the curved-glass effect looks convincing at play size and meets the interaction and rendering budgets on actual target hardware. If there is no clear, affordable way to achieve both, remove the effect and its switch. A scanline overlay is not a substitute.
@@ -55,6 +57,7 @@ Desktop is the design target. A phone gets the same game, not a reduced menu-dri
 2. Keep a fast route to the exact moment under review: a clean start, a supplier decision, a refill, a long transcript or a final score. Use reproducible saves for engineering checks and clean saves for discovery reviews. Measure edit-to-play time; fix the development loop if setup or rebuilding takes more time than evaluating the change.
 3. Use subagents in parallel at milestones: one plays without the design document; another challenges the interaction, art in motion or performance evidence. Ask what happened, what they expected and what decision they could not make. Source inspection is not a playtest. Agent reviews do not replace human taste or real-device testing.
 4. After each substantial pass, record elapsed time, the player-visible difference, the result of the same task and the largest remaining obstacle. If two attempts leave the same blocker, stop tuning that approach. Replace it, simplify it or cut it.
+5. A blocked check is not a blocked game. Record the dependency in the scratchpad and work on the next useful task. Mark the whole goal blocked only when no meaningful, authorized progress is possible on any part of the game.
 
 ## Exit condition
 
