@@ -1,26 +1,24 @@
 {
-  "name": "vending-bench-game",
+  "name": "vending-bench-workspace",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.5.1",
   "scripts": {
-    "test": "node scripts/benchmark-assets.js && node --test scripts/benchmark.test.js scripts/workbench.test.js",
-    "generate:localize": "node packages/localize/src/cli.ts --input dictionary.yaml --output src/dictionary",
-    "generate": "pnpm generate:localize && node scripts/benchmark-assets.js",
-    "dev": "pnpm generate && next dev --port 5173",
-    "build": "pnpm generate && next build"
-  },
-  "dependencies": {
-    "games-localize": "workspace:*",
-    "next": "16.4.0-canary.50",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "generate": "pnpm --filter vending-bench-game generate",
+    "dev": "pnpm generate && pnpm --filter vending-bench-game dev",
+    "build": "pnpm generate && pnpm --filter vending-bench-game build",
+    "test": "pnpm generate && pnpm --filter vending-bench-game test",
+    "typecheck": "pnpm generate && pnpm --filter vending-bench-game typegen && tsc -b",
+    "quality:check": "node apps/web/scripts/check-source.ts && pnpm typecheck && pnpm quality:check:lint && pnpm quality:check:format && pnpm --filter vending-bench-game test",
+    "quality:check:format": "oxfmt --check",
+    "quality:fix:format": "oxfmt",
+    "quality:check:lint": "oxlint"
   },
   "devDependencies": {
-    "@types/node": "26.6.5",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "pyodide": "0.27.7",
-    "typescript": "7.0.2"
-  }
+    "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "oxlint-tsgolint": "catalog:",
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@12.5.1"
 }

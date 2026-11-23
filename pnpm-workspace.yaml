@@ -1,4 +1,26 @@
 packages:
+  - .
+  - apps/*
   - packages/*
+catalog:
+  "@tailwindcss/turbopack": 4.3.3
+  tailwindcss: 4.3.3
+  babel-plugin-react-compiler: 1.0.0
+  oxlint-tsgolint: 7.0.2004
+  "@types/node": 26.6.5
+  "@types/react": 19.3.0
+  "@types/react-dom": 19.3.0
+  esbuild: 0.28.2
+  js-yaml: 5.4.3
+  messageformat: 4.1.0
+  next: 16.4.0-canary.50
+  oxfmt: 0.67.0
+  oxlint: 1.87.0
+  pyodide: 0.27.7
+  react: 19.3.0
+  react-dom: 19.3.0
+  typescript: 7.0.2
+  valibot: 1.5.0
 allowBuilds:
+  esbuild: false
   sharp: false

@@ -3,16 +3,26 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": {"react-server":"./src/server.ts","default":"./src/index.ts"},
+    ".": {
+      "react-server": "./src/server.ts",
+      "default": "./src/index.ts"
+    },
     "./react": "./src/react.tsx",
     "./loader": "./src/loader.ts",
     "./next": "./src/next.ts"
   },
   "dependencies": {
-    "games-common":"workspace:*",
-    "js-yaml":"5.4.3",
-    "messageformat":"4.1.0",
-    "valibot":"1.5.0",
-    "react":"19.3.0"
+    "games-common": "workspace:*",
+    "js-yaml": "catalog:",
+    "messageformat": "catalog:",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "react": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
   }
 }

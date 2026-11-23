@@ -1,1 +1,12 @@
-{"name":"games-common","private":true,"type":"module","exports":{"./language":"./src/language.ts"}}
+{
+  "name": "games-common",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./language": "./src/language.ts",
+    "./benchmark": "./src/benchmark.ts"
+  },
+  "dependencies": {
+    "valibot": "catalog:"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "extends": "../common/tsconfig.common.json",
+  "compilerOptions": { "types": ["node", "react"], "lib": ["esnext", "dom"] },
+  "include": ["src"]
+}

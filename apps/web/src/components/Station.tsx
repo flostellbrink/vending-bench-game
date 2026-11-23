@@ -1,0 +1,132 @@
+import type { Release } from "games-common/benchmark";
+
+import { useMemo, useState } from "react";
+
+import { locales } from "@/dictionary/runtime";
+import { useCommandLine } from "@/hooks/useCommandLine";
+import { useNavigation } from "@/hooks/useNavigation";
+import { useRun } from "@/hooks/useRun";
+import { isLang } from "@/localization/locale";
+import { operatorLabels, screenLabels, type Lang } from "@/localization/messages";
+import { stationMessages as msg } from "@/localization/station-messages";
+
+import { OperatorTerminal } from "./OperatorTerminal";
+import { Scorecard } from "./Scorecard";
+import SessionSetup from "./SessionSetup";
+import { Workspace } from "./Workspace";
+interface Props {
+  release: Release;
+  lang: Lang;
+  changeLang: (locale: Lang) => void;
+}
+export function Station({ release, lang, changeLang }: Props) {
+  const nav = useNavigation(),
+    run = useRun(release, nav.setTab);
+  const t = useMemo(() => operatorLabels(lang), [lang]),
+    screen = useMemo(() => screenLabels(lang), [lang]);
+  const money = useMemo(() => {
+    const formatter = new Intl.NumberFormat(lang, {
+      style: "currency",
+      currency: release.currency,
+    });
+    return (value: number) => formatter.format(value);
+  }, [lang, release.currency]);
+  const shell = useCommandLine(run, nav, release, lang, t, screen),
+    [reviewing, setReviewing] = useState(false);
+  const { state, rivals, best, reports, busy, history } = run;
+  const opponent = rivals.find((r) => r.kind === "model") ?? rivals[0],
+    day = history.length - 1,
+    closing = history[day],
+    rivalClose = opponent?.values?.[day];
+  const gap =
+    day > 0 && closing !== undefined && rivalClose !== undefined ? closing - rivalClose : null;
+  if (state?.over && !reviewing)
+    return (
+      <main className="settlement">
+        <header className="settlement-rail">
+          <h1>Vending Bench</h1>
+          <span>
+            {release.version} / {t("day")} {state.day}
+          </span>
+        </header>
+        <div className="settlement-body">
+          <section>
+            <Scorecard
+              {...{ state, rivals, best, lang, t, screen, reports, money }}
+              archives={release.archives}
+              openReport={(id) => {
+                setReviewing(true);
+                nav.setTab(id);
+              }}
+            />
+            <button
+              onClick={() => {
+                setReviewing(true);
+                nav.setTab("world");
+              }}
+            >
+              {t("journal")}
+            </button>
+          </section>
+          <SessionSetup lang={lang} initialRevision={release.revision} compact />
+        </div>
+      </main>
+    );
+  return (
+    <main className="station">
+      <header className="mast">
+        <h1>
+          <i className="brand-mark" aria-hidden />
+          Vending Bench
+        </h1>
+        <span className="operator">{t("operator")}</span>
+        <i className="vent" aria-hidden />
+        {opponent && (
+          <button className="pace-key" onClick={() => nav.setTab("scores")}>
+            <span>
+              {opponent.kind === "script" ? msg.fields.bot({}, { locale: lang }) : opponent.name}
+            </span>
+            <b>
+              {gap === null
+                ? money(opponent.score)
+                : t("day") + " " + day + " · " + (gap > 0 ? "+" : "") + money(gap)}
+            </b>
+          </button>
+        )}
+        <select
+          aria-label="Language / Idioma / Sprache"
+          value={lang}
+          disabled={busy}
+          onChange={(e) => {
+            if (isLang(e.target.value)) changeLang(e.target.value);
+          }}
+        >
+          {locales.map((l) => (
+            <option key={l} value={l}>
+              {l.toUpperCase()}
+            </option>
+          ))}
+        </select>
+        <button className="bank-key" aria-label={t("bank")} onClick={() => nav.setTab("world")}>
+          <strong>{state ? money(state.cash) : "—"}</strong>
+        </button>
+      </header>
+      <div className="desk">
+        <OperatorTerminal
+          {...{ release, lang, t, screen, money, run, shell }}
+          setTab={nav.setTab}
+        />
+        <Workspace {...{ run, nav, shell, release, lang, t, screen, money }} />
+      </div>
+      <footer>
+        <span>
+          {state?.final
+            ? t("score") + " · " + money(state.final.reward)
+            : "Vending Bench / " + release.id + " · Seed " + release.seed}
+        </span>
+        {state?.over && <button onClick={() => setReviewing(false)}>{t("standings")}</button>}
+        <a href={"/" + lang + "/"}>{t("setup")}</a>
+      </footer>
+    </main>
+  );
+}

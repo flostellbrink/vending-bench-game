@@ -1,0 +1,93 @@
+.session-screen {
+  min-height: 100svh;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: clamp(1rem, 6vw, 5rem);
+  background: #363c3d url("/enamel.jpg") repeat center / 290px;
+  background-blend-mode: luminosity;
+}
+.session-setup {
+  width: min(100%, 35rem);
+  padding: clamp(1rem, 3vw, 2rem);
+  background: #e6e8dd;
+  color: #24342e;
+  border: 3px ridge #a0aaa0;
+  line-height: 1.4;
+}
+.session-setup header,
+.session-setup nav,
+.session-setup .session-actions,
+.session-version,
+.session-setup dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+.session-setup header {
+  padding-bottom: 0.6rem;
+  border-bottom: 2px solid #738578;
+}
+.session-setup h1 {
+  font:
+    900 italic 1.75rem/1 Arial,
+    sans-serif;
+  text-transform: uppercase;
+}
+.session-setup h2,
+.session-setup h3 {
+  margin: 0;
+}
+.session-setup h3 {
+  margin-top: 1.3rem;
+  font-size: 1rem;
+}
+.session-setup nav {
+  gap: 0.45rem;
+  font-size: 0.85em;
+}
+.session-setup a {
+  color: inherit;
+  text-underline-offset: 0.15em;
+}
+.session-setup nav [aria-current] {
+  text-decoration: none;
+  font-weight: 700;
+}
+.session-setup dl {
+  margin: 0.45rem 0;
+}
+.session-setup dl > div {
+  padding: 0.22rem 0;
+  border-bottom: 1px dotted #a1ab9f;
+}
+.session-setup dd {
+  margin: 0;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+.session-version {
+  padding: 0.7rem 0 0.25rem;
+}
+.session-version select,
+.session-actions button {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid #7a8a7b;
+  font: inherit;
+}
+.session-version select {
+  background: #f1f1e8;
+}
+.session-actions button {
+  background: #304b3b;
+  color: #f8f7e9;
+}
+.session-note {
+  color: #4b5951;
+  font-size: 0.9em;
+}
+.session-actions {
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}

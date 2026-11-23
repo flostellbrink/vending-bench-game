@@ -1,38 +1,10 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "jsx": "react-jsx",
-    "allowJs": true,
-    "noEmit": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "incremental": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true
-  },
-  "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "app",
-    "web",
-    "src/dictionary",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
+  "extends": "./packages/common/tsconfig.common.json",
+  "files": [],
+  "references": [
+    { "path": "./apps/web" },
+    { "path": "./apps/web/tsconfig.tools.json" },
+    { "path": "./apps/web/tsconfig.worker.json" },
+    { "path": "./packages/localize" }
   ]
 }

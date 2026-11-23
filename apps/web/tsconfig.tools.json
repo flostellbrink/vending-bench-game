@@ -1,0 +1,5 @@
+{
+  "extends": "../../packages/common/tsconfig.common.json",
+  "compilerOptions": { "types": ["node"], "lib": ["esnext", "dom"] },
+  "include": ["scripts", "../../design/*.ts"]
+}

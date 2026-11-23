@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "options": { "typeAware": true, "typeCheck": true },
+  "categories": { "correctness": "error", "suspicious": "error" },
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "react"],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "vendor/**",
+    "**/.next/**",
+    "**/dist/**",
+    "**/out/**",
+    "**/next-env.d.ts",
+    "**/src/dictionary/**",
+    "**/src/generated/**",
+    "**/public/benchmarks/**",
+    "**/public/python/**",
+    "**/public/releases.json",
+    "**/public/worker.js"
+  ],
+  "rules": {
+    "react/memo-dependencies": "off",
+    "typescript/no-explicit-any": "error",
+    "typescript/ban-ts-comment": [
+      "error",
+      { "ts-check": false, "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true }
+    ],
+    "typescript/no-non-null-assertion": "error",
+    "react/react-in-jsx-scope": "off",
+    "eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["apps/web/src/worker/worker.ts", "apps/web/src/hooks/useRun.ts"],
+      "rules": { "unicorn/require-post-message-target-origin": "off" }
+    },
+    {
+      "files": [
+        "apps/**/*.ts",
+        "apps/**/*.tsx",
+        "design/**/*.ts",
+        "packages/common/src/benchmark.ts"
+      ],
+      "rules": { "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }] }
+    }
+  ]
+}

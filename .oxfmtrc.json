@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "sortImports": {
+    "groups": [
+      "type-import",
+      ["value-builtin", "value-external"],
+      "type-internal",
+      "value-internal",
+      ["type-parent", "type-sibling", "type-index"],
+      ["value-parent", "value-sibling", "value-index"],
+      "unknown"
+    ]
+  },
+  "objectWrap": "collapse",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "vendor/**",
+    "**/.next/**",
+    "**/dist/**",
+    "**/out/**",
+    "**/next-env.d.ts",
+    "**/src/dictionary/**",
+    "**/src/generated/**",
+    "**/public/benchmarks/**",
+    "**/public/python/**",
+    "**/public/releases.json",
+    "**/public/worker.js",
+    "pnpm-lock.yaml"
+  ]
+}

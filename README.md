@@ -12,13 +12,19 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open <http://localhost:5173>. Type `help` or press Tab at the empty prompt. `brief` opens the operating rules. Use `find snacks` to search for suppliers, or open the depot and use its supplier directory. A supplier’s quote doubles as an order slip. Its price applies to the quoted quantity; placing the order pays immediately. The map follows the address you type; no map clicks are necessary.
+Open <http://localhost:5173>, select the benchmark version, then start or resume a run. Type `help` or press Tab at the empty prompt. `brief` opens the operating rules. Use `find snacks` to search for suppliers, or open the depot and use its supplier directory. A supplier’s quote doubles as an order slip. Its price applies to the quoted quantity; placing the order pays immediately. The map follows the address you type; no map clicks are necessary.
 
 Use `balance` to review daily balances, `tabs` to list receipts, or `view <result>` to reopen one. The office remains visible above the report. After day 30, `scores` compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
 
 ## Static export
 
-Run `pnpm build`. Serve the contents of `out/` with a static web server, or use it as the output directory for Cloudflare Pages. The export includes the Python runtime and the simulation. Play needs no server code, external service or API key. Each browser stores its own run.
+Run `pnpm build`. Serve `apps/web/out/` with a static web server or use it as the output directory for Cloudflare Pages. The export includes the Python runtime and the simulation. Play needs no server code, external service or API key. Each browser stores its own run.
+
+## Workspace
+
+The pnpm workspace contains one application and two shared packages. `apps/web/src/app` owns the localized Next.js routes. Components render the workbench; hooks own interaction and simulator lifecycle; game modules handle commands and observations; scene modules draw the office. The worker runs in its own TypeScript environment and bundles to a classic worker for Pyodide.
+
+`packages/common` owns shared types and schemas for the worker protocol, published data and saves. `packages/localize` generates page-specific messages. The app’s generators and tests live in `apps/web/scripts`. Run `pnpm quality:check` before committing. Run `pnpm build` and `pnpm --filter vending-bench-game test:export` to check the deployable files.
 
 ## Benchmark versions
 

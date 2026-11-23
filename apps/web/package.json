@@ -1,0 +1,35 @@
+{
+  "name": "vending-bench-game",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "generate:localize": "node ../../packages/localize/src/cli.ts --input dictionary.yaml --output src/dictionary",
+    "generate:assets": "node scripts/benchmark-assets.ts",
+    "generate:worker": "esbuild src/worker/worker.ts --bundle --format=iife --platform=browser --outfile=public/worker.js",
+    "generate": "pnpm generate:localize && pnpm generate:assets && pnpm generate:worker",
+    "dev": "next dev --hostname 127.0.0.1 --port 5173",
+    "build": "next build",
+    "typegen": "next typegen",
+    "test": "node --test scripts/benchmark.test.ts scripts/workbench.test.ts",
+    "test:export": "node --test scripts/export.test.ts"
+  },
+  "dependencies": {
+    "games-common": "workspace:*",
+    "games-localize": "workspace:*",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "valibot": "catalog:"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "babel-plugin-react-compiler": "catalog:",
+    "esbuild": "catalog:",
+    "pyodide": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:"
+  }
+}

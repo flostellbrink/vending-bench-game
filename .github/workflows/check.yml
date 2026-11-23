@@ -13,6 +13,6 @@ jobs:
           node-version-file: .nvmrc
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
+      - run: pnpm quality:check
       - run: pnpm build
-      - run: node --test scripts/export.test.js
-      - run: pnpm test
+      - run: pnpm --filter vending-bench-game test:export
