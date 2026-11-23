@@ -10,7 +10,7 @@
     "dev": "next dev --hostname 127.0.0.1 --port 5173",
     "build": "next build",
     "typegen": "next typegen",
-    "test": "node --test scripts/benchmark.test.ts scripts/workbench.test.ts",
+    "test": "node --test scripts/benchmark.test.ts scripts/workbench.test.ts scripts/saves.test.ts",
     "test:export": "node --test scripts/export.test.ts"
   },
   "dependencies": {

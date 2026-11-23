@@ -10,9 +10,11 @@ interface Props {
   label: string;
   children: ReactNode;
   page?: "run" | "setup";
+  slot?: string;
 }
-export function StationFrame({ lang, revision, label, children, page = "setup" }: Props) {
+export function StationFrame({ lang, revision, label, children, page = "setup", slot }: Props) {
   const query = new URLSearchParams({ bench: revision });
+  if (slot) query.set("slot", slot);
   return (
     <main className="station-frame">
       <header className="mast">

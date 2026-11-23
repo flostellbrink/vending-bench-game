@@ -18,7 +18,16 @@ import * as v from "valibot";
 
 import { opensInstrument } from "@/game/receipt-routing";
 import { observation } from "@/game/reports";
-import { recordKey, runKey, readRecord, readRun, saveRun, withRunLock } from "@/game/runs";
+import {
+  recordKey,
+  runKey,
+  readRecord,
+  readRun,
+  runTimeline,
+  saveRun,
+  withRunLock,
+  type RunTimeline,
+} from "@/game/runs";
 
 export interface LocalLine {
   id: string;
@@ -100,7 +109,7 @@ function reportsFor(data: SimulatorResult, entries: Entry[], offset: number): Re
 }
 
 /** Keeps the selected run's simulator, journal and comparison record in sync. */
-export function useRun(release: Release, onView: (id: View) => void) {
+export function useRun(release: Release, slot: string, onView: (id: View) => void) {
   const [storedView, setView] = useState<RunView>(initialView);
   const view = storedView.revision === release.revision ? storedView : initialView();
   const [rivalResult, setRivals] = useState<{ revision: string; rivals: Rival[] } | null>(null);
@@ -109,7 +118,7 @@ export function useRun(release: Release, onView: (id: View) => void) {
   const [epoch, retry] = useState(0);
   const worker = useRef<Worker | null>(null);
   const pending = useRef<Entry | null>(null);
-  const saveKey = runKey(release);
+  const saveKey = runKey(release, slot);
   const bestKey = recordKey(release);
   const setError = useCallback((error: string) => setView((old) => ({ ...old, error })), []);
   const clearSaveIssue = useCallback(() => setSaveIssue(""), []);
@@ -123,6 +132,7 @@ export function useRun(release: Release, onView: (id: View) => void) {
       balances: number[] = [];
     let first = false;
     let entries: Entry[] = [];
+    let timeline: RunTimeline | undefined;
     pending.current = null;
 
     const fail = (error: unknown) => {
@@ -139,9 +149,11 @@ export function useRun(release: Release, onView: (id: View) => void) {
     function replay() {
       first = !localStorage.getItem("vendix.booted");
       serialized = localStorage.getItem(saveKey);
+      if (serialized === null) throw Error("Saved run not found");
       const saved = readRun(serialized, readRecord(localStorage.getItem(bestKey)));
       opponent = saved.opponent;
       entries = saved.moves;
+      timeline = saved.timeline;
       balances = [];
       pending.current = null;
       post(current, { release, moves: entries.map((e) => e.move) });
@@ -150,12 +162,14 @@ export function useRun(release: Release, onView: (id: View) => void) {
     async function accept(data: SimulatorResult) {
       const entry = pending.current;
       const reports = reportsFor(data, entry ? [entry] : entries, entry ? entries.length : 0);
+      const previousTimeline = timeline;
+      timeline = runTimeline(release, data.receipts, data.state.over, entry ? timeline : undefined);
       balances = entry ? [...balances, ...data.history.slice(1)] : data.history;
       if (entry) {
         const next = [...entries, entry];
         try {
           serialized = await withRunLock(saveKey, () =>
-            saveRun(localStorage, saveKey, serialized, next, opponent, data.state.over),
+            saveRun(localStorage, saveKey, serialized, next, opponent, data.state.over, timeline),
           );
         } catch (error) {
           if (abort.signal.aborted) return;
@@ -170,8 +184,30 @@ export function useRun(release: Release, onView: (id: View) => void) {
         }
         if (abort.signal.aborted) return;
         entries = next;
-      } else if (first) {
-        localStorage.setItem("vendix.booted", "1");
+      } else {
+        if (!previousTimeline && serialized !== null) {
+          try {
+            serialized = await withRunLock(saveKey, () =>
+              saveRun(
+                localStorage,
+                saveKey,
+                serialized,
+                entries,
+                opponent,
+                data.state.over,
+                timeline,
+              ),
+            );
+          } catch (error) {
+            if (abort.signal.aborted) return;
+            if (error instanceof Error && error.message === "changed") {
+              replay();
+              return;
+            }
+            setSaveIssue("saveFailed");
+          }
+        }
+        if (first) localStorage.setItem("vendix.booted", "1");
       }
       if (data.state.over) {
         try {

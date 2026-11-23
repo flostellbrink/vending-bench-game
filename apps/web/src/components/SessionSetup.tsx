@@ -4,19 +4,28 @@ import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
 import { first } from "games-common/language";
-import { useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import type { Locale } from "@/dictionary/runtime";
 
 import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
-import { readRecord, readRun, recordKey, runKey, saveRun, withRunLock } from "@/game/runs";
+import {
+  createRun,
+  forkRun,
+  readRecord,
+  readSlotSnapshot,
+  recordKey,
+  slotSnapshot,
+} from "@/game/runs";
 
+import SaveTree from "./SaveTree";
 import "./session-setup.css";
 
 interface Props {
   lang: Locale;
   initialRevision?: string;
+  activeSlot?: string;
   compact?: boolean;
   renderPage?: (release: Release, setup: ReactElement) => ReactElement;
 }
@@ -33,12 +42,12 @@ function subscribeToStorage(update: () => void) {
   return () => window.removeEventListener("storage", update);
 }
 
-function useStoredText(key: string) {
+function useStoredText(read: () => string | null) {
   return useSyncExternalStore<string | null | undefined | typeof unavailable>(
     subscribeToStorage,
     () => {
       try {
-        return localStorage.getItem(key);
+        return read();
       } catch {
         return unavailable;
       }
@@ -50,6 +59,7 @@ function useStoredText(key: string) {
 export default function SessionSetup({
   lang,
   initialRevision,
+  activeSlot,
   compact = false,
   renderPage,
 }: Props) {
@@ -64,50 +74,31 @@ export default function SessionSetup({
     releases.find((release) => release.revision === revision) ??
     releases.find((release) => release.rivals.some((r) => r.kind === "model")) ??
     first(releases);
-  const raw = useStoredText(runKey(current));
-  const record = useStoredText(recordKey(current));
-  const details = useMemo(() => {
-    if (raw === unavailable || record === unavailable) return null;
-    if (raw === undefined || record === undefined) return undefined;
-    try {
-      const best = readRecord(record);
-      return { raw, finished: readRun(raw, best).finished, best: best?.score };
-    } catch {
-      return null;
-    }
-  }, [raw, record]);
-  const [issue, setProblem] = useState<"conflict" | "unavailable">();
-  const problem = details === null ? "unavailable" : issue;
+  const snapshot = useStoredText(() => slotSnapshot(localStorage, current));
+  const slots = typeof snapshot === "string" ? readSlotSnapshot(snapshot) : [];
+  const record = useStoredText(() => {
+    const best = readRecord(localStorage.getItem(recordKey(current)));
+    return best === null ? null : String(best.score);
+  });
+  const [issue, setProblem] = useState<"branchFailed" | "unavailable">();
+  const problem = snapshot === unavailable ? "unavailable" : issue;
   const [sending, setSending] = useState(false);
-  const [replacement, setReplacement] = useState<{ revision: string; raw: string } | null>(null);
-  const startButton = useRef<HTMLButtonElement>(null);
-  const explanation = useId();
-  function keep() {
-    setReplacement(null);
-    requestAnimationFrame(() => startButton.current?.focus());
-  }
   const options = { locale: lang };
   const money = new Intl.NumberFormat(lang, { style: "currency", currency: current.currency });
-  const hasSave = details != null && details.raw !== null;
-  const disabled = sending || details == null || problem === "unavailable";
-  const params = new URLSearchParams({ bench: current.revision });
-  const destination = "/" + lang + "/run/?" + params;
-  async function begin(expected: string | null) {
-    if (disabled || !details) return;
+  const disabled = sending || typeof snapshot !== "string";
+  function begin(parent?: { id: string; day: number }) {
+    if (disabled) return;
     setSending(true);
     try {
-      const key = runKey(current);
-      await withRunLock(key, () => {
-        const latestBest = readRecord(localStorage.getItem(recordKey(current)));
-        saveRun(localStorage, key, expected, [], latestBest);
-      });
-      location.assign(destination);
-    } catch (error) {
-      if (error instanceof Error && error.message === "changed") {
-        setProblem("conflict");
-      } else setProblem("unavailable");
+      const slot = parent
+        ? forkRun(localStorage, current, parent.id, parent.day)
+        : createRun(localStorage, current);
+      location.assign(
+        "/" + lang + "/run/?" + new URLSearchParams({ bench: current.revision, slot }),
+      );
+    } catch {
+      setProblem(parent ? "branchFailed" : "unavailable");
       setSending(false);
-      setReplacement(null);
     }
   }
 
@@ -127,7 +118,6 @@ export default function SessionSetup({
           disabled={sending}
           onChange={(event) => {
             setChoice(event.currentTarget.value);
-            setReplacement(null);
             setProblem(undefined);
           }}
         >
@@ -164,68 +154,35 @@ export default function SessionSetup({
             <dd>{money.format(r.score)}</dd>
           </div>
         ))}
-        {details?.best != null && (
+        {typeof record === "string" && (
           <div>
             <dt>{msg.session.record({}, options)}</dt>
-            <dd>{money.format(details.best)}</dd>
+            <dd>{money.format(Number(record))}</dd>
           </div>
         )}
       </dl>
       {!current.rivals.some((r) => r.kind === "model") && (
         <p className="session-note">{msg.session.noAI({}, options)}</p>
       )}
-      {replacement?.revision === current.revision ? (
-        <div
-          className="replace-run"
-          role="group"
-          aria-describedby={explanation}
-          onKeyDown={(event) => {
-            if (event.key === "Escape" && !sending) {
-              event.preventDefault();
-              keep();
-            }
-          }}
-        >
-          <p id={explanation}>{msg.session.discard({}, options)}</p>
-          <div className="session-actions">
-            <button type="button" autoFocus disabled={sending} onClick={keep}>
-              {msg.session.keep({}, options)}
-            </button>
-            <button type="button" disabled={disabled} onClick={() => begin(replacement.raw)}>
-              {msg.session.replace({}, options)}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="session-actions">
-          {hasSave && !(compact && details?.finished && current.revision === initialRevision) && (
-            <a href={destination}>
-              {details?.finished
-                ? msg.session.reopen({}, options)
-                : msg.session.resume({}, options)}
-            </a>
-          )}
-          <button
-            ref={startButton}
-            type="button"
-            disabled={disabled}
-            onClick={() => {
-              if (!details) return;
-              if (details.raw !== null && !details.finished) {
-                setReplacement({ revision: current.revision, raw: details.raw });
-                return;
-              }
-              void begin(details.raw);
-            }}
-          >
-            {hasSave ? msg.session.again({}, options) : msg.session.start({}, options)}
-          </button>
-        </div>
-      )}
+      <div className="session-actions">
+        <button type="button" disabled={disabled} onClick={() => begin()}>
+          {slots.length ? msg.session.again({}, options) : msg.session.start({}, options)}
+        </button>
+      </div>
+      <SaveTree
+        key={current.revision}
+        release={current}
+        slots={slots}
+        lang={lang}
+        compact={compact}
+        activeSlot={current.revision === initialRevision ? activeSlot : undefined}
+        disabled={disabled}
+        branch={(id, day) => begin({ id, day })}
+      />
       {problem && (
         <p role="alert">
-          {problem === "conflict"
-            ? msg.session.conflict({}, options)
+          {problem === "branchFailed"
+            ? msg.session.branchFailed({}, options)
             : msg.session.unavailable({}, options)}
         </p>
       )}

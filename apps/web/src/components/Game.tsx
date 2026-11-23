@@ -1,10 +1,11 @@
 "use client";
 import { redirect, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useSyncExternalStore } from "react";
 
 import type { Lang } from "@/localization/messages";
 
 import { releases } from "@/game/releases";
+import { isSlotId, legacySlot, runKey } from "@/game/runs";
 
 import { Station } from "./Station";
 export default function Game({ lang }: { lang: Lang }) {
@@ -16,13 +17,29 @@ export default function Game({ lang }: { lang: Lang }) {
 }
 
 function ActiveRun({ lang }: { lang: Lang }) {
-  const revision = useSearchParams().get("bench");
+  const query = useSearchParams();
+  const revision = query.get("bench");
+  const slot = query.get("slot") ?? legacySlot;
   const release = releases.find((entry) => entry.revision === revision);
-  if (!release) redirect("/" + lang + "/");
+  const exists = useSyncExternalStore(
+    subscribe,
+    () => {
+      if (!release || !isSlotId(slot)) return false;
+      try {
+        return localStorage.getItem(runKey(release, slot)) !== null;
+      } catch {
+        return false;
+      }
+    },
+    () => undefined,
+  );
+  if (exists === undefined) return <main className="run-loading">VENDIX/OS</main>;
+  if (!release || !exists) redirect("/" + lang + "/");
   return (
     <Station
-      key={release.revision}
+      key={release.revision + ":" + slot}
       release={release}
+      slot={slot}
       lang={lang}
       changeLang={(l) => {
         localStorage.language = l;
@@ -30,4 +47,9 @@ function ActiveRun({ lang }: { lang: Lang }) {
       }}
     />
   );
+}
+
+function subscribe(update: () => void) {
+  window.addEventListener("storage", update);
+  return () => window.removeEventListener("storage", update);
 }

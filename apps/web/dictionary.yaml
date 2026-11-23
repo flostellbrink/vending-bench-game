@@ -1112,6 +1112,78 @@ landing:
     es: "Modelo"
     de: "Modell"
 session:
+  parentDifference:
+    .id: SLTR0012
+    .inputs:
+      - $run :integer
+      - $difference :string
+    ^en: "Difference from run {$run} at the same morning: {$difference}"
+    es: "Diferencia con la partida {$run} al inicio del mismo día: {$difference}"
+    de: "Differenz zu Lauf {$run} am gleichen Morgen: {$difference}"
+  damaged:
+    .id: SLTR0010
+    ^en: "This save cannot be read. The other runs are unaffected."
+    es: "No se puede leer esta partida. Las demás no se ven afectadas."
+    de: "Dieser Spielstand ist nicht lesbar. Andere Läufe sind nicht betroffen."
+  branchFailed:
+    .id: SLTR0011
+    ^en: "Could not create the branch. The original run has not changed."
+    es: "No se pudo crear la rama. La partida original no ha cambiado."
+    de: "Der Zweig konnte nicht erstellt werden. Der ursprüngliche Lauf ist unverändert."
+  library:
+    .id: SLTR0001
+    ^en: "Saved runs"
+    es: "Partidas guardadas"
+    de: "Spielstände"
+  runNumber:
+    .id: SLTR0002
+    .inputs:
+      - $index :integer
+    ^en: "Run {$index}"
+    es: "Partida {$index}"
+    de: "Lauf {$index}"
+  dayNumber:
+    .id: SLTR0003
+    .inputs:
+      - $day :integer
+    ^en: "Day {$day}"
+    es: "Día {$day}"
+    de: "Tag {$day}"
+  checkpoint:
+    .id: SLTR0004
+    ^en: "Start of day"
+    es: "Inicio del día"
+    de: "Tagesbeginn"
+  latest:
+    .id: SLTR0005
+    ^en: "Latest save"
+    es: "Último guardado"
+    de: "Letzter Stand"
+  fork:
+    .id: SLTR0006
+    .inputs:
+      - $day :integer
+    ^en: "Branch from day {$day}"
+    es: "Bifurcar desde el día {$day}"
+    de: "Ab Tag {$day} verzweigen"
+  from:
+    .id: SLTR0007
+    .inputs:
+      - $run :integer
+      - $day :integer
+    ^en: "From run {$run}, day {$day}"
+    es: "Desde la partida {$run}, día {$day}"
+    de: "Aus Lauf {$run}, Tag {$day}"
+  finished:
+    .id: SLTR0008
+    ^en: "Finished"
+    es: "Terminada"
+    de: "Beendet"
+  recoverDays:
+    .id: SLTR0009
+    ^en: "Resume this save to recover its day checkpoints."
+    es: "Continúa esta partida para recuperar los puntos de guardado diarios."
+    de: "Öffne diesen Spielstand, um seine Tagesstände wiederherzustellen."
   keep:
     .id: SX000019
     ^en: Keep saved run

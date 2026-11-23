@@ -16,9 +16,15 @@ Open <http://localhost:5173>, select the benchmark version, then start or resume
 
 Use `balance` to review daily balances, `tabs` to list receipts, or `view <result>` to reopen one. The office remains visible above the report. After day 30, `scores` compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
 
+## Saved runs
+
+Each new run gets its own slot in this browser. In **Saved runs**, select the diamond to resume a run at its latest command. Select a numbered day to start a separate branch from that morning. The original run, its later days and other branches remain available. A branch uses the same benchmark revision and seed as its parent.
+
+Older saves appear alongside new slots. Resume an older save once to reconstruct its morning checkpoints from its command journal.
+
 ## Static export
 
-Run `pnpm build`. Serve `apps/web/out/` with a static web server or use it as the output directory for Cloudflare Pages. The export includes the Python runtime and the simulation. Play needs no server code, external service or API key. Each browser stores its own run.
+Run `pnpm build`. Serve `apps/web/out/` with a static web server or use it as the output directory for Cloudflare Pages. The export includes the Python runtime and the simulation. Play needs no server code, external service or API key.
 
 ## Workspace
 

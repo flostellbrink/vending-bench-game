@@ -15,12 +15,13 @@ import { Settlement } from "./Settlement";
 import { Workspace } from "./Workspace";
 interface Props {
   release: Release;
+  slot: string;
   lang: Lang;
   changeLang: (locale: Lang) => void;
 }
-export function Station({ release, lang, changeLang }: Props) {
+export function Station({ release, slot, lang, changeLang }: Props) {
   const nav = useNavigation(),
-    run = useRun(release, nav.setTab);
+    run = useRun(release, slot, nav.setTab);
   const t = useMemo(() => operatorLabels(lang), [lang]),
     screen = useMemo(() => screenLabels(lang), [lang]);
   const money = useMemo(() => {
@@ -38,7 +39,7 @@ export function Station({ release, lang, changeLang }: Props) {
     rivalClose = opponent?.values?.[day];
   const gap =
     day > 0 && closing !== undefined && rivalClose !== undefined ? closing - rivalClose : null;
-  if (state?.over) return <Settlement {...{ run, release, lang, t, screen, money }} />;
+  if (state?.over) return <Settlement {...{ run, release, slot, lang, t, screen, money }} />;
   return (
     <main className="station">
       <header className="mast">
@@ -91,7 +92,9 @@ export function Station({ release, lang, changeLang }: Props) {
             ? t("score") + " · " + money(state.final.reward)
             : "Vending Bench / " + release.id + " · Seed " + release.seed}
         </span>
-        <a href={"/" + lang + "/"}>{t("setup")}</a>
+        <a href={"/" + lang + "/?" + new URLSearchParams({ bench: release.revision, slot })}>
+          {t("setup")}
+        </a>
       </footer>
     </main>
   );

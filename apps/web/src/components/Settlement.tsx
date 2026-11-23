@@ -12,6 +12,7 @@ import SessionSetup from "./SessionSetup";
 import { StationFrame } from "./StationFrame";
 
 interface Props {
+  slot: string;
   run: Run;
   release: Release;
   lang: Lang;
@@ -19,13 +20,19 @@ interface Props {
   screen: ScreenTranslate;
   money: Money;
 }
-export function Settlement({ run, release, lang, t, screen, money }: Props) {
+export function Settlement({ run, release, slot, lang, t, screen, money }: Props) {
   const [day, setDay] = useState<number | null>(null),
     [receipt, setReceipt] = useState<number | null>(null);
   const { state, rivals, best, reports, history } = run;
   const selected = reports.find((r) => r.id === receipt);
   return (
-    <StationFrame lang={lang} revision={release.revision} label={t("standings")} page="run">
+    <StationFrame
+      lang={lang}
+      revision={release.revision}
+      slot={slot}
+      label={t("standings")}
+      page="run"
+    >
       <div className="dossier settlement-desks">
         <section className="bench-paper">
           <Scorecard
@@ -92,7 +99,7 @@ export function Settlement({ run, release, lang, t, screen, money }: Props) {
           )}
         </section>
         <aside className="launch-bay">
-          <SessionSetup lang={lang} initialRevision={release.revision} compact />
+          <SessionSetup lang={lang} initialRevision={release.revision} activeSlot={slot} compact />
         </aside>
       </div>
     </StationFrame>
