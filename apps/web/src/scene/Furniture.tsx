@@ -131,7 +131,7 @@ export function Table({ x, y, w, d, h = 16 }: Position & { w: number; d: number;
     </g>
   );
 }
-function DeskTerminal({ x, y, z }: Position & { z: number }) {
+export function DeskTerminal({ x, y, z }: Position & { z: number }) {
   const shell: Material = ["#d9d7bf", "#bcbda8", "#949e8d"];
   return (
     <g>
@@ -254,12 +254,6 @@ export const Furniture = memo(function Furniture({ site }: { site: string }) {
         <ContactShadow x={45} y={81} w={44} d={17} amount={2} />
         <Table x={47} y={83} w={43} d={16} h={12} />
       </g>
-      {site === "house" && (
-        <g>
-          <Table x={135} y={77} w={52} d={28} h={23} />
-          <DeskTerminal x={146} y={78} z={25.5} />
-        </g>
-      )}
       {site === "lounge" && <CafeSet x={132} y={94} />}
       <Plant x={13} y={125} size={1.15} />
       <Box x={168} y={109} w={36} d={6} h={9} c={wood} />

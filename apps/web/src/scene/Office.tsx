@@ -15,6 +15,7 @@ import { Machine, type CabinetStock } from "./Cabinet";
 import { Depot } from "./Depot";
 import { Furniture } from "./Furniture";
 import { Polygon } from "./geometry";
+import { HouseShell, HouseWorkstations } from "./House";
 import { Plant } from "./Plant";
 import { ServiceVisit, Person, type ServiceMotion } from "./ServiceVisit";
 import { StreetTree, Outside } from "./Street";
@@ -44,6 +45,7 @@ export default function Office({
 }: OfficeProps) {
   const id = useId().replaceAll(":", "");
   const depot = site === "depot",
+    house = site === "house",
     communal = site === "main-lounge";
   const x = phase * 33;
   const width = communal ? concourse.width : 222;
@@ -87,9 +89,9 @@ export default function Office({
         </>
       ) : (
         <>
-          {communal ? <AtriumShell /> : <RoomShell id={id} />}
+          {communal ? <AtriumShell /> : house ? <HouseShell /> : <RoomShell id={id} />}
           <Sunlight {...{ id, x, light, phase }} atrium={communal} />
-          {communal ? <AtriumFurniture /> : <BackWall />}
+          {communal ? <AtriumFurniture /> : !house && <BackWall />}
         </>
       )}
       {!depot &&
@@ -113,7 +115,7 @@ export default function Office({
         </>
       ) : (
         <>
-          {!depot && <Furniture site={site} />}
+          {house ? <HouseWorkstations /> : !depot && <Furniture site={site} />}
           <StreetTree x={-17} y={151} phase={phase} light={light} />
         </>
       )}

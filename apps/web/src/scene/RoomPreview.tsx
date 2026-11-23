@@ -4,6 +4,7 @@ import { AtriumShell, AtriumRail, AtriumFurniture, concourse } from "./Atrium";
 import { Depot } from "./Depot";
 import { Sofa, Table } from "./Furniture";
 import { Box, Front, Line, Polygon, repeat, pine } from "./geometry";
+import { HouseShell, HouseWorkstations } from "./House";
 
 export const RoomPreview = memo(function RoomPreview({
   site,
@@ -27,6 +28,8 @@ export const RoomPreview = memo(function RoomPreview({
     >
       {atrium ? (
         <AtriumShell />
+      ) : site === "house" ? (
+        <HouseShell />
       ) : (
         <>
           <Box x={0} y={0} z={-5} w={222} d={145} h={5} c={["#d2d0b9", "#a6ad9d", "#929f93"]} />
@@ -79,11 +82,12 @@ export const RoomPreview = memo(function RoomPreview({
             <AtriumFurniture />
             <AtriumRail />
           </>
+        ) : site === "house" ? (
+          <HouseWorkstations />
         ) : (
           <>
             <Sofa x={28} y={43} w={70} orange={site === "lounge"} />
             <Table x={47} y={83} w={43} d={16} h={12} />
-            {site === "house" && <Table x={135} y={77} w={52} d={28} h={23} />}
           </>
         )}
       </>
