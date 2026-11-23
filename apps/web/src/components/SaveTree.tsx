@@ -94,11 +94,21 @@ export default function SaveTree({
   const rows = orderSlots(slots);
   const runNumbers = new Map(slots.map((s, i) => [s.id, i + 1]));
   const rowNumbers = new Map(rows.map((s, i) => [s.id, i]));
-  const slot =
+  let slot =
     slots.find((s) => s.id === selection?.slot) ??
     slots.find((s) => s.id === activeSlot) ??
     slots.at(-1);
   const selectedDay = slot?.id === selection?.slot ? selection?.day : undefined;
+  if (selectedDay !== undefined) {
+    const seen = new Set<string>();
+    while (slot?.parent && selectedDay < slot.parent.day && !seen.has(slot.id)) {
+      seen.add(slot.id);
+      const parentId = slot.parent.slot;
+      const parent = slots.find((s) => s.id === parentId);
+      if (!parent) break;
+      slot = parent;
+    }
+  }
   const selectedX = slot ? point(selectedDay ?? end(slot)) : 0;
   useEffect(() => {
     const box = scroller.current;
@@ -113,8 +123,7 @@ export default function SaveTree({
   const runName = (id: string) =>
     msg.session.runNumber({ index: runNumbers.get(id) ?? 1 }, options);
   const dayName = (day: number) => msg.session.dayNumber({ day }, options);
-  const checkpoint =
-    slot.id === selection?.slot ? slot.checkpoints.find((c) => c.day === selection.day) : undefined;
+  const checkpoint = slot.checkpoints.find((c) => c.day === selectedDay);
   const day = checkpoint?.day ?? slot.day;
   const balance = checkpoint?.cash ?? slot.cash;
   const destination =
