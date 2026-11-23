@@ -6,6 +6,7 @@ import { Box, Line, project, steel, wood, type Position } from "./geometry";
 export interface ServiceMotion {
   drink: boolean;
   progress: number;
+  inspecting: boolean;
   open: number;
 }
 
@@ -15,7 +16,8 @@ export function Person({
   walk = 0,
   coat = "#697f83",
   facing = 1,
-}: Position & { walk?: number; coat?: string; facing?: number }) {
+  check = 0,
+}: Position & { walk?: number; coat?: string; facing?: number; check?: number }) {
   const [cx, cy] = project([x, y, 0]);
   const step = Math.sin(walk) * 2.1;
   return (
@@ -32,11 +34,25 @@ export function Person({
         stroke="#364744"
         strokeWidth="1.6"
       />
-      <path d="M-3.8 -24 Q-.5 -26 3 -23 L4.5 -12 Q1 -10 -4 -12Z" fill={coat} />
-      <path d="M-3 -22 L-4 -17 L-1 -14" fill="none" stroke="#526567" strokeWidth="2.2" />
-      <path d="M1 -24 L3 -22 L1 -17" stroke="#c3ad88" strokeWidth="1.5" fill="none" />
-      <path d="M-2 -29 Q1 -31 3 -28 L3 -26 L4 -25.5 L2 -24 L-.5 -24 L-2 -26Z" fill="#bd957c" />
-      <path d="M-2.6 -27 Q-3 -30 0 -30.5 Q3 -31 3.4 -28 L.5 -28 L-.8 -26Z" fill="#58554b" />
+      <g transform={`rotate(${check * 16} 0 -12)`}>
+        <path d="M-3.8 -24 Q-.5 -26 3 -23 L4.5 -12 Q1 -10 -4 -12Z" fill={coat} />
+        {check > 0 ? (
+          <g>
+            <path
+              d={`M1 -22 L5 -18 L${6 + check * 5} ${-18 - check * 4}`}
+              fill="none"
+              stroke={coat}
+              strokeWidth="2.8"
+            />
+            <circle cx={6 + check * 5} cy={-18 - check * 4} r="1.4" fill="#c09d80" />
+          </g>
+        ) : (
+          <path d="M-3 -22 L-4 -17 L-1 -14" fill="none" stroke="#526567" strokeWidth="2.2" />
+        )}
+        <path d="M1 -24 L3 -22 L1 -17" stroke="#c3ad88" strokeWidth="1.5" fill="none" />
+        <path d="M-2 -29 Q1 -31 3 -28 L3 -26 L4 -25.5 L2 -24 L-.5 -24 L-2 -26Z" fill="#bd957c" />
+        <path d="M-2.6 -27 Q-3 -30 0 -30.5 Q3 -31 3.4 -28 L.5 -28 L-.8 -26Z" fill="#58554b" />
+      </g>
     </g>
   );
 }
@@ -48,7 +64,7 @@ export function ServiceVisit({
   atrium: boolean;
 }) {
   if (!service) return null;
-  const offset = Math.max(0, 1 - Math.min(service.progress, 1 - service.progress) * 5);
+  const offset = Math.max(0, 1 - Math.min(service.progress, 1 - service.progress) * 4);
   const cabinetX = (atrium ? concourse.machineX : 126) + (service.drink ? 51 : 15);
   const x = atrium
     ? cabinetX + (concourse.entry - cabinetX) * Math.min(1, offset * 1.25)
@@ -58,11 +74,23 @@ export function ServiceVisit({
     : 49 + offset * 37;
   return (
     <g>
-      <Box x={x + 8} y={y + 4} w={13} d={8} z={2} h={2} c={steel} />
-      <Box x={x + 9} y={y + 5} w={10} d={7} z={4} h={7} c={wood} />
-      <Line a={[x + 20, y + 5, 3]} b={[x + 20, y + 5, 31]} color="#586c63" width="1.5" />
-      <Line a={[x + 20, y + 5, 31]} b={[x + 20, y + 11, 31]} color="#67796e" width="1.5" />
-      <Person x={x + 5} y={y + 9} walk={offset * 12} coat="#697e69" />
+      {!service.inspecting && (
+        <>
+          <Box x={x + 8} y={y + 4} w={13} d={8} z={2} h={2} c={steel} />
+          <Box x={x + 9} y={y + 5} w={10} d={7} z={4} h={7} c={wood} />
+          <Line a={[x + 20, y + 5, 3]} b={[x + 20, y + 5, 31]} color="#586c63" width="1.5" />
+          <Line a={[x + 20, y + 5, 31]} b={[x + 20, y + 11, 31]} color="#67796e" width="1.5" />
+        </>
+      )}
+      <Person
+        x={x + 5}
+        y={y + (service.inspecting ? 0 : 9)}
+        walk={offset * 15}
+        check={
+          service.inspecting && offset === 0 ? Math.sin((service.progress - 0.25) * Math.PI * 2) : 0
+        }
+        coat={service.inspecting ? "#9d6d46" : "#697e69"}
+      />
     </g>
   );
 }

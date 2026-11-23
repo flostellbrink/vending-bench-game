@@ -17,6 +17,14 @@ import {
 
 export type CabinetStock = Record<string, SlotObservation>;
 
+const wrappers = ["#73a6a2", "#d4a95d", "#bd775c", "#95a7b4", "#bd8ca4", "#95a86f"];
+
+function wrapperColor(item: string) {
+  let hash = 0;
+  for (const letter of item) hash = (hash * 31 + letter.charCodeAt(0)) >>> 0;
+  return assertValue(wrappers[hash % wrappers.length]);
+}
+
 function Cabinet({
   x,
   drink,
@@ -58,9 +66,6 @@ function Cabinet({
       fill={color}
     />
   );
-  const packages = drink
-    ? ["#6b9391", "#c7a568", "#a66c51", "#8d9fa7"]
-    : ["#d29852", "#b3624e", "#8a9d78", "#cbb76e"];
   return (
     <g>
       <Floor x={x - 1} y={y + 1} w={w + 4} d={d + 4} fill="#8f9684" />
@@ -88,21 +93,35 @@ function Cabinet({
             const item = stock?.[String.fromCharCode(68 - r) + (c + 1)];
             const z = 20 + r * 8.6,
               left = x + 5 + c * 6.1;
-            if (!item?.qty)
-              return <Front x={left} y={Y + 0.1} z={z} w={4.9} h={1.2} fill="#53685c" />;
+            const [cx, cy] = project([left, Y + 0.24, z]);
             return (
               <g>
-                <Front
-                  x={left}
-                  y={Y + 0.1}
-                  z={z}
-                  w={4.8}
-                  h={5.5}
-                  fill={assertValue(packages[(r + c) % packages.length])}
-                />
-                <Front x={left + 0.5} y={Y + 0.2} z={z + 1.8} w={3.7} h={1.6} fill="#ece0bf" />
-                {drink && (
-                  <Front x={left + 1} y={Y + 0.1} z={z + 5.4} w={2.5} h={1.5} fill="#b2bcaf" />
+                {drink && <Front x={left - 0.7} y={Y + 0.1} z={z} w={0.9} h={8.6} fill="#849890" />}
+                {item?.qty && item.item ? (
+                  <>
+                    <Front
+                      x={left}
+                      y={Y + 0.1}
+                      z={z}
+                      w={4.8}
+                      h={5.5}
+                      fill={wrapperColor(item.item)}
+                    />
+                    <Front x={left + 0.5} y={Y + 0.2} z={z + 1.8} w={3.7} h={1.6} fill="#ece0bf" />
+                    {drink && (
+                      <Front x={left + 1} y={Y + 0.1} z={z + 5.4} w={2.5} h={1.5} fill="#b2bcaf" />
+                    )}
+                  </>
+                ) : null}
+                {!drink && (
+                  <g transform={`matrix(1 .5 0 1 ${cx} ${cy})`}>
+                    <path
+                      d="M0 -1 C-1 -6 5 -7 5 -3 C5 0 1 1 1 -2 C1 -4 4 -5 4 -3"
+                      stroke="#b8bca5"
+                      strokeWidth=".95"
+                      fill="none"
+                    />
+                  </g>
                 )}
               </g>
             );
@@ -164,7 +183,6 @@ function Cabinet({
       {repeat(3, (i) => panel(3, 4.8 + i * 0.8, 20, 0.28, "#80968a"))}
       {open > 0 && panel(25, 58, 2, 2, "#ffcb74")}
       {illuminated && panel(2.8, 17, 1.5, 38, "#ffe8ad")}
-      {progress != null && panel(3.5, 51 - 32 * progress, 19, 2.2, "#f6dba3")}
     </g>
   );
 }

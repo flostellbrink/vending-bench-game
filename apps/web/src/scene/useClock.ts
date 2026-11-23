@@ -7,7 +7,7 @@ const opening = 9 * 60;
 export const minutesPerDay = 24 * 60;
 
 /** Animate only the interval between two observed simulator timestamps. */
-export function useClock(state: Optional<Snapshot>): number {
+export function useClock(state: Optional<Snapshot>, visitEnd?: number): number {
   const target = state ? (state.day - 1) * minutesPerDay + state.minute : null;
   const shown = useRef<Optional<number>>(null);
   const [value, setValue] = useState(opening);
@@ -24,19 +24,30 @@ export function useClock(state: Optional<Snapshot>): number {
       setValue(target ?? opening);
       return undefined;
     }
-    const duration = Math.min(3200, 400 + 65 * Math.sqrt(target - from));
+    if (from === target) return undefined;
+    const actionEnd =
+      visitEnd !== undefined && from < visitEnd && visitEnd < target ? visitEnd : target;
+    const actionDuration = Math.min(3200, 500 + 180 * Math.sqrt(actionEnd - from));
+    const nightDuration = actionEnd < target ? 2000 : 0;
     const start = performance.now();
     let frame: number;
     function tick(now: number) {
       if (target === null || from == null) return;
-      const progress = Math.min(1, (now - start) / duration);
-      const minute = from + (target - from) * progress * progress * (3 - 2 * progress);
+      const elapsed = now - start;
+      const night = nightDuration > 0 && elapsed >= actionDuration;
+      const progress = Math.min(
+        1,
+        night ? (elapsed - actionDuration) / nightDuration : elapsed / actionDuration,
+      );
+      const begin = night ? actionEnd : from;
+      const finish = night ? target : actionEnd;
+      const minute = begin + (finish - begin) * progress * progress * (3 - 2 * progress);
       shown.current = minute;
       setValue(minute);
-      if (progress < 1) frame = requestAnimationFrame(tick);
+      if (elapsed < actionDuration + nightDuration) frame = requestAnimationFrame(tick);
     }
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [target]);
+  }, [target, visitEnd]);
   return value;
 }

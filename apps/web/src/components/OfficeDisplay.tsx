@@ -30,7 +30,12 @@ export const OfficeDisplay = memo(function OfficeDisplay({
   onSiteSelect,
   previewVerb,
 }: Props) {
-  const time = useClock(state);
+  const last = reports.at(-1);
+  const visitEnd =
+    state && last && last.endDay > last.day && (last.args.machine_id || last.args.slot)
+      ? (last.day - 1) * 1440 + state.closes
+      : undefined;
+  const time = useClock(state, visitEnd);
   const day = Math.floor(time / 1440);
   const date =
     state?.startDate &&

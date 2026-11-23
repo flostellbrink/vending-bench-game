@@ -78,7 +78,10 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
   const active = sites.find((site) => site.id === selectedSite) ?? commandSite;
   const visibleFocus = active === commandSite && !showDepot ? focus : undefined;
   const start = last ? (last.day - 1) * minutesPerDay + last.minute : 0;
-  const end = last ? (last.endDay - 1) * minutesPerDay + last.endMinute : 0;
+  const end = last
+    ? (last.day - 1) * minutesPerDay +
+      (last.endDay > last.day && state ? state.closes : last.endMinute)
+    : 0;
   const cabinetVisit =
     last &&
     Object.keys(last.slots).length > 0 &&
@@ -89,11 +92,18 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
     value < end;
   const progress = cabinetVisit ? (value - start) / (end - start) : 0;
   const service =
-    cabinetVisit && (last.tool === "restock_machine" || last.tool === "swap_item")
+    cabinetVisit &&
+    (last.tool === "get_machine_inventory" ||
+      last.tool === "restock_machine" ||
+      last.tool === "swap_item")
       ? {
           drink: destination.endsWith("DRINKS"),
           progress,
-          open: Math.min(1, progress * 4, (1 - progress) * 4),
+          inspecting: last.tool === "get_machine_inventory",
+          open:
+            last.tool === "get_machine_inventory"
+              ? 0
+              : Math.min(1, progress * 4, (1 - progress) * 4),
         }
       : null;
   const light = daylight(value, state?.startDate ?? "2026-01-05");
