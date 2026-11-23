@@ -24,6 +24,7 @@ interface OfficeProps {
   light: number;
   service: Optional<ServiceMotion>;
   focus: Optional<string>;
+  visit: Optional<{ drink: boolean; progress: number }>;
   stock: Optional<Record<string, CabinetStock>>;
   weather?: string;
 }
@@ -34,6 +35,7 @@ export default function Office({
   phase,
   service,
   focus,
+  visit,
   stock,
   weather,
 }: OfficeProps) {
@@ -87,6 +89,7 @@ export default function Office({
             stock={stock?.[drink ? "drinks" : "snack"]}
             open={service?.drink === drink ? service.open : 0}
             selected={focus === (drink ? "DRINKS" : "SNACK")}
+            progress={visit?.drink === drink ? visit.progress : null}
           />
         ))}
       {!communal && <CornerPlant />}

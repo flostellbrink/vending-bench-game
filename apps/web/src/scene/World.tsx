@@ -79,23 +79,23 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
   const visibleFocus = active === commandSite && !showDepot ? focus : undefined;
   const start = last ? (last.day - 1) * minutesPerDay + last.minute : 0;
   const end = last ? (last.endDay - 1) * minutesPerDay + last.endMinute : 0;
-  const servicing =
+  const cabinetVisit =
     last &&
     Object.keys(last.slots).length > 0 &&
-    (last.tool === "restock_machine" || last.tool === "swap_item") &&
     destination &&
     address(destination).startsWith(active.id + ".") &&
     end > start &&
     value >= start &&
     value < end;
-  const progress = servicing ? (value - start) / (end - start) : 0;
-  const service = servicing
-    ? {
-        drink: destination.endsWith("DRINKS"),
-        progress,
-        open: Math.min(1, progress * 4, (1 - progress) * 4),
-      }
-    : null;
+  const progress = cabinetVisit ? (value - start) / (end - start) : 0;
+  const service =
+    cabinetVisit && (last.tool === "restock_machine" || last.tool === "swap_item")
+      ? {
+          drink: destination.endsWith("DRINKS"),
+          progress,
+          open: Math.min(1, progress * 4, (1 - progress) * 4),
+        }
+      : null;
   const light = daylight(value, state?.startDate ?? "2026-01-05");
   const style: CSSProperties & { "--light": number } = { "--light": 0.67 + light * 0.33 };
   return (
@@ -108,6 +108,7 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
           weather={state?.weather}
           service={service}
           focus={visibleFocus?.split(":")[1]}
+          visit={cabinetVisit ? { drink: destination.endsWith("DRINKS"), progress } : null}
           stock={stock[active.id]}
         />
         <figcaption>

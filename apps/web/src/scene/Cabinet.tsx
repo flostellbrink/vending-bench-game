@@ -22,12 +22,14 @@ function Cabinet({
   drink,
   open,
   selected,
+  progress,
   stock,
 }: {
   x: number;
   drink: boolean;
   open: number;
   selected: boolean;
+  progress: Optional<number>;
   stock: Optional<CabinetStock>;
 }) {
   const y = 11,
@@ -36,6 +38,8 @@ function Cabinet({
     h = 66,
     Y = y + d;
   const ang = open * Math.PI * 0.46;
+  const [sideX, sideY] = project([x + w + 0.1, Y - 1, 53]);
+  const illuminated = selected || progress != null;
   const doorPoint = ([u, v]: Point): Vertex => [
     x + 1 + u * Math.cos(ang),
     Y + 0.5 + u * Math.sin(ang),
@@ -62,7 +66,22 @@ function Cabinet({
       <Floor x={x - 1} y={y + 1} w={w + 4} d={d + 4} fill="#8f9684" />
       <Box x={x + 1} y={y + 1} w={w - 2} d={d - 2} h={3} c={pine} />
       <Box {...{ x, y, w, d, h: h - 3 }} z={3} c={pine} edge />
-      <Front x={x + 1} y={Y} z={4} w={w - 2} h={h - 6} fill="#263c37" />
+      <g transform={`matrix(1 -.5 0 1 ${sideX} ${sideY})`}>
+        <rect width="18" height="37" fill={drink ? "#587979" : "#906e54"} />
+        <path
+          d={
+            drink
+              ? "M7 5 H11 V10 L13 14 V30 Q9 32 5 30 V14 L7 10 Z"
+              : "M3 8 L6 9 L9 8 L12 9 L15 8 L14 18 L15 28 L12 27 L9 28 L6 27 L3 28 L4 18 Z"
+          }
+          fill="#ded5ad"
+        />
+        <path
+          d={drink ? "M5 18 H13 V23 H5 Z" : "M4 20 L14 14 V18 L4 24 Z"}
+          fill={drink ? "#689497" : "#ab7351"}
+        />
+      </g>
+      <Front x={x + 1} y={Y} z={4} w={w - 2} h={h - 6} fill={illuminated ? "#536858" : "#263c37"} />
       {repeat(4, (r) => (
         <g>
           {repeat(3, (c) => {
@@ -95,8 +114,7 @@ function Cabinet({
       {panel(0, 16, 2.8, 41, "#304d42")}
       {panel(23, 16, 7, 41, "#304d42")}
       {panel(0, 55, 30, 10, "#304d42")}
-      {panel(1, 57, 28, 6, "#a5b69a")}
-      {panel(3, 59, 13, 1.5, "#496551")}
+      {panel(1, 56.5, 28, 7.5, illuminated ? "#fbdda4" : drink ? "#96b2ab" : "#c7a680")}
       {(() => {
         const p = project(doorPoint([2, 58])),
           q = project(doorPoint([3, 58]));
@@ -145,16 +163,8 @@ function Cabinet({
       )}
       {repeat(3, (i) => panel(3, 4.8 + i * 0.8, 20, 0.28, "#80968a"))}
       {open > 0 && panel(25, 58, 2, 2, "#ffcb74")}
-      {selected && (
-        <Polygon
-          v={[
-            [x - 1, Y + 4, 0],
-            [x + 7, Y + 4, 0],
-            [x + 3, Y + 9, 0],
-          ]}
-          fill="#437d68"
-        />
-      )}
+      {illuminated && panel(2.8, 17, 1.5, 38, "#ffe8ad")}
+      {progress != null && panel(3.5, 51 - 32 * progress, 19, 2.2, "#f6dba3")}
     </g>
   );
 }
