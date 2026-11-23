@@ -40,9 +40,9 @@ The opening lounge and its three site previews now contain 1,374 SVG elements, d
 
 These samples used short transcripts. They show less renderer work, not a change in physical display latency or late-run memory use.
 
-## Final export: startup, long run and five resets
+## Export before multiple save slots: startup, long run and five resets
 
-The release removed CRT and now reuses the interpreter on a new run. This pass used the same M4, browser, loopback server, five-command sequence and completion probe as the baseline.
+This build removed CRT and reused the interpreter on reset. Its measurements predate navigation between independent save slots. This pass used the same M4, browser, loopback server, five-command sequence and completion probe as the baseline.
 
 - **Startup, 1280 × 577 at 1×:** an empty browser profile reached the shell hydration marker at 80 ms, first contentful paint at 116 ms and simulator readiness at 822 ms. A second tab in the same profile reached those markers at 47, 240 and 668 ms. One sample each. Hydration is not physical display latency: both tabs reported their first paint after worker construction.
 - **Transfer:** the browser reported 773,234 bytes for the cold document and page resources, and 3,900 bytes for the warm visit. The cold worker payload adds 13,902,053 uncompressed file bytes, for an estimated 14.0 MiB total. Worker cache hits were not measured.
@@ -50,3 +50,7 @@ The release removed CRT and now reuses the interpreter on a new run. This pass u
 - **Overnight transition, same late run:** two 3.44-second samples each produced 60 callbacks/s, p95 intervals of 16.7 and 16.8 ms and no interval over 25 ms. Chrome process-tree CPU time was 1.84 and 1.49 seconds. The earlier native no-CRT samples used 2.37–2.38 CPU-seconds; the late runs contained different numbers of receipts.
 - **Completion:** after 599 paid commands, the final score was €1,140. The browser tree used 1,295 MiB RSS at the full-run sample; the main thread had 13.8 MiB JS heap and the document had 4,687 live elements.
 - **Five immediate new runs:** every reset returned to day 1 with no receipts and 1,501 live elements. Worker constructors stayed at one and terminations at zero. The baseline created six workers across the same number of starts. RSS was 1,296–1,297 MiB during resets and later settled at 1,218 MiB. Main-thread heap ranged from 13.6 to 15.5 MiB during resets and later measured 7.9 MiB. No worker or live-element accumulation appeared in this sequence. The sample does not prove a long-term leak bound.
+
+## AI House workstation
+
+At 1440 × 900 and 2× density on the same M4, 48 synthetic edits on day 25 reached the second animation frame in 35.0 ms at p95 (35.3 ms maximum). A snack-machine inspection from 12:45 to 13:10 produced 100 frame intervals: 16.7 ms at p95 and 16.8 ms maximum. During 1.2 seconds of idle time, no station subtree mutations or size changes occurred in the observed station, scene, room or prompt. The save contained 33 receipts, not a long transcript. This sample does not measure GPU time or physical display latency.
