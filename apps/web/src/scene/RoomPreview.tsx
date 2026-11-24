@@ -49,6 +49,7 @@ export const RoomPreview = memo(function RoomPreview({
         </>
       )}
       <>
+        {atrium && <AtriumFurniture />}
         {repeat(2, (i) => (
           <>
             <Box
@@ -78,10 +79,7 @@ export const RoomPreview = memo(function RoomPreview({
           </>
         ))}
         {atrium ? (
-          <>
-            <AtriumFurniture />
-            <AtriumRail />
-          </>
+          <AtriumRail />
         ) : site === "house" ? (
           <HouseWorkstations />
         ) : (

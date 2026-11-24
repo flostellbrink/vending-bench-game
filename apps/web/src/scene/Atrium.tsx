@@ -1,6 +1,5 @@
 import { memo } from "react";
 
-import { Table } from "./Furniture";
 import { Box, Floor, Front, Line, Polygon, project, repeat, steel, wood } from "./geometry";
 import { Plant } from "./Plant";
 import { StreetTree } from "./Street";
@@ -110,26 +109,7 @@ export const AtriumFurniture = memo(function AtriumFurniture() {
           <Front x={33 + i * 24} y={0.6} z={24} w={11} h={1} fill="#8e927d" />
         </g>
       ))}
-      {repeat(2, (i) => (
-        <g>
-          <Table x={bay + 90 * i} y={14} w={61} d={18} h={24} />
-          {[6, 46].map((offset) => (
-            <Box key={offset} x={bay + 90 * i + offset} y={36} w={3} d={8} h={10} c={steel} />
-          ))}
-          <Box x={bay + 90 * i + 4} y={35} z={10} w={53} d={9} h={2.8} c={wood} />
-          {repeat(3, (seat) => (
-            <Box
-              x={bay + 90 * i + 5 + seat * 17}
-              y={35.3}
-              z={12.8}
-              w={15.8}
-              d={8.5}
-              h={1.8}
-              c={["#bc896c", "#a16d53", "#895c49"]}
-            />
-          ))}
-        </g>
-      ))}
+      <DiningBooth />
       <Plant x={17} y={25} size={1.2} />
       <Box x={192} y={8} w={24} d={10} h={12} c={wood} />
       <Plant x={198} y={12} size={0.85} />
@@ -137,6 +117,63 @@ export const AtriumFurniture = memo(function AtriumFurniture() {
     </g>
   );
 });
+
+const oxblood = ["#965e56", "#804a43", "#603a38"] as const;
+const seatLeather = ["#cb9080", "#ac7163", "#8c584e"] as const;
+
+function Banquette({ x, facesRight }: { x: number; facesRight: boolean }) {
+  const back = facesRight ? x : x + 21;
+  return (
+    <g>
+      <Box x={x + 2} y={8} w={24} d={40} h={8} c={steel} />
+      <Box x={x} y={6} z={8} w={28} d={44} h={7} c={oxblood} />
+      {facesRight && <Box x={back} y={6} z={14} w={7} d={44} h={23} c={oxblood} />}
+      {[0, 1].map((seat) => (
+        <Box
+          key={seat}
+          x={facesRight ? x + 7 : x}
+          y={7 + seat * 21}
+          z={15}
+          w={21}
+          d={20}
+          h={4}
+          c={seatLeather}
+        />
+      ))}
+      {!facesRight && <Box x={back} y={6} z={14} w={7} d={44} h={23} c={oxblood} />}
+      <Box x={back} y={6} z={37} w={7} d={44} h={2} c={seatLeather} />
+    </g>
+  );
+}
+
+function DiningBooth() {
+  const [cx, cy] = project([111, 28, 24]);
+  const [lx, ly] = project([111, 26, 59]);
+  return (
+    <g>
+      <Floor x={48} y={3} w={127} d={49} fill="#9aa59a" />
+      <Banquette x={55} facesRight />
+      <Box x={100} y={21} w={23} d={16} h={3} c={steel} />
+      <Box x={106} y={24} z={3} w={10} d={9} h={19} c={steel} />
+      <g transform={`matrix(1 .5 -1 .5 ${cx} ${cy})`}>
+        <ellipse rx={38} ry={22} cy={3} fill="#97785c" />
+        <ellipse rx={38} ry={22} fill="#ecddba" stroke="#c4b08c" strokeWidth="1" />
+      </g>
+      <Banquette x={140} facesRight={false} />
+      <Line a={[111, 0, 71]} b={[111, 26, 71]} color="#525e54" width="2.4" />
+      <Line a={[111, 26, 71]} b={[111, 26, 59]} color="#3b4c44" width="1.5" />
+      <g transform={`translate(${lx} ${ly})`}>
+        <path
+          d="M-16 7 Q-13 -6 0 -7 Q13 -6 16 7 Q0 15 -16 7 Z"
+          fill="#47695e"
+          stroke="#374f46"
+          strokeWidth="1.3"
+        />
+        <ellipse cy="7" rx="15" ry="4" fill="#f0d9a2" />
+      </g>
+    </g>
+  );
+}
 
 export const AtriumRail = memo(function AtriumRail() {
   const c = ["#e9e2ce", "#c3c4b2", "#a1ac9d"] as const;
