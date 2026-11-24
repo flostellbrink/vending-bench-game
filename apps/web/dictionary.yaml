@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  allOrders:
+    .id: POACT002
+    ^en: All orders
+    es: Todos los pedidos
+    de: Alle Bestellungen
   amountPaid:
     .id: ORREG001
     ^en: Amount paid
@@ -105,9 +110,29 @@ operator:
     de: Stückpreisänderung seit Angebot
   writeLetter:
     .id: ML000000
-    ^en: "Write a letter"
-    es: "Escribir un correo"
+    ^en: "Compose email"
+    es: "Redactar correo"
     de: "Nachricht verfassen"
+  replyToMail:
+    .id: ML000004
+    ^en: Reply
+    es: Responder
+    de: Antworten
+  mailFrom:
+    .id: ML000005
+    ^en: From
+    es: De
+    de: Von
+  mailTo:
+    .id: ML000006
+    ^en: To
+    es: Para
+    de: An
+  cancelMail:
+    .id: ML000007
+    ^en: Cancel
+    es: Cancelar
+    de: Abbrechen
   mailSubject:
     .id: ML000001
     ^en: "Subject"

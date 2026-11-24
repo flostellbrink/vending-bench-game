@@ -8,10 +8,10 @@ import type { ObservationProps } from "./panel-props";
 
 import CabinetBench from "./CabinetBench";
 import { DayStatement } from "./DayStatement";
+import { EmailComposer } from "./EmailComposer";
 import { Metrics } from "./Metrics";
 import { OrderSlip } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
-import { SupplierLetter } from "./SupplierLetter";
 function ReceiptHeading({
   report,
   t,
@@ -19,7 +19,7 @@ function ReceiptHeading({
 }: Pick<ObservationProps, "report" | "t"> & { action?: ReactNode }) {
   return (
     <header className="receipt-heading">
-      {action ?? <h2>{report.line}</h2>}
+      {action ?? <h2>{report.terms?.order ?? report.line}</h2>}
       <small>
         #{report.id} · {t("day")} {report.day} · {clock(report.minute)} →{" "}
         {receiptEnd(report, t("day"))} · {report.minutes} min
@@ -39,9 +39,20 @@ export default function ObservationView({
   disabled,
   openReport,
   action,
-}: ObservationProps & { openReport: (id: number) => void; action?: ReactNode }) {
+  openSupplier,
+}: ObservationProps & {
+  openReport: (id: number) => void;
+  action?: ReactNode;
+  openSupplier?: (id: string) => void;
+}) {
   const text = report.display;
-  const letterProps = { state, t, disabled, send: runCommand };
+  const purchaseSupplier = report.terms?.order
+    ? (report.args.supplier_id ??
+      reports
+        .flatMap((r) => r.directory)
+        .find((entry) => entry.email.toLowerCase() === report.args.to?.toLowerCase())?.id)
+    : undefined;
+  const letterProps = { state, reports, t, disabled, send: runCommand };
   const contact =
     report.terms?.minimum === undefined
       ? undefined
@@ -66,7 +77,7 @@ export default function ObservationView({
           </p>
           <pre>{report.mail.body}</pre>
           {from && (
-            <SupplierLetter
+            <EmailComposer
               key={report.id}
               {...letterProps}
               to={sent ? report.mail.to : from}
@@ -89,7 +100,7 @@ export default function ObservationView({
                 <div>
                   {t("minimum")}: <b>{entry.minimum}</b> · {entry.email}
                 </div>
-                <SupplierLetter {...letterProps} to={entry.email} />
+                <EmailComposer {...letterProps} to={entry.email} />
               </div>
               <button
                 data-clock-verb="quote"
@@ -100,7 +111,9 @@ export default function ObservationView({
               </button>
             </article>
           ))}
-          {contact && <SupplierLetter key={contact.email} {...letterProps} to={contact.email} />}
+          {!action && contact && (
+            <EmailComposer key={contact.email} {...letterProps} to={contact.email} />
+          )}
           {report.terms?.minimum !== undefined ? (
             <OrderSlip
               key={report.id}
@@ -112,7 +125,14 @@ export default function ObservationView({
             <>
               {report.terms?.order !== undefined && (
                 <p className="terms">
-                  {report.terms.order} · −{money(report.terms.paid)} · {t("expectedClose")}{" "}
+                  {purchaseSupplier && openSupplier ? (
+                    <button className="receipt-link" onClick={() => openSupplier(purchaseSupplier)}>
+                      {purchaseSupplier}
+                    </button>
+                  ) : (
+                    (purchaseSupplier ?? report.args.to)
+                  )}{" "}
+                  · {t("amountPaid")}: {money(report.terms.paid)} · {t("expectedClose")}{" "}
                   {report.terms.eta}
                 </p>
               )}

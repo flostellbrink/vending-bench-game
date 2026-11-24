@@ -10,6 +10,7 @@ import { BalanceScope } from "./BalanceScope";
 import { Mailbox, SalesReports } from "./BusinessReports";
 import { CommandIndex } from "./CommandIndex";
 import DispatchDesk from "./DispatchDesk";
+import { EmailComposer } from "./EmailComposer";
 import ObservationView from "./ObservationView";
 import { OperatorBrief } from "./OperatorBrief";
 import { OrderRegister } from "./OrderRegister";
@@ -38,7 +39,15 @@ export function WorkspaceReadout({
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
   const controls = { t, lang, money, reports, disabled, runCommand: shell.runCommand };
   if (tab === "desk")
-    return <DispatchDesk {...controls} state={state} orders={orders} onView={setTab} />;
+    return (
+      <DispatchDesk
+        {...controls}
+        state={state}
+        orders={orders}
+        onView={setTab}
+        onOrders={() => setTab("orders")}
+      />
+    );
   if (tab === "world")
     return (
       <BalanceScope
@@ -84,7 +93,7 @@ export function WorkspaceReadout({
         {verb === "quote" ? t("reprice") : t("inspectNow")} · {timeLabel(verb, state, t)}
       </button>
     );
-    return scoped ? (
+    const instrument = scoped ? (
       <ObservationView
         {...controls}
         report={scoped}
@@ -95,13 +104,48 @@ export function WorkspaceReadout({
     ) : (
       <section className="sheet asset-actions">{action}</section>
     );
+    if (!tab.startsWith("supplier:")) return instrument;
+    const supplier = tab.slice(9);
+    const contact = reports.flatMap((r) => r.directory).find((entry) => entry.id === supplier);
+    const purchases = orders.filter(
+      (o) =>
+        o.supplier === supplier ||
+        (contact && o.supplier.toLowerCase() === contact.email.toLowerCase()),
+    );
+    return (
+      <>
+        {contact && (
+          <header className="supplier-contact">
+            <b>{contact.name}</b>
+            <EmailComposer
+              to={contact.email}
+              {...{ state, t, disabled, reports }}
+              send={shell.runCommand}
+            />
+          </header>
+        )}
+        <section className="supplier-orders">
+          <h3>
+            {t("orders")} <small>{purchases.length}</small>
+          </h3>
+          <OrderRegister {...{ t, money }} orders={purchases} open={setTab} />
+        </section>
+        {instrument}
+      </>
+    );
   }
   if (state && tab === "mail") return <Mailbox {...controls} state={state} openReport={setTab} />;
   if (state && tab === "sales")
     return <SalesReports {...controls} state={state} openReport={setTab} />;
   if (context.selected && state)
     return (
-      <ObservationView {...controls} report={context.selected} state={state} openReport={setTab} />
+      <ObservationView
+        {...controls}
+        report={context.selected}
+        state={state}
+        openReport={setTab}
+        openSupplier={(id) => nav.openObject("supplier:" + id)}
+      />
     );
   if (typeof tab === "string" && tab.startsWith("past:"))
     return (

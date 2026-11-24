@@ -2,6 +2,7 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    allOrders: msg.operator.allOrders,
     confirmClose: msg.operator.confirmClose,
     amountPaid: msg.operator.amountPaid,
     newOrder: msg.operator.newOrder,
@@ -23,6 +24,10 @@ export const stationMessages = {
     noSizeMatches: msg.operator.noSizeMatches,
     versusQuote: msg.operator.versusQuote,
     writeLetter: msg.operator.writeLetter,
+    replyToMail: msg.operator.replyToMail,
+    mailFrom: msg.operator.mailFrom,
+    mailTo: msg.operator.mailTo,
+    cancelMail: msg.operator.cancelMail,
     mailSubject: msg.operator.mailSubject,
     sendLetter: msg.operator.sendLetter,
     supplierMailTerms: msg.operator.supplierMailTerms,

@@ -1,0 +1,91 @@
+.mail-compose-trigger,
+.mail-composer .compose-actions button {
+  padding: 0.35rem 0.7rem;
+  color: #213529;
+  background: #d5e0cf;
+  border: 1px solid #788b7d;
+  box-shadow: inset 0 1px #f1f5e8;
+  font: inherit;
+  font-weight: 600;
+}
+.mail-composer {
+  position: fixed;
+  inset: 0;
+  width: min(37rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  margin: auto;
+  padding: 0;
+  border: 2px ridge #859488;
+  background: #e8ebe1;
+  color: #263a2d;
+  box-shadow: 0 0.7rem 2.5rem #101d1790;
+}
+.mail-composer::backdrop {
+  background: #0d181498;
+}
+.mail-composer form {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.9rem;
+}
+.mail-composer form > header {
+  margin: -0.9rem -0.9rem 0;
+  padding: 0.55rem 0.9rem;
+  color: #e1efdc;
+  background: #364a3e;
+}
+.mail-composer header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.compose-addresses {
+  display: grid;
+  gap: 0.35rem;
+}
+.compose-addresses > :is(div, label) {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: center;
+}
+.compose-addresses > div span {
+  overflow-wrap: anywhere;
+}
+.compose-message {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: bold;
+}
+.mail-composer :is(input, textarea) {
+  width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid #8a9a89;
+  background: #fbfcf4;
+  color: inherit;
+  font: inherit;
+  font-weight: normal;
+}
+.mail-composer textarea {
+  resize: vertical;
+  min-height: 5rem;
+  max-height: 44dvh;
+}
+.mail-composer form > p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+.compose-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #a2ad9d;
+}
+.mail-composer .compose-actions button[type="submit"] {
+  color: #eef5e8;
+  background: #354e3d;
+  box-shadow: none;
+}

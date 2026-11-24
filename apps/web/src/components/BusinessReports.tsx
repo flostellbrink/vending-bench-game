@@ -6,6 +6,7 @@ import { stationMessages as msg } from "@/localization/station-messages";
 
 import type { ObservationProps } from "./panel-props";
 
+import { EmailComposer } from "./EmailComposer";
 import ObservationView from "./ObservationView";
 import "./business-reports.css";
 
@@ -45,6 +46,7 @@ export function Mailbox(props: Props) {
         >
           {msg.operator.checkFolder({}, options)} · {timeLabel("inbox", state, t)}
         </button>
+        <EmailComposer to="" {...{ state, t, disabled, reports }} send={runCommand} />
       </header>
       {report ? (
         <ObservationView {...props} report={report} />

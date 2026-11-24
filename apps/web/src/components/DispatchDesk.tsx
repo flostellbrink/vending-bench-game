@@ -8,9 +8,10 @@ interface Props extends Pick<ObservationProps, "t" | "lang"> {
   state: Snapshot | null;
   orders: KnownOrder[];
   onView: (id: number) => void;
+  onOrders: () => void;
 }
 
-export default function DispatchDesk({ state, orders, lang, t, onView }: Props) {
+export default function DispatchDesk({ state, orders, lang, t, onView, onOrders }: Props) {
   if (!state) return null;
 
   const expected = orders.filter((order) => !order.arrival).toSorted((a, b) => a.eta - b.eta);
@@ -45,8 +46,18 @@ export default function DispatchDesk({ state, orders, lang, t, onView }: Props) 
           <p>{t("noDeliveries")}</p>
         )}
         {lastArrival && arrival && (
-          <button className="dispatch-reference" onClick={() => onView(arrival.id)}>
-            {t(arrival.short ? "incompleteOrder" : "arrived")} · {lastArrival.order}
+          <p className="arrival-links">
+            <button className="dispatch-reference" onClick={() => onView(lastArrival.id)}>
+              {lastArrival.order}
+            </button>
+            <button className="dispatch-reference" onClick={() => onView(arrival.id)}>
+              {t(arrival.short ? "incompleteOrder" : "arrived")} · {t("day")} {arrival.day}
+            </button>
+          </p>
+        )}
+        {orders.length > 0 && (
+          <button className="dispatch-reference" onClick={onOrders}>
+            {t("allOrders")} ({orders.length})
           </button>
         )}
       </section>

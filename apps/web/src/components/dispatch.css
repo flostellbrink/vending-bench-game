@@ -147,3 +147,32 @@
 .dispatch-shift strong {
   color: var(--dispatch-ink);
 }
+.arrival-links {
+  display: flex;
+  gap: 1em;
+  align-items: baseline;
+}
+.supplier-orders {
+  padding: 0.5rem 0.75rem 0;
+}
+.supplier-orders h3 {
+  margin: 0;
+  font-size: 1em;
+}
+.supplier-orders h3 small {
+  margin-inline-start: 0.35em;
+}
+.supplier-orders .sheet {
+  padding: 0;
+  max-height: 9.5rem;
+  overflow: auto;
+}
+.supplier-contact {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #9caa9c;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+}
