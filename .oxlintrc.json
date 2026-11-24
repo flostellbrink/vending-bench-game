@@ -1,8 +1,8 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "options": { "typeAware": true, "typeCheck": true },
-  "categories": { "correctness": "error", "suspicious": "error" },
-  "plugins": ["eslint", "typescript", "unicorn", "oxc", "react"],
+  "categories": { "correctness": "error", "style": "error", "suspicious": "error" },
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "react", "react-perf"],
+  "jsPlugins": ["./scripts/oxlint-language.ts", "./scripts/oxlint-tests.ts"],
   "ignorePatterns": [
     "**/node_modules/**",
     "vendor/**",
@@ -17,21 +17,106 @@
     "**/public/releases.json",
     "**/public/worker.js"
   ],
+  "options": { "typeAware": true, "typeCheck": true },
   "rules": {
+    "eslint/func-style": ["error", "declaration", { "allowArrowFunctions": true }],
+    "eslint/id-length": "off",
+    "eslint/max-params": ["error", { "max": 5 }],
+    "eslint/max-statements": ["error", { "max": 50 }],
+    "eslint/new-cap": ["error", { "capIsNew": false }],
+    "eslint/no-continue": "off",
+    "eslint/no-duplicate-imports": ["error", { "allowSeparateTypeImports": true }],
+    "eslint/no-implicit-coercion": "error",
+    "eslint/no-restricted-globals": [
+      "error",
+      {
+        "checkGlobalObject": true,
+        "globals": [
+          {
+            "name": "Boolean",
+            "message": "Use hasValue for presence, hasAny for non-empty text or lists, or ?? false for an optional boolean."
+          }
+        ]
+      }
+    ],
+    "eslint/no-magic-numbers": [
+      "error",
+      {
+        "ignore": [-10, -5, -2, -1, 0, 1, 2, 3, 4, 5, 60, 10, 100, 1000],
+        "ignoreArrayIndexes": true
+      }
+    ],
+    "eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true, "varsIgnorePattern": "^_" }
+    ],
+    "eslint/no-shadow": ["error", { "allow": ["_"], "ignoreOnInitialization": true }],
+    "eslint/no-ternary": "off",
+    "eslint/no-underscore-dangle": "off",
+    "eslint/one-var": ["error", "never"],
+    "eslint/prefer-arrow-callback": [
+      "error",
+      { "allowNamedFunctions": true, "allowUnboundThis": false }
+    ],
+    "eslint/sort-imports": "off",
+    "eslint/sort-keys": ["error", "asc", { "allowLineSeparatedGroups": true }],
+    "language/asserted-value": "error",
+    "language/missing-value": "error",
+    "language/optional-type": "error",
+    "language/record-methods": "error",
+    "react/jsx-handler-names": "off",
+    "react/jsx-max-depth": ["error", { "max": 5 }],
     "react/memo-dependencies": "off",
-    "typescript/no-explicit-any": "error",
+    "react/react-in-jsx-scope": "off",
     "typescript/ban-ts-comment": [
       "error",
       { "ts-check": false, "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true }
     ],
+    "typescript/consistent-return": "off",
+    "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
-    "react/react-in-jsx-scope": "off",
-    "eslint/no-unused-vars": [
+    "unicorn/filename-case": [
       "error",
-      { "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
-    ]
+      { "cases": { "camelCase": true, "kebabCase": true, "pascalCase": true } }
+    ],
+    "unicorn/max-nested-calls": "off",
+    "unicorn/no-null": "off",
+    "unicorn/number-literal-case": "off",
+    "unicorn/prefer-spread": "off"
   },
   "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx"],
+      "plugins": ["import"],
+      "rules": {
+        "import/consistent-type-specifier-style": "off",
+        "import/exports-last": "off",
+        "import/extensions": [
+          "error",
+          "always",
+          { "checkTypeImports": true, "ignorePackages": true }
+        ],
+        "import/first": "off",
+        "import/group-exports": "off",
+        "import/newline-after-import": "off",
+        "import/no-duplicates": "off",
+        "import/no-named-export": "off",
+        "import/no-namespace": "off",
+        "import/no-nodejs-modules": "off",
+        "import/no-unassigned-import": "off",
+        "import/prefer-default-export": "off"
+      }
+    },
+    { "files": ["**/*.test.ts", "**/*.test.tsx"], "rules": { "tests/risk": "error" } },
+    {
+      "files": ["packages/common/src/language.ts"],
+      "rules": {
+        "language/asserted-value": "off",
+        "language/missing-value": "off",
+        "language/optional-type": "off",
+        "language/record-methods": "off"
+      }
+    },
     {
       "files": ["apps/web/src/worker/worker.ts", "apps/web/src/hooks/useRun.ts"],
       "rules": { "unicorn/require-post-message-target-origin": "off" }
