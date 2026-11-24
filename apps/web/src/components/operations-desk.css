@@ -59,3 +59,25 @@
 .operations-controls textarea {
   resize: vertical;
 }
+.note-source {
+  display: block;
+  margin-block: 0.35rem;
+}
+.saved-note {
+  border-block-start: 1px solid #a9b9a8;
+  padding-block: 0.35rem;
+}
+.saved-note summary {
+  cursor: pointer;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.saved-note summary small {
+  font-weight: normal;
+}
+.saved-note pre,
+.note-original {
+  margin-block: 0.4rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

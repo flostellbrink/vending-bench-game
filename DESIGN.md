@@ -34,7 +34,11 @@ Use a flat display. The enclosure, controls, type and illustration supply the wo
 
 The shift strip is optional. Ctrl+Enter or Cmd+Enter places the current command on the strip without spending time. Move, edit or remove a step to see what fits before closing. The timing comes from the selected benchmark. The strip does not predict future inventory, reserve prices or run commands automatically. Execute the first step to spend its time. Keep dated evidence beside the proposed action.
 
-Expose each meaningful benchmark choice in the GUI. Omit a variant only if another available action gives the player at least the same information and outcome, costs no more time or money, and has no additional risk or side effect. A rare or advanced use is not a reason to omit it. In v3, a cabinet inspection therefore reads all machines in one call and shows the selected cabinet. Reassess the exception if the benchmark changes.
+Expose each meaningful benchmark choice in the GUI. Omit a variant only if another available action gives the player at least the same information and outcome, costs no more time or money, and has no additional risk or side effect. A rare or advanced use is not a reason to omit it. Reassess these v3 choices if the benchmark changes:
+
+- Inspect all cabinets or read all notes in one call. Selecting an item from that observation is free.
+- Request the maximum mailbox listing. Keep folder and unread-only filters: the benchmark applies them before the limit.
+- Request the full daily sales history for the selected location. Filter dates and calculate totals locally. Keep the paid period selector for product totals: the benchmark aggregates those before returning them.
 
 The console retains the full published MCP signatures and logs the exact calls made by the GUI. Only `help` is local. Use the directory, not console commands, for navigation. A syntax error costs nothing. A valid command that the simulator refuses can cost time.
 

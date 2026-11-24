@@ -5,6 +5,11 @@ operator:
     ^en: Note editor
     es: Editor de notas
     de: Notizeditor
+  editNote:
+    .id: NOTEOPEN
+    ^en: Edit note
+    es: Editar nota
+    de: Notiz bearbeiten
   campaignDraft:
     .id: CAMPDRFT
     ^en: Campaign draft
@@ -227,6 +232,26 @@ operator:
     ^en: No saved sales report for this selection.
     es: No hay un informe de ventas guardado para esta selección.
     de: Für diese Auswahl ist kein Verkaufsbericht gespeichert.
+  salesDateRange:
+    .id: RV000001
+    ^en: Report dates
+    es: Fechas del informe
+    de: Berichtszeitraum
+  rangeFrom:
+    .id: RV000002
+    ^en: From
+    es: Desde
+    de: Von
+  rangeThrough:
+    .id: RV000003
+    ^en: Through
+    es: Hasta
+    de: Bis
+  averagePerDay:
+    .id: RV000004
+    ^en: Daily average
+    es: Media diaria
+    de: Tagesdurchschnitt
   shortBy:
     .id: ORSH0001
     ^en: Short by

@@ -7,6 +7,7 @@ import { commandForMove } from "@/game/commands";
 
 import type { ObservationProps } from "./panel-props";
 
+import { DailyRevenue } from "./DailyRevenue";
 import { EmailComposer } from "./EmailComposer";
 import { ActionForm, ControlInput, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
@@ -25,14 +26,11 @@ export function Mailbox(props: Props) {
   const folders = useId();
   const emailIds = useId();
   const [emailId, setEmailId] = useState("");
-  const [limit, setLimit] = useState(String(defaults.limit));
   const [unread, setUnread] = useState(defaults.unread_only);
-  const valid = limit !== "" && Number.isSafeInteger(Number(limit));
   const report = reports.findLast(
     (r) =>
       r.tool === "list_emails" &&
       (r.args.folder ?? defaults.folder) === folder &&
-      (r.args.limit ?? defaults.limit) === Number(limit) &&
       (r.args.unread_only ?? defaults.unread_only) === unread,
   );
   return (
@@ -46,16 +44,16 @@ export function Mailbox(props: Props) {
           aria-label={msg.commands.list_emails()}
           actions={
             <GuiToolInfo verb="list_emails">
-              <button type="submit" disabled={disabled || !valid} data-clock-verb="list_emails" />
+              <button type="submit" disabled={disabled} data-clock-verb="list_emails" />
             </GuiToolInfo>
           }
           onSubmit={(event) => {
             event.preventDefault();
-            if (valid && !disabled)
+            if (!disabled)
               runCommand(
                 commandForMove([
                   "list_emails",
-                  { folder, unread_only: unread, limit: Number(limit) },
+                  { folder, unread_only: unread, limit: props.release.reportLimits.mailCount },
                 ]),
                 "inline",
               );
@@ -71,15 +69,6 @@ export function Mailbox(props: Props) {
               <option value="inbox">{msg.operator.incomingMail()}</option>
               <option value="sent">{msg.operator.sentMail()}</option>
             </datalist>
-          </Field>
-          <Field label={msg.fields.limit()}>
-            <ControlInput
-              type="number"
-              step="1"
-              required
-              value={limit}
-              onChange={(e) => setLimit(e.currentTarget.value)}
-            />
           </Field>
           <Field inline className="report-breakdown" label={msg.fields.unread_only()}>
             <ControlInput
@@ -147,18 +136,18 @@ export function SalesReports(props: Props) {
   const [site, setSite] = useState(defaults.location);
   const [days, setDays] = useState(String(defaults.days));
   const [byProduct, setByProduct] = useState(defaults.by_product);
-  const valid = days !== "" && Number.isSafeInteger(Number(days));
+  const valid = !byProduct || (days !== "" && Number.isSafeInteger(Number(days)));
   const report = reports.findLast(
     (r) =>
       r.tool === "get_sales_report" &&
       (r.args.location ?? defaults.location) === site &&
-      (r.args.days ?? defaults.days) === Number(days) &&
+      (!byProduct || (r.args.days ?? defaults.days) === Number(days)) &&
       (r.args.by_product ?? defaults.by_product) === byProduct,
   );
   return (
     <section className="business-report sheet">
       <ActionForm
-        className="sales-controls"
+        className={byProduct ? "sales-controls by-product" : "sales-controls"}
         aria-label={msg.commands.get_sales_report()}
         actions={
           <GuiToolInfo verb="get_sales_report">
@@ -171,7 +160,11 @@ export function SalesReports(props: Props) {
             runCommand(
               commandForMove([
                 "get_sales_report",
-                { days: Number(days), location: site, by_product: byProduct },
+                {
+                  days: byProduct ? Number(days) : props.release.reportLimits.salesDays,
+                  location: site,
+                  by_product: byProduct,
+                },
               ]),
               "inline",
             );
@@ -192,15 +185,17 @@ export function SalesReports(props: Props) {
             ))}
           </datalist>
         </Field>
-        <Field label={msg.fields.days()}>
-          <ControlInput
-            type="number"
-            step="1"
-            required
-            value={days}
-            onChange={(e) => setDays(e.currentTarget.value)}
-          />
-        </Field>
+        {byProduct && (
+          <Field label={msg.fields.days()}>
+            <ControlInput
+              type="number"
+              step="1"
+              required
+              value={days}
+              onChange={(e) => setDays(e.currentTarget.value)}
+            />
+          </Field>
+        )}
         <Field inline className="report-breakdown" label={msg.operator.productBreakdown()}>
           <ControlInput
             type="checkbox"
@@ -209,7 +204,9 @@ export function SalesReports(props: Props) {
           />
         </Field>
       </ActionForm>
-      {report ? (
+      {report && !byProduct && report.rows.length ? (
+        <DailyRevenue key={site} {...props} report={report} />
+      ) : report ? (
         <ObservationView {...props} report={report} />
       ) : (
         <p className="readout-empty">{msg.operator.noSalesObservation()}</p>

@@ -1,4 +1,4 @@
-import { Fragment, useState, useMemo } from "react";
+import { Fragment, useState, useMemo, type ReactNode } from "react";
 
 import { msg } from "@/dictionary";
 import { commandForMove } from "@/game/commands";
@@ -14,8 +14,19 @@ import { StorageBatches } from "./StorageBatches";
 type Props = Pick<ObservationProps, "report" | "reports" | "money" | "state" | "disabled"> & {
   openReport: (id: number) => void;
   runCommand?: ObservationProps["runCommand"];
+  visibleRows?: ObservationProps["report"]["rows"];
+  footer?: ReactNode;
 };
-export function ReportGrid({ report, reports, money, runCommand, disabled, openReport }: Props) {
+export function ReportGrid({
+  report,
+  reports,
+  money,
+  runCommand,
+  disabled,
+  openReport,
+  visibleRows = report.rows,
+  footer,
+}: Props) {
   const { collator } = useFormatters();
   const [sort, setSort] = useState<{ index: number; dir: number } | null>(null);
   const command = report.tool === "list_emails" ? "read_email" : null;
@@ -42,8 +53,8 @@ export function ReportGrid({ report, reports, money, runCommand, disabled, openR
     return letters;
   }, [command, reports]);
   const rows = useMemo(() => {
-    if (!sort) return report.rows;
-    return report.rows.toSorted((a, b) => {
+    if (!sort) return visibleRows;
+    return visibleRows.toSorted((a, b) => {
       const first = a[sort.index],
         second = b[sort.index];
       const difference =
@@ -52,7 +63,7 @@ export function ReportGrid({ report, reports, money, runCommand, disabled, openR
           : collator.compare(String(first), String(second));
       return difference * sort.dir;
     });
-  }, [report, sort, collator]);
+  }, [visibleRows, sort, collator]);
   return (
     <table className="observation-grid" data-report={report.tool}>
       <thead>
@@ -145,6 +156,7 @@ export function ReportGrid({ report, reports, money, runCommand, disabled, openR
           );
         })}
       </tbody>
+      {footer && <tfoot>{footer}</tfoot>}
     </table>
   );
 }

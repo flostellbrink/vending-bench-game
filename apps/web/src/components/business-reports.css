@@ -9,6 +9,10 @@
 }
 .mail-list-controls,
 .sales-controls {
+  --action-columns: minmax(8rem, 17rem) max-content;
+  --narrow-action-columns: minmax(6rem, 1fr) max-content;
+}
+.sales-controls.by-product {
   --action-columns: minmax(8rem, 17rem) 7ch max-content;
   --narrow-action-columns: minmax(6rem, 1fr) 7ch;
 }

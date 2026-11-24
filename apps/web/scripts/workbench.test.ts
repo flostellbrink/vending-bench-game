@@ -1,4 +1,4 @@
-import type { Actions, Entry, Move } from "games-common/benchmark";
+import type { Actions, Entry, Move, ReportRow } from "games-common/benchmark";
 
 import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
@@ -13,12 +13,14 @@ import {
   priceOrder,
   timing,
 } from "../src/game/commands.ts";
+import { noteSnapshot } from "../src/game/note-snapshot.ts";
 import { observedProducts } from "../src/game/observed-products.ts";
 import { orderEntry } from "../src/game/order-entry.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { enterReadout } from "../src/game/readout-path.ts";
 import { displayCell, knownOrders, observation, weatherObservations } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
+import { salesRange } from "../src/game/sales-range.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
 
@@ -34,6 +36,23 @@ await test("receipt drill-down keeps its originating section and history list", 
   assert.deepEqual(enterReadout(searchResult, "supplier:A", true), ["suppliers", 5, "supplier:A"]);
   assert.deepEqual(enterReadout(searchResult, "supplier:A"), ["supplier:A"]);
   assert.deepEqual(enterReadout(enterReadout(["scores"], "day:3"), 7), ["scores", "day:3", 7]);
+});
+
+await test("a local sales range uses only its observed dates, including days without sales", () => {
+  const rows: ReportRow[] = [
+    ["1", "2024-01-01", "clear", "1", 9.95],
+    ["2", "2024-01-02", "clear", "2", 0.1],
+    ["3", "2024-01-03", "rain", "0", 0],
+    ["4", "2024-01-04", "clear", "1", 0.2],
+  ];
+  assert.deepEqual(salesRange(rows, "2024-01-02", "2024-01-04"), {
+    rows: rows.slice(1),
+    units: 3,
+    revenue: 0.3,
+    averageUnits: 1,
+    averageRevenue: 0.3 / 3,
+  });
+  assert.equal(rows.length, 4);
 });
 
 const actions: Actions = {
@@ -68,6 +87,44 @@ const actions: Actions = {
   ],
   wait_for_next_day: [],
 };
+
+await test("a notes read is a snapshot and header-like note text is not a separate note", () => {
+  const text = "First line\n\n[not a key] (day 9)\nLast line   \n";
+  const write = {
+    id: 1,
+    day: 1,
+    tool: "write_note",
+    args: { key: "shift", text },
+    body: "Saved note 'shift'.",
+  };
+  const obsolete = {
+    ...write,
+    id: 2,
+    args: { key: "gone", text: "old" },
+    body: "Saved note 'gone'.",
+  };
+  const deleted = {
+    ...obsolete,
+    id: 3,
+    args: { key: "gone", text: "" },
+    body: "Deleted note 'gone'.",
+  };
+  const read = {
+    id: 4,
+    day: 1,
+    tool: "read_notes",
+    args: {},
+    body: "Your notes:\n\n[shift] (day 1)\n" + text + "\n",
+  };
+  const edited = { ...write, id: 5, args: { key: "shift", text: "updated" } };
+  const keyed = { ...read, id: 6, args: { key: "shift" }, body: "[shift] (day 1)\nupdated" };
+  assert.equal(noteSnapshot([write, keyed]), null);
+  assert.deepEqual(noteSnapshot([write, obsolete, deleted, read, edited, keyed]), {
+    read,
+    entries: [{ key: "shift", text, day: 1 }],
+  });
+  assert.equal(noteSnapshot([obsolete, deleted, read])?.entries, null);
+});
 
 await test("a site sales report can use the benchmark's default time window", () => {
   const state = { machines: ["AI-HOUSE:SNACK", "MAIN-LOUNGE:DRINKS"], slots: [] };

@@ -1,15 +1,17 @@
 import type { CommandArgs, Release } from "games-common/benchmark";
 import type { FormEvent, ReactNode } from "react";
 
-import { useId, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 import { msg } from "@/dictionary";
 import { commandForMove, type ToolName } from "@/game/commands";
+import { noteSnapshot } from "@/game/note-snapshot";
 import { commandLabel } from "@/localization/messages";
+import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
-import { ActionForm, ControlInput, ControlTextarea, Field } from "./FormControls";
+import { ActionButton, ActionForm, ControlInput, ControlTextarea, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import "./operations-desk.css";
@@ -28,13 +30,17 @@ function value(data: FormData, key: string) {
 
 export function OperationsDesk(props: Props) {
   const { desk, release, state, reports, disabled, runCommand } = props;
-  const defaultKey = release.toolDefaults.read_notes?.key;
   const defaultDays = release.toolDefaults.set_reminder?.in_days;
   const [noteKey, setNoteKey] = useState("");
   const [noteText, setNoteText] = useState("");
   const channelList = useId();
   const locationList = useId();
   const keyList = useId();
+  const editor = useRef<HTMLTextAreaElement>(null);
+  const notebook = useMemo(
+    () => (desk === "notes" ? noteSnapshot(reports) : null),
+    [desk, reports],
+  );
   function dispatch(tool: ToolName, args: CommandArgs = {}) {
     if (!disabled) runCommand(commandForMove([tool, args]), "inline");
   }
@@ -150,30 +156,49 @@ export function OperationsDesk(props: Props) {
       break;
     }
     case "notes": {
-      const keys = [
-        ...new Set(
-          reports.flatMap((r) => (r.tool === "write_note" && r.args.key ? [r.args.key] : [])),
-        ),
-      ];
       forms = (
         <>
-          {block(
-            "read_notes",
-            <ActionForm
-              className="note-lookup compact"
-              onSubmit={submit("read_notes", (data) => ({ key: value(data, "key") }))}
-              actions={button("read_notes")}
-            >
-              <Field label={msg.fields.key()}>
-                <ControlInput
-                  name="key"
-                  list={keyList}
-                  defaultValue={typeof defaultKey === "string" ? defaultKey : ""}
-                />
-              </Field>
-            </ActionForm>,
-            msg.operator.savedNotes(),
-          )}
+          <section className="operation-block" aria-label={msg.operator.savedNotes()}>
+            <h3>{msg.operator.savedNotes()}</h3>
+            {inspect("read_notes")}
+            {notebook && (
+              <>
+                <button
+                  className="receipt-link note-source"
+                  type="button"
+                  onClick={() => props.openReport(notebook.read.id)}
+                >
+                  {msg.operator.seen()} · {msg.operator.day()} {notebook.read.day} /{" "}
+                  {clock(notebook.read.minute)} · #{notebook.read.id}
+                </button>
+                {notebook.entries ? (
+                  notebook.entries.map((note) => (
+                    <details className="saved-note" key={note.key}>
+                      <summary>
+                        {note.key}{" "}
+                        <small>
+                          · {msg.operator.day()} {note.day}
+                        </small>
+                      </summary>
+                      <pre>{note.text}</pre>
+                      <ActionButton
+                        type="button"
+                        onClick={() => {
+                          setNoteKey(note.key);
+                          setNoteText(note.text);
+                          editor.current?.focus();
+                        }}
+                      >
+                        {msg.operator.editNote()}
+                      </ActionButton>
+                    </details>
+                  ))
+                ) : (
+                  <pre className="note-original">{notebook.read.output}</pre>
+                )}
+              </>
+            )}
+          </section>
           {block(
             "write_note",
             <ActionForm
@@ -198,12 +223,13 @@ export function OperationsDesk(props: Props) {
                 />
               </Field>
               <datalist id={keyList}>
-                {keys.map((key) => (
-                  <option key={key} value={key} />
+                {notebook?.entries?.map((note) => (
+                  <option key={note.key} value={note.key} />
                 ))}
               </datalist>
               <Field wide label={msg.fields.text()}>
                 <ControlTextarea
+                  ref={editor}
                   rows={2}
                   value={noteText}
                   onChange={(event) => setNoteText(event.currentTarget.value)}
