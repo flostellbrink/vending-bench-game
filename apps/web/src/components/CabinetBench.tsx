@@ -9,6 +9,7 @@ import { slotChanges } from "@/game/slot-evidence";
 
 import type { ObservationProps } from "./panel-props";
 
+import { ControlSelect } from "./FormControls";
 import { SlotInstrument } from "./SlotInstrument";
 import "./cabinet-bench.css";
 interface Props extends ObservationProps {
@@ -61,7 +62,7 @@ export default function CabinetBench(props: Props) {
           {machines.size === 1 ? (
             <b>{slot.machine}</b>
           ) : (
-            <select
+            <ControlSelect
               aria-label={t("machines")}
               value={slot.machine}
               onChange={(e) => {
@@ -72,7 +73,7 @@ export default function CabinetBench(props: Props) {
               {[...machines.keys()].map((id) => (
                 <option key={id}>{id}</option>
               ))}
-            </select>
+            </ControlSelect>
           )}
         </header>
         <div className="cabinet-glass">

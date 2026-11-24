@@ -179,17 +179,7 @@
   font-size: 0.88rem;
 }
 .slot-instrument input {
-  box-sizing: border-box;
-  min-width: 0;
   width: 11rem;
-  height: var(--action-height);
-  max-width: 100%;
-  padding: 0.23rem 0.35rem;
-  color: #1e3326;
-  background: #fcfcf3;
-  border: 1px solid #849081;
-  box-shadow: inset 0 1px 2px #17291e1a;
-  font: inherit;
 }
 .slot-instrument input[type="number"] {
   width: 4.25rem;

@@ -44,3 +44,35 @@
   color: #4d5d52;
   font-variant-numeric: tabular-nums;
 }
+.control-field.inline-field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--control-gap);
+}
+.field-label {
+  color: #314538;
+  font:
+    600 0.83rem/1.25 ui-monospace,
+    Menlo,
+    monospace;
+}
+.station :is(.control-input:not([type="checkbox"]), .control-textarea) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #85978a;
+  border-radius: 2px;
+  background: #fbfcf4;
+  padding: 0 0.42rem;
+  color: #22362c;
+  font:
+    normal 0.93rem/1.25 ui-monospace,
+    Menlo,
+    monospace;
+}
+.station .control-input:not([type="checkbox"]) {
+  height: var(--action-height);
+}
+.station .control-textarea {
+  padding-block: 0.35rem;
+}

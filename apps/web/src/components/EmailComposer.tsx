@@ -6,6 +6,7 @@ import type { Translate } from "@/localization/messages";
 
 import { quotedWord } from "@/game/command-words";
 
+import { ControlInput, ControlRow, Field, ControlTextarea } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import "./email-composer.css";
 
@@ -84,37 +85,34 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
               <b>{t("mailFrom")}</b>
               <span>{observedSender(reports) ?? t("operator")}</span>
             </div>
-            <label>
-              <b>{t("mailTo")}</b>
-              <input
+            <Field label={t("mailTo")}>
+              <ControlInput
                 ref={recipientField}
                 type="email"
                 required
                 value={recipient}
                 onChange={(event) => setRecipient(event.currentTarget.value)}
               />
-            </label>
-            <label>
-              <b>{t("mailSubject")}</b>
-              <input
+            </Field>
+            <Field label={t("mailSubject")}>
+              <ControlInput
                 ref={titleField}
                 value={title}
                 onChange={(event) => setTitle(event.currentTarget.value)}
               />
-            </label>
+            </Field>
           </div>
-          <label className="control-field compose-message">
-            {t("letter")}
-            <textarea
+          <Field className="compose-message" label={t("letter")}>
+            <ControlTextarea
               ref={messageField}
               rows={7}
               required
               value={body}
               onChange={(event) => setBody(event.currentTarget.value)}
             />
-          </label>
+          </Field>
           <p>{t("supplierMailTerms")}</p>
-          <div className="control-row compose-actions">
+          <ControlRow className="compose-actions">
             <button type="button" onClick={() => dialog.current?.close()}>
               {t("cancelMail")}
             </button>
@@ -127,7 +125,7 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
                 {t("sendLetter")}
               </button>
             </GuiToolInfo>
-          </div>
+          </ControlRow>
         </form>
       </dialog>
     </>

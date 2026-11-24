@@ -11,6 +11,7 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { ControlRow, ControlInput, Field, QuantityInput } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 
 const operations = ["refill", "price", "clear", "swap"] as const;
@@ -143,19 +144,18 @@ export function SlotInstrument({
             </button>
           ))}
         </div>
-        <div className="control-row slot-inputs">
+        <ControlRow className="slot-inputs">
           {needsProduct && (
             <>
-              <label className="control-field">
-                {field("product_id")}
-                <input
+              <Field label={field("product_id")}>
+                <ControlInput
                   value={product}
                   list={productList}
                   spellCheck="false"
                   autoComplete="off"
                   onChange={(e) => setProduct(e.target.value)}
                 />
-              </label>
+              </Field>
               <datalist id={productList}>
                 {depot &&
                   sizeMatches?.map((r) => (
@@ -165,30 +165,25 @@ export function SlotInstrument({
                     </option>
                   ))}
               </datalist>
-              <label className="control-field">
-                {field("quantity")}
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
+              <Field label={field("quantity")}>
+                <QuantityInput
                   disabled={!product}
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                 />
-              </label>
+              </Field>
             </>
           )}
           {verb === "price" && (
-            <label className="control-field">
-              {field("price")}
-              <input
+            <Field label={field("price")}>
+              <ControlInput
                 type="number"
                 min="0"
                 step=".01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
               />
-            </label>
+            </Field>
           )}
           <span className="control-line slot-submit">
             <GuiToolInfo verb={verb}>
@@ -197,7 +192,7 @@ export function SlotInstrument({
               </button>
             </GuiToolInfo>
           </span>
-        </div>
+        </ControlRow>
       </form>
     </section>
   );

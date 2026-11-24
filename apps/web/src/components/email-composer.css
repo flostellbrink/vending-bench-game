@@ -56,19 +56,12 @@
 .compose-message {
   font-weight: bold;
 }
-.compose-addresses input {
-  box-sizing: border-box;
-  height: var(--action-height);
-}
 .mail-composer :is(input, textarea) {
   width: 100%;
-  min-width: 0;
-  padding: 0.35rem 0.45rem;
-  border: 1px solid #8a9a89;
-  background: #fbfcf4;
-  color: inherit;
-  font: inherit;
-  font-weight: normal;
+}
+.compose-addresses .control-field,
+.compose-message.control-field {
+  justify-items: stretch;
 }
 .mail-composer textarea {
   resize: vertical;
