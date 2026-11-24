@@ -12,7 +12,7 @@ import CabinetBench from "./CabinetBench";
 import { DayStatement } from "./DayStatement";
 import { EmailComposer } from "./EmailComposer";
 import { Metrics } from "./Metrics";
-import { OrderSlip, QuoteRequest } from "./OrderSlip";
+import { OrderSlip } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
 function ReceiptHeading({
   report,
@@ -39,7 +39,8 @@ export default function ObservationView({
   openReport,
   action,
   openSupplier,
-}: ObservationProps & {
+}: Omit<ObservationProps, "runCommand"> & {
+  runCommand?: ObservationProps["runCommand"];
   openReport: (id: number) => void;
   action?: ReactNode;
   openSupplier?: (id: string) => void;
@@ -54,7 +55,7 @@ export default function ObservationView({
       )
     : null;
   const purchaseSupplier = supplierForPurchase(report, reports);
-  const letterProps = { reports, disabled, send: runCommand };
+  const letterProps = runCommand && { reports, disabled, send: runCommand };
   const contact =
     report.terms?.minimum === undefined
       ? undefined
@@ -78,7 +79,7 @@ export default function ObservationView({
             {report.mail.from} → {report.mail.to}
           </p>
           <pre>{report.mail.body}</pre>
-          {from && (
+          {from && letterProps && (
             <EmailComposer
               key={report.id}
               {...letterProps}
@@ -93,30 +94,45 @@ export default function ObservationView({
         </article>
       ) : (
         <>
-          {report.directory.map((entry) => (
-            <article className="supplier-entry" key={entry.id}>
-              <div>
-                <h3>{entry.name}</h3>
-                <small>{entry.id}</small>
-                <p>{entry.description}</p>
-                <div>
-                  {msg.operator.minimum()}: <b>{entry.minimum}</b>
-                </div>
-                <div className="supplier-contact">
-                  <span>{entry.email}</span>
-                  <EmailComposer {...letterProps} to={entry.email} />
-                </div>
-              </div>
-              <QuoteRequest supplier={entry.id} {...{ state, disabled, runCommand }} />
-            </article>
-          ))}
-          {!action && contact && (
+          {report.directory.length > 0 && (
+            <ul className="directory-results">
+              {report.directory.map((entry) => (
+                <li key={entry.id}>
+                  <article>
+                    <header>
+                      <h3>{entry.name}</h3>
+                      <code>{entry.id}</code>
+                    </header>
+                    <p>{entry.description}</p>
+                    <dl>
+                      <div>
+                        <dt>{msg.operator.minimum()}</dt>
+                        <dd>{entry.minimum}</dd>
+                      </div>
+                    </dl>
+                    <address>{entry.email}</address>
+                    {openSupplier && (
+                      <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        className="receipt-link"
+                        onClick={() => openSupplier(entry.id)}
+                      >
+                        {msg.operator.openSupplier()}
+                      </button>
+                    )}
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
+          {!action && contact && letterProps && (
             <div className="supplier-contact">
               <span>{contact.email}</span>
               <EmailComposer key={contact.email} {...letterProps} to={contact.email} />
             </div>
           )}
-          {report.terms?.minimum !== undefined && report.args.supplier_id ? (
+          {runCommand && report.terms?.minimum !== undefined && report.args.supplier_id ? (
             <OrderSlip
               key={report.id}
               supplier={report.args.supplier_id}
@@ -125,6 +141,12 @@ export default function ObservationView({
             />
           ) : (
             <>
+              {!runCommand && report.terms?.minimum !== undefined && (
+                <p className="terms">
+                  {report.args.supplier_id} · {msg.operator.minimum()} {money(report.terms.minimum)}{" "}
+                  · {msg.operator.expires()} {report.terms.until}
+                </p>
+              )}
               {report.terms?.order !== undefined && (
                 <p className="terms">
                   {purchaseSupplier && openSupplier ? (
@@ -139,7 +161,7 @@ export default function ObservationView({
                 </p>
               )}
               {!!report.rows.length &&
-                (report.tool === "get_machine_inventory" ? (
+                (report.tool === "get_machine_inventory" && runCommand ? (
                   <CabinetBench
                     live={Boolean(action)}
                     openReport={openReport}

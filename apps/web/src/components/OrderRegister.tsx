@@ -1,12 +1,12 @@
 import type { KnownOrder, Report } from "games-common/benchmark";
 
-import { useId, useRef, useState } from "react";
+import { useState } from "react";
 
 import { msg } from "@/dictionary";
 import { displayCell } from "@/game/reports";
 import { fieldLabel, type Money } from "@/localization/messages";
 
-import { ActionButton } from "./FormControls";
+import { ResultDialog } from "./ResultDialog";
 
 interface Props {
   orders: KnownOrder[];
@@ -16,14 +16,8 @@ interface Props {
   supplier: string;
 }
 export function OrderRegister({ orders, money, reports, supplier }: Props) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const heading = useId();
   const [selected, select] = useState<KnownOrder | null>(null);
   const receipt = reports.find((report) => report.id === selected?.id);
-  function inspect(order: KnownOrder) {
-    select(order);
-    dialog.current?.showModal();
-  }
   return (
     <section className="sheet" aria-label={msg.operator.orders()}>
       {orders.length === 0 && <p>{msg.operator.empty()}</p>}
@@ -46,7 +40,7 @@ export function OrderRegister({ orders, money, reports, supplier }: Props) {
                   <button
                     className="receipt-link"
                     aria-haspopup="dialog"
-                    onClick={() => inspect(order)}
+                    onClick={() => select(order)}
                   >
                     {order.order}
                   </button>
@@ -81,62 +75,55 @@ export function OrderRegister({ orders, money, reports, supplier }: Props) {
           </tbody>
         </table>
       )}
-      <dialog className="mail-composer" ref={dialog} aria-labelledby={heading}>
-        <form method="dialog">
-          <header>
-            <h2 id={heading}>
-              {msg.operator.order()} {selected?.order}
-            </h2>
-          </header>
-          {selected && receipt && (
-            <>
-              <p>
-                {supplier} · {msg.operator.day()} {receipt.day}
-              </p>
-              <table className="observation-grid">
-                <thead>
-                  <tr>
-                    {receipt.columns.map((column) => (
-                      <th key={column} scope="col">
-                        {fieldLabel(column)}
-                      </th>
+      {selected && receipt && (
+        <ResultDialog
+          title={msg.operator.order() + " " + selected.order}
+          close={() => select(null)}
+        >
+          <article className="order-receipt report">
+            <p>
+              {supplier} · {msg.operator.day()} {receipt.day}
+            </p>
+            <table className="observation-grid">
+              <thead>
+                <tr>
+                  {receipt.columns.map((column) => (
+                    <th key={column} scope="col">
+                      {fieldLabel(column)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {receipt.rows.map((row) => (
+                  <tr key={row[0]}>
+                    {row.map((cell, index) => (
+                      <td key={receipt.columns[index]} data-field={receipt.columns[index]}>
+                        {displayCell(cell, receipt.columns[index], money)}
+                      </td>
                     ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {receipt.rows.map((row) => (
-                    <tr key={row[0]}>
-                      {row.map((cell, index) => (
-                        <td key={receipt.columns[index]}>
-                          {displayCell(cell, receipt.columns[index], money)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <strong>
-                {msg.operator.amountPaid()}: {money(selected.paid)}
-              </strong>
-              <p>
-                {msg.operator.expectedClose()}: {msg.operator.day()} {selected.eta}
-              </p>
-              <p>
-                {msg.operator.arrived()}:{" "}
-                {selected.arrival
-                  ? msg.operator.day() +
-                    " " +
-                    selected.arrival.day +
-                    (selected.arrival.short ? " · " + msg.operator.incompleteOrder() : "")
-                  : "—"}
-              </p>
-            </>
-          )}
-          <div className="compose-actions">
-            <ActionButton type="submit">{msg.operator.closeDialog()}</ActionButton>
-          </div>
-        </form>
-      </dialog>
+                ))}
+              </tbody>
+            </table>
+            <strong>
+              {msg.operator.amountPaid()}: {money(selected.paid)}
+            </strong>
+            <p>
+              {msg.operator.expectedClose()}: {msg.operator.day()} {selected.eta}
+            </p>
+            <p>
+              {msg.operator.arrived()}:{" "}
+              {selected.arrival
+                ? msg.operator.day() +
+                  " " +
+                  selected.arrival.day +
+                  (selected.arrival.short ? " · " + msg.operator.incompleteOrder() : "")
+                : "—"}
+            </p>
+          </article>
+        </ResultDialog>
+      )}
     </section>
   );
 }

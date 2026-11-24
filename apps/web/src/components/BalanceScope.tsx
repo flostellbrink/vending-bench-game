@@ -89,7 +89,7 @@ export function BalanceScope({
           <strong>{playerBalance === undefined ? "—" : format.format(playerBalance)}</strong>
         </div>
         {day > 0 && day < history.length && (
-          <button className="receipt-link" onClick={() => showReceipts(day)}>
+          <button aria-haspopup="dialog" className="receipt-link" onClick={() => showReceipts(day)}>
             {msg.operator.cashChange()}{" "}
             {format.format(assertValue(history[day]) - assertValue(history[day - 1]))} ·{" "}
             {msg.operator.results()}

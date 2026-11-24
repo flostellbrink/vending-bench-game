@@ -65,7 +65,7 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
       <dialog
         ref={dialog}
         aria-labelledby={headingId}
-        className="mail-composer"
+        className="workbench-dialog mail-composer"
         onClose={() => trigger.current?.focus()}
       >
         <form

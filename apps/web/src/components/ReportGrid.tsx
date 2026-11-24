@@ -11,10 +11,10 @@ import type { ObservationProps } from "./panel-props";
 
 import { GuiToolInfo } from "./GuiToolInfo";
 import { StorageBatches } from "./StorageBatches";
-type Props = Pick<
-  ObservationProps,
-  "report" | "reports" | "money" | "state" | "runCommand" | "disabled"
-> & { openReport: (id: number) => void };
+type Props = Pick<ObservationProps, "report" | "reports" | "money" | "state" | "disabled"> & {
+  openReport: (id: number) => void;
+  runCommand?: ObservationProps["runCommand"];
+};
 export function ReportGrid({ report, reports, money, runCommand, disabled, openReport }: Props) {
   const { collator } = useFormatters();
   const [sort, setSort] = useState<{ index: number; dir: number } | null>(null);
@@ -105,7 +105,7 @@ export function ReportGrid({ report, reports, money, runCommand, disabled, openR
                       <button className="receipt-link" onClick={() => openReport(cached)}>
                         #{cached} · {msg.operator.noCharge()}
                       </button>
-                    ) : (
+                    ) : runCommand ? (
                       <GuiToolInfo verb={command}>
                         <button
                           data-clock-verb={command}
@@ -115,6 +115,8 @@ export function ReportGrid({ report, reports, money, runCommand, disabled, openR
                           }
                         />
                       </GuiToolInfo>
+                    ) : (
+                      "—"
                     )}
                   </td>
                 )}

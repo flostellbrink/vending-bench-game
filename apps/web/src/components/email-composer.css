@@ -1,18 +1,5 @@
 .mail-composer {
-  position: fixed;
-  inset: 0;
-  width: min(37rem, calc(100vw - 2rem));
-  max-height: calc(100dvh - 2rem);
-  overflow: auto;
-  margin: auto;
-  padding: 0;
-  border: 2px ridge #859488;
-  background: #e8ebe1;
-  color: #263a2d;
-  box-shadow: 0 0.7rem 2.5rem #101d1790;
-}
-.mail-composer::backdrop {
-  background: #0d181498;
+  --dialog-width: 37rem;
 }
 .mail-composer form {
   display: grid;

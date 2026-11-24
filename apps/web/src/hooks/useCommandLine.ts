@@ -101,7 +101,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
   function dispatchFirst() {
     const first = steps[0];
     if (!first || !state || state.over || run.busy || editing !== null) return;
-    if (run.submit({ move: first.move, line: first.line })) {
+    if (run.submit({ move: first.move, line: first.line }, true)) {
       setPlan(
         steps.map((step) =>
           step === first ? { ...step, dispatchedAt: run.journal.length } : step,
@@ -142,7 +142,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
     }
     try {
       const move = parse(raw, actions);
-      if (run.submit({ move, line: commandForMove(move) }, keepInstrument)) {
+      if (run.submit({ move, line: commandForMove(move) }, fromPrompt || keepInstrument)) {
         nav.followMove(move);
         if (fromPrompt) edit("");
       }

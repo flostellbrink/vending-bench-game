@@ -22,7 +22,7 @@ export function ReportList({ reports, money, open }: Props) {
             {msg.operator.day()} {day}
           </h3>
           {entries.map((r) => (
-            <button key={r.id} onClick={() => open(r.id)}>
+            <button aria-haspopup="dialog" key={r.id} onClick={() => open(r.id)}>
               <small>#{r.id}</small>
               <time>{clock(r.minute)}</time>
               <span>{r.line}</span>

@@ -118,7 +118,11 @@ export function Scorecard({
                       {r.day} · {clock(r.minute)}
                     </td>
                     <td>
-                      <button className="receipt-link" onClick={() => openReport(r.id)}>
+                      <button
+                        aria-haspopup="dialog"
+                        className="receipt-link"
+                        onClick={() => openReport(r.id)}
+                      >
                         #{r.id} {r.line}
                       </button>
                     </td>

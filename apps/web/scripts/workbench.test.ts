@@ -30,6 +30,9 @@ await test("receipt drill-down keeps its originating section and history list", 
   assert.deepEqual(enterReadout(receipt, "past:mail"), list);
   assert.deepEqual(enterReadout(receipt, "sales"), ["sales"]);
   assert.deepEqual(enterReadout(section, "machine:A", true), ["mail", "machine:A"]);
+  const searchResult = enterReadout(["suppliers"], 5);
+  assert.deepEqual(enterReadout(searchResult, "supplier:A", true), ["suppliers", 5, "supplier:A"]);
+  assert.deepEqual(enterReadout(searchResult, "supplier:A"), ["supplier:A"]);
   assert.deepEqual(enterReadout(enterReadout(["scores"], "day:3"), 7), ["scores", "day:3", 7]);
 });
 

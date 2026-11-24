@@ -101,7 +101,11 @@ export function PaceReview({
               </div>
             ))}
           </div>
-          <button className="receipt-link" onClick={() => reviewDay(loss.day)}>
+          <button
+            aria-haspopup="dialog"
+            className="receipt-link"
+            onClick={() => reviewDay(loss.day)}
+          >
             {msg.operator.reviewThisDay()}
           </button>
         </>

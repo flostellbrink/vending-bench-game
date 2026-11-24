@@ -11,10 +11,12 @@ import { msg } from "@/dictionary";
 import { readoutContext } from "@/game/readout-route";
 import { observedSuppliers } from "@/game/suppliers";
 
+import { ActionButton } from "./FormControls";
 import { ToolReferenceContext } from "./GuiToolInfo";
 import { ObjectNavigator } from "./ObjectNavigator";
 import { OfficeDisplay } from "./OfficeDisplay";
 import { QuoteDrafts } from "./QuoteDrafts";
+import { ResultDialog, resultTitle } from "./ResultDialog";
 import { WorkspaceReadout } from "./WorkspaceReadout";
 import "./mobile-workbench.css";
 
@@ -35,7 +37,8 @@ export function Workspace(props: WorkspaceProps) {
     [release, run.state, run.actions],
   );
   const [preview, setPreview] = useState("");
-  const context = useMemo(() => readoutContext(nav.tab, run.reports), [nav.tab, run.reports]);
+  const section = nav.path[0] ?? nav.tab;
+  const context = useMemo(() => readoutContext(section, run.reports), [section, run.reports]);
   const suppliers = useMemo(() => observedSuppliers(run.reports), [run.reports]);
   const { rememberObject } = nav;
   useEffect(() => rememberObject(context.object), [context.object, rememberObject]);
@@ -44,6 +47,7 @@ export function Workspace(props: WorkspaceProps) {
   const directory = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement>(null);
   const selected = useRef(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
   useEffect(() => {
@@ -54,7 +58,7 @@ export function Workspace(props: WorkspaceProps) {
   const sections = msg.operator.sections();
   useEffect(() => {
     const station = directory.current?.closest<HTMLElement>(".station");
-    const phone = matchMedia("(max-width: 600px)");
+    const phone = matchMedia("(max-width: 760px)");
     const viewport = window.visualViewport;
     if (!station) return undefined;
     function sizeWorkbench() {
@@ -73,23 +77,10 @@ export function Workspace(props: WorkspaceProps) {
     };
   }, []);
   const directoryProps = { state: run.state, suppliers, value: context.object };
-  const key = String(nav.tab);
-  const detail = nav.path.length > 1;
-  const parent = key.startsWith("supplier:")
-    ? { id: "suppliers", label: msg.operator.supply() }
-    : key === "machines" || key.startsWith("machine:")
-      ? { id: "site:depot", label: msg.operator.depot() }
-      : key === "status" || key === "payments"
-        ? { id: "world", label: msg.operator.bank() }
-        : null;
   const supplier = context.object.startsWith("supplier:")
     ? suppliers.find((entry) => entry.id === context.object.slice(9))
     : undefined;
-  let title = context.name ?? context.label();
-  if (typeof nav.tab === "string" && supplier) title = supplier.name;
-  if (key.startsWith("day:"))
-    title = msg.operator.results() + " · " + msg.operator.day() + " " + key.slice(4);
-  if (key.startsWith("past:")) title = msg.operator.history() + " · " + title;
+  const title = supplier?.name ?? context.name ?? context.label();
   function previewFor(target: EventTarget | null) {
     const button = target instanceof Element ? target.closest("[data-clock-verb]") : null;
     setPreview(button?.getAttribute("data-clock-verb") ?? "");
@@ -98,6 +89,17 @@ export function Workspace(props: WorkspaceProps) {
     <ToolReferenceContext value={toolReference}>
       <section
         className="workspace"
+        onClickCapture={(event) => {
+          const target = event.target;
+          if (target instanceof Element) {
+            const control = target.closest<HTMLElement>("button, a[href], input, select, textarea");
+            if (control) opener.current = control;
+          }
+        }}
+        onSubmitCapture={(event) => {
+          const submitter = event.nativeEvent.submitter;
+          if (submitter instanceof HTMLElement) opener.current = submitter;
+        }}
         onPointerOver={(e) => previewFor(e.target)}
         onPointerLeave={() => setPreview("")}
         onFocusCapture={(e) => previewFor(e.target)}
@@ -135,30 +137,12 @@ export function Workspace(props: WorkspaceProps) {
           <h2 id={headingId} ref={heading} tabIndex={-1}>
             {title}
           </h2>
-          {detail && (
+          {context.history.length > 0 && (
             <button
-              type="button"
-              onClick={() => {
-                nav.leaveDetail();
-                heading.current?.focus({ preventScroll: true });
-              }}
+              className="history-key"
+              aria-haspopup="dialog"
+              onClick={() => nav.setTab("past:" + context.object)}
             >
-              ← {msg.operator.back()}
-            </button>
-          )}
-          {!detail && parent && (
-            <button
-              type="button"
-              onClick={() => {
-                nav.openObject(parent.id);
-                heading.current?.focus({ preventScroll: true });
-              }}
-            >
-              ↑ {parent.label}
-            </button>
-          )}
-          {context.history.length > 0 && !String(nav.tab).startsWith("past:") && (
-            <button className="history-key" onClick={() => nav.setTab("past:" + context.object)}>
               {msg.operator.history()} ({context.history.length})
             </button>
           )}
@@ -197,23 +181,38 @@ export function Workspace(props: WorkspaceProps) {
         <div className="work-surface">
           <ObjectNavigator {...directoryProps} onOpen={nav.openObject} />
           <QuoteDrafts>
-            {nav.path
-              .filter((view) => typeof view === "string" || view === nav.tab)
-              .map((view) => (
-                <section
-                  className="readout"
-                  aria-labelledby={headingId}
+            <section className="readout" aria-labelledby={headingId} key={section}>
+              <WorkspaceReadout {...props} tab={section} context={context} suppliers={suppliers} />
+            </section>
+            {nav.path.slice(1).map((view) => {
+              const detail = readoutContext(view, run.reports);
+              const report = detail.selected;
+              const historyView = "past:" + detail.object;
+              const owner =
+                suppliers.find((entry) => "supplier:" + entry.id === detail.object)?.name ??
+                detail.name ??
+                detail.label();
+              return (
+                <ResultDialog
                   key={view}
-                  hidden={view !== nav.tab}
+                  opener={opener}
+                  title={resultTitle(view, report, owner)}
+                  close={nav.leaveDetail}
+                  covered={view !== nav.tab}
+                  related={
+                    report &&
+                    detail.history.length > 1 &&
+                    !nav.path.includes(historyView) && (
+                      <ActionButton onClick={() => nav.setTab(historyView)}>
+                        {msg.operator.history()} ({detail.history.length})
+                      </ActionButton>
+                    )
+                  }
                 >
-                  <WorkspaceReadout
-                    {...props}
-                    tab={view}
-                    context={view === nav.tab ? context : readoutContext(view, run.reports)}
-                    suppliers={suppliers}
-                  />
-                </section>
-              ))}
+                  <WorkspaceReadout {...props} tab={view} context={detail} suppliers={suppliers} />
+                </ResultDialog>
+              );
+            })}
           </QuoteDrafts>
         </div>
       </section>

@@ -35,7 +35,11 @@ export function DayStatement({ report, reports, state, money, openReport }: Prop
           .map((r) => (
             <div key={r.id}>
               <dt>
-                <button className="receipt-link" onClick={() => openReport(r.id)}>
+                <button
+                  aria-haspopup="dialog"
+                  className="receipt-link"
+                  onClick={() => openReport(r.id)}
+                >
                   #{r.id} {r.line}
                 </button>
               </dt>

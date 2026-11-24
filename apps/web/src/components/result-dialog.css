@@ -1,0 +1,58 @@
+.workbench-dialog {
+  box-sizing: border-box;
+  width: min(var(--dialog-width, 54rem), calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  border: 2px ridge #859488;
+  color: #24392c;
+  background: #e8ebe1;
+  box-shadow: 0 0.7rem 2.5rem #101d1790;
+  font: inherit;
+}
+.result-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.workbench-dialog::backdrop {
+  background: #0d181498;
+}
+.result-dialog[data-covered]::backdrop {
+  background: transparent;
+}
+.result-dialog > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0.55rem;
+  background: #364a3e;
+  color: #eef3e9;
+}
+.result-dialog > header h2 {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font:
+    bold 1rem/1.25 ui-monospace,
+    monospace;
+}
+.result-dialog > header button {
+  flex: none;
+}
+.workbench-dialog .readout.result-body {
+  min-height: 0;
+  border: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  font:
+    0.93rem/1.34 ui-monospace,
+    monospace;
+}
+.result-balance {
+  margin: 0.5rem 0.75rem 0;
+}

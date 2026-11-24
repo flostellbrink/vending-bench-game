@@ -1,11 +1,11 @@
 export type View = string | number;
 
-export function enterReadout(path: readonly View[], next: View, inspection = false): View[] {
+export function enterReadout(path: readonly View[], next: View, inspectObject = false): View[] {
   if (
     typeof next === "string" &&
     !next.startsWith("past:") &&
     !next.startsWith("day:") &&
-    !(inspection && next.startsWith("machine:"))
+    !(inspectObject && (next.startsWith("machine:") || next.startsWith("supplier:")))
   )
     return [next];
   const existing = path.indexOf(next);

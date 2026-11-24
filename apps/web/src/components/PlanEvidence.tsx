@@ -38,7 +38,7 @@ export function PlanEvidence({ line, reports, state, openReport }: Props) {
     <div className="plan-evidence">
       <small>{msg.operator.seen()}</small>
       {observation && (
-        <button onClick={() => openReport(observation.id)}>
+        <button aria-haspopup="dialog" onClick={() => openReport(observation.id)}>
           {target}
           {observedSlot ? " · " + observedSlot.qty + "/" + (observedSlot.capacity ?? "—") : ""}
           <small>
@@ -47,7 +47,7 @@ export function PlanEvidence({ line, reports, state, openReport }: Props) {
         </button>
       )}
       {depot && depotRow && (
-        <button onClick={() => openReport(depot.id)}>
+        <button aria-haspopup="dialog" onClick={() => openReport(depot.id)}>
           {msg.operator.depot()} · {depotRow[3]} × {product}
           <small>
             {msg.operator.day()} {depot.day} · {clock(depot.minute)}

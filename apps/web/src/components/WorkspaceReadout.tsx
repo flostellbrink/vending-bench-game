@@ -74,7 +74,7 @@ export function WorkspaceReadout({
         {...controls}
         state={state}
         suppliers={suppliers}
-        openObject={nav.openObject}
+        openObject={nav.showResult}
       />
     );
   const cmd = inspectionCommand(tab);
@@ -181,7 +181,7 @@ export function WorkspaceReadout({
         report={context.selected}
         state={state}
         openReport={setTab}
-        openSupplier={(id) => nav.openObject("supplier:" + id)}
+        openSupplier={(id) => nav.showResult("supplier:" + id)}
       />
     );
   if (typeof tab === "string" && tab.startsWith("past:"))

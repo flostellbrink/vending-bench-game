@@ -91,7 +91,7 @@ export const Receipts = memo(function Receipts({
                 r.directory.map((entry) => entry.name).join("\n")}
             </p>
           )}
-          <button onClick={() => openReport(r.id)}>
+          <button aria-haspopup="dialog" onClick={() => openReport(r.id)}>
             {msg.operator.openReceipt()} #{r.id}
           </button>
         </div>
