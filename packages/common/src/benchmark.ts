@@ -47,6 +47,15 @@ export const releaseSchema = v.object({
     refill: v.number(),
   }),
   tools: v.record(v.string(), v.string()),
+  toolDefaults: v.objectWithRest(
+    {
+      check_offers: v.objectWithRest(
+        { quantity: v.pipe(v.number(), v.integer(), v.minValue(1)) },
+        jsonValueSchema,
+      ),
+    },
+    v.record(v.string(), jsonValueSchema),
+  ),
   engineArchive: v.string(),
   scriptedReplay: v.string(),
   adapter: v.string(),

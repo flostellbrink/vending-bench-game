@@ -30,6 +30,22 @@ const pins = v.parse(
   JSON.parse(await readFile(new URL("releases.json", root), "utf8")),
 );
 const retained = assertValue(pins.find((pin) => pin.revision !== "submodule")).revision;
+await test("quote defaults come from the published MCP signature, not a frontend constant", async () => {
+  const python = await readSnapshot(retained);
+  const path = v.parse(v.string(), python.runPython('str(SERVER / "server.py")'));
+  python.FS.writeFile(
+    path,
+    [
+      "@mcp.tool()",
+      "def check_offers(supplier_id: str, quantity: int = 37):",
+      '    """Quote this quantity."""',
+    ].join("\n"),
+  );
+  assert.deepEqual(pythonJSON(python, "json.dumps(tool_metadata())"), [
+    { check_offers: "Quote this quantity." },
+    { check_offers: { quantity: 37 } },
+  ]);
+});
 const calibrationSchema = v.object({
   seed: v.number(),
   sim_days: v.number(),

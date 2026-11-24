@@ -25,8 +25,14 @@ def read_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def tool_descriptions():
+def published_value(expression):
+    return eval(compile(ast.Expression(expression), "server.py", "eval"),
+                {"__builtins__": {}, "config": config})
+
+
+def tool_metadata():
     descriptions = {}
+    defaults = {}
     for node in ast.parse((SERVER / "server.py").read_text()).body:
         if not isinstance(node, ast.FunctionDef):
             continue
@@ -36,14 +42,21 @@ def tool_descriptions():
             description = ast.get_docstring(node)
             for keyword in decorator.keywords:
                 if keyword.arg == "description":
-                    expression = compile(ast.Expression(keyword.value), "server.py", "eval")
-                    description = eval(expression, {"__builtins__": {}, "config": config})
+                    description = published_value(keyword.value)
             if not description or not hasattr(Engine, "tool_" + node.name):
                 raise ValueError(f"Missing engine method or description: {node.name}")
             descriptions[node.name] = description.strip()
+            params = node.args
+            positional = [*params.posonlyargs, *params.args]
+            optional = zip(reversed(positional), reversed(params.defaults))
+            defaults[node.name] = {arg.arg: published_value(value) for arg, value in optional}
+            defaults[node.name].update({
+                arg.arg: published_value(value)
+                for arg, value in zip(params.kwonlyargs, params.kw_defaults) if value is not None
+            })
     if not descriptions:
         raise ValueError("No published MCP business tools in server.py")
-    return descriptions
+    return descriptions, defaults
 
 
 def reference_trace(version):
@@ -179,12 +192,13 @@ def metadata():
     version = task["task"]["version"]
     brief = render()
     script, replay = reference_trace(version)
+    tools, defaults = tool_metadata()
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
                        "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
                                    "slots": config.all_slots(),
                                    "fee":config.DAILY_SPOT_FEE, "opens":config.DAY_START_MINUTE,
                                    "closes":config.DAY_END_MINUTE, "refill":config.TOOL_MINUTES.get("restock_machine",config.DEFAULT_TOOL_MINUTES)},
-                       "brief": brief.strip(), "tools": tool_descriptions(),
+                       "brief": brief.strip(), "tools": tools, "toolDefaults": defaults,
                        "scriptedReplay": replay,
                        "rivals": [script, *model_results(version)]}, allow_nan=False)
