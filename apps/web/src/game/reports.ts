@@ -235,16 +235,20 @@ export function knownOrders(reports: Report[]): KnownOrder[] {
         arrival: null,
       });
     }
-    for (const match of report.output.matchAll(/Delivery (PO-[\w-]+) arrived in storage\./g)) {
+    for (const notice of report.notices) {
+      const match = /^Delivery (\S+) arrived in storage\.$/.exec(notice);
+      if (!match) continue;
       const order = orders.get(capture(match, 1));
-      if (order)
+      if (order && !order.arrival) {
         order.arrival = {
           id: report.id,
           day: report.day,
-          short:
-            report.output.includes(capture(match, 1) + " from ") &&
-            report.output.includes("arrived short."),
+          short: report.notices.some(
+            (n) =>
+              n.startsWith("Delivery " + order.order + " from ") && n.endsWith(" arrived short."),
+          ),
         };
+      }
     }
   }
   return [...orders.values()].toReversed();

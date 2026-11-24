@@ -24,7 +24,9 @@ export default function DispatchDesk({
   if (!state) return null;
 
   const expected = orders.filter((order) => !order.arrival).toSorted((a, b) => a.eta - b.eta);
-  const lastArrival = orders.find((order) => order.arrival);
+  const lastArrival = orders
+    .filter((order) => order.arrival)
+    .toSorted((a, b) => (b.arrival?.id ?? 0) - (a.arrival?.id ?? 0))[0];
   const arrival = lastArrival?.arrival;
   const remaining = Math.max(0, state.closes - state.minute);
   const digits = new Intl.NumberFormat(lang);

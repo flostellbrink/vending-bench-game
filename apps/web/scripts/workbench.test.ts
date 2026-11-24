@@ -14,7 +14,7 @@ import {
   timing,
 } from "../src/game/commands.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
-import { observation } from "../src/game/reports.ts";
+import { knownOrders, observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
@@ -253,4 +253,44 @@ await test("a depot receipt keeps each expiry with its product and leaves undate
   });
   assert.equal(result.rows.length, 3);
   assert.doesNotMatch(result.display, /batch of/);
+});
+await test("only delivery notices update an order, and a short shipment applies to one order", () => {
+  const receipt = {
+    day: 4,
+    endDay: 4,
+    minute: 540,
+    endMinute: 565,
+    minutes: 25,
+    openingCash: 300,
+    closingCash: 300,
+    body: "",
+    output: "",
+    notices: [],
+  };
+  const order = (orderId: string, id: number) => ({
+    ...observation(receipt, ["order_goods", { supplier_id: "supplier" }], id),
+    terms: { order: orderId, paid: 20, eta: 4 },
+  });
+  const orders = [order("PO-1", 1), order("PO-2", 2)];
+  const text = "Delivery PO-2 arrived in storage.";
+  const note = observation({ ...receipt, body: text, output: text }, ["read_notes", {}], 3);
+  assert.ok(knownOrders([...orders, note]).every((o) => o.arrival === null));
+  const notices = [
+    "Delivery PO-1 from Supplier arrived short.",
+    "Delivery PO-1 arrived in storage.",
+    text,
+  ];
+  const close = observation(
+    { ...receipt, endDay: 5, notices, output: notices.join("\n") },
+    ["wait_for_next_day", {}],
+    4,
+  );
+  const delivered = knownOrders([...orders, close, note]);
+  assert.deepEqual(
+    delivered.map((o) => [o.order, o.arrival]),
+    [
+      ["PO-2", { id: 4, day: 4, short: false }],
+      ["PO-1", { id: 4, day: 4, short: true }],
+    ],
+  );
 });
