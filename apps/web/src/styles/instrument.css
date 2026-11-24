@@ -819,9 +819,10 @@ footer button[aria-pressed="true"] {
   margin: 0;
   font-weight: bold;
 }
-.order-entry {
-  border-bottom: 1px dotted var(--rule);
-  padding: 0.4rem 0;
+.order-register td small {
+  display: block;
+  color: #526456;
+  overflow-wrap: anywhere;
 }
 .brief p,
 .brief ul {

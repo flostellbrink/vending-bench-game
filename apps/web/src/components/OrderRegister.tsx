@@ -10,38 +10,48 @@ interface Props {
 }
 export function OrderRegister({ orders, t, money, open }: Props) {
   return (
-    <section className="sheet">
-      <h2>{t("orders")}</h2>
+    <section className="sheet" aria-label={t("orders")}>
       {orders.length === 0 && <p>{t("empty")}</p>}
-      {orders.map((order) => (
-        <div key={order.order} className="order-entry">
-          <b>{order.order}</b> · {order.supplier} · {money(order.paid)}
-          <div>
-            {order.arrival
-              ? t(order.arrival.short ? "incompleteOrder" : "arrived") +
-                " · " +
-                t("day") +
-                " " +
-                order.arrival.day
-              : t("expectedClose") + " " + order.eta}
-          </div>
-          <button className="receipt-link" onClick={() => open(order.id)}>
-            {t("source")} #{order.id}
-          </button>
-          {order.arrival && <ArrivalLink id={order.arrival.id} t={t} open={open} />}
-        </div>
-      ))}
+      {orders.length > 0 && (
+        <table className="observation-grid order-register">
+          <thead>
+            <tr>
+              <th scope="col">{t("order")}</th>
+              <th scope="col" data-field="price">
+                {t("amountPaid")}
+              </th>
+              <th scope="col">{t("expectedClose")}</th>
+              <th scope="col">{t("arrived")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders.map(({ arrival, ...order }) => (
+              <tr key={order.order}>
+                <td>
+                  <button className="receipt-link" onClick={() => open(order.id)}>
+                    {order.order}
+                  </button>
+                  <small>{order.supplier}</small>
+                </td>
+                <td data-field="price">{money(order.paid)}</td>
+                <td>
+                  {t("day")} {order.eta}
+                </td>
+                <td>
+                  {arrival ? (
+                    <button className="receipt-link" onClick={() => open(arrival.id)}>
+                      {t("day")} {arrival.day}
+                      {arrival.short && " · " + t("incompleteOrder")}
+                    </button>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
-  );
-}
-function ArrivalLink({ id, t, open }: { id: number; t: Translate; open: (id: number) => void }) {
-  return (
-    <>
-      {" "}
-      ·{" "}
-      <button className="receipt-link" onClick={() => open(id)}>
-        {t("arrived")} #{id}
-      </button>
-    </>
   );
 }

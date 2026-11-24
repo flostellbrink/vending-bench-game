@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  amountPaid:
+    .id: ORREG001
+    ^en: Amount paid
+    es: Importe pagado
+    de: Zahlbetrag
   newOrder:
     .id: POACT001
     ^en: New order
