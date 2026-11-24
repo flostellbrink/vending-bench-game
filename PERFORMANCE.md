@@ -70,3 +70,9 @@ On the loopback export, Start to a ready simulator prompt took 819 ms. Enter to 
 Before the worker lifecycle change, three visits to the same day-30 checkpoint left 2, 3, then 4 worker targets in Chrome, including a worker from an earlier game. The browser could have frozen them in its history cache. After the change, each of three visits showed one worker in the game and none on the save tree. Worker counts do not measure total browser memory.
 
 Browser Back restored receipt 500 and the 09:25 clock. An inspection produced receipt 501 at 09:50. Main-thread JS heap measured 35.2 MiB before leaving, 38.1 MiB after Back and 28.5 MiB after the inspection. This excludes memory allocated by the worker and its Python runtime.
+
+The detached-node check was inconclusive. After garbage collection, the landing page reported one document and 1,623 total DOM nodes. Chrome stopped responding to the detached-node query before the first game opened. Total nodes are not a count of retained scenes.
+
+## Development turnaround
+
+With dependencies installed and the build cache warm, generation and production export after a cabinet price change took 3.65 seconds on the M4. The preview returned the rebuilt landing page 3.83 seconds after the command started. This is build-to-HTTP time, not browser paint time.
