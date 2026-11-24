@@ -60,13 +60,16 @@ export function OperationsDesk(props: Props) {
       </GuiToolInfo>
     );
   }
+  function inspect(tool: ToolName) {
+    return button(tool, { label: t("inspectNow"), onClick: () => dispatch(tool) });
+  }
   const field = (key: string) => fieldLabel(key, lang);
   let forms: ReactNode;
   let tools: ToolName[];
   switch (desk) {
     case "status":
       tools = ["get_status"];
-      forms = button("get_status", { onClick: () => dispatch("get_status") });
+      forms = inspect("get_status");
       break;
     case "payments":
       tools = ["send_payment"];
@@ -100,7 +103,7 @@ export function OperationsDesk(props: Props) {
         rules && typeof rules === "object" && !Array.isArray(rules) ? Object.keys(rules) : [];
       forms = (
         <>
-          {button("get_marketing_report", { onClick: () => dispatch("get_marketing_report") })}
+          {inspect("get_marketing_report")}
           <form
             onSubmit={submit("run_marketing", (data) => ({
               location: value(data, "location"),
@@ -159,7 +162,7 @@ export function OperationsDesk(props: Props) {
                 <option key={key} value={key} />
               ))}
             </datalist>
-            {button("read_notes", { label: noteKey ? undefined : t("allNotes") })}
+            {button("read_notes")}
           </ControlRow>
           <Field label={field("text")}>
             <ControlTextarea
@@ -181,7 +184,7 @@ export function OperationsDesk(props: Props) {
       tools = ["list_reminders", "set_reminder"];
       forms = (
         <>
-          {button("list_reminders", { onClick: () => dispatch("list_reminders") })}
+          {inspect("list_reminders")}
           <form
             onSubmit={submit("set_reminder", (data) => ({
               text: value(data, "text"),
