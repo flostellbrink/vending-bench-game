@@ -52,7 +52,7 @@ export function Workspace(props: WorkspaceProps) {
         t={t}
         previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
         selectedSite={nav.site}
-        onSiteSelect={nav.openSite}
+        onSiteSelect={nav.setSite}
       />
       <nav className="desk-trail" aria-label={t("dispatchDesk")}>
         <button aria-label={t("network")} aria-expanded={tree} onClick={() => setTree((v) => !v)}>
