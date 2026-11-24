@@ -59,7 +59,7 @@ export function ReportGrid({
     });
   }, [report, sort, lang]);
   return (
-    <table className="observation-grid">
+    <table className="observation-grid" data-report={report.tool}>
       <thead>
         <tr>
           {report.columns.map((c, i) => (

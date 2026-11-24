@@ -4,6 +4,16 @@
   margin: 0.55rem 0;
   border-top: 1px solid #9eaa9c;
 }
+.supplier-index {
+  container-type: inline-size;
+  min-width: 0;
+}
+.supplier-search .control-input {
+  width: min(14rem, 100%);
+}
+.supplier-directory button > span {
+  min-width: 0;
+}
 .sheet.asset-actions {
   display: flex;
   align-items: baseline;
@@ -65,6 +75,8 @@
 }
 .supplier-desk,
 .depot-desk {
+  container-type: inline-size;
+  min-inline-size: 0;
   padding: 0.45rem 0.7rem;
 }
 .depot-tools {
@@ -86,6 +98,7 @@
   border-bottom: 1px solid #9caa9c;
 }
 .supplier-contact > span {
+  overflow-wrap: anywhere;
   font-size: 0.85rem;
   color: #4d5d52;
 }
@@ -129,4 +142,76 @@
 }
 .depot-ledger td:first-child {
   width: 49%;
+}
+.order-register .order-cell-label {
+  display: none;
+}
+@container (max-width:26rem) {
+  .supplier-directory :is(b, code),
+  .depot-ledger td:first-child {
+    overflow-wrap: anywhere;
+  }
+  .depot-tools {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+  .depot-ledger {
+    table-layout: fixed;
+    min-width: 0;
+  }
+  .depot-ledger th:first-child {
+    width: 40%;
+  }
+  .depot-ledger th:nth-child(2) {
+    width: 16%;
+  }
+  .depot-ledger th:nth-child(3) {
+    width: 18%;
+  }
+  .depot-ledger :is(th, td) {
+    padding: 0.3rem 0.2rem;
+  }
+  .depot-ledger th button {
+    white-space: normal;
+    min-width: 0;
+    width: auto;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .supplier-orders .sheet {
+    max-height: none;
+  }
+  .order-register,
+  .order-register tbody {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .order-register thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .order-register tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    border-block-start: 1px solid #9eac9e;
+    padding: 0.22rem 0;
+  }
+  .order-register tbody td {
+    padding: 0.15rem 0.25rem;
+    border: 0;
+    text-align: left;
+    min-width: 0;
+    white-space: normal;
+    align-self: start;
+  }
+  .order-register .order-cell-label {
+    display: block;
+    font-size: 0.78rem;
+    color: #4c6052;
+    line-height: 1.15;
+  }
 }

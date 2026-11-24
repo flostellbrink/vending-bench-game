@@ -80,7 +80,6 @@ export const OfficeDisplay = memo(function OfficeDisplay({
             <small>{clock(state.closes)}</small>
           </div>
         )}
-        {estimate && <small className="clock-estimate">+{estimate.minutes} min</small>}
         <strong>{state ? clock(time) : "—"}</strong>
         <GuiToolInfo verb="close">
           <button
@@ -115,8 +114,10 @@ export const OfficeDisplay = memo(function OfficeDisplay({
               closeDay();
             }}
           >
-            <span aria-hidden={armed}>{t("closeShift")}</span>
-            <span aria-hidden={!armed}>{t("confirmClose")}</span>
+            <span className="clock-label">
+              <span aria-hidden={armed}>{t("closeShift")}</span>
+              <span aria-hidden={!armed}>{t("confirmClose")}</span>
+            </span>
           </button>
         </GuiToolInfo>
       </div>

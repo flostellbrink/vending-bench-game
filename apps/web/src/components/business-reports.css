@@ -16,16 +16,6 @@
 .report-actions input[type="number"] {
   width: 6ch;
 }
-.report-actions button[data-clock-verb] {
-  background: #d8e2d6;
-  border: 1px solid #829484;
-  padding: 0.3em 0.6em;
-}
-.report-actions .mail-compose-trigger {
-  box-sizing: border-box;
-  height: var(--action-height);
-  padding-block: 0;
-}
 .business-report .report {
   padding-inline: 0;
 }
@@ -41,4 +31,65 @@
 .sales-evidence td > * {
   display: block;
   margin: 0.22em 0;
+}
+@media (max-width: 600px) {
+  .business-report .report-actions {
+    padding-block: 0.18rem 0.32rem;
+  }
+  .business-report .control-row {
+    row-gap: 0.25rem;
+  }
+  .business-report .report {
+    padding: 0.3rem 0;
+  }
+  .business-report .receipt-heading {
+    gap: 0.2em;
+    margin-block-end: 0.25rem;
+  }
+  .readout .observation-grid :is(th, td) {
+    padding: 0.24em 0.28em;
+  }
+  .observation-grid[data-report="list_emails"] {
+    table-layout: fixed;
+  }
+  .observation-grid[data-report="list_emails"] thead tr {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .observation-grid[data-report="list_emails"] thead th {
+    position: static;
+    flex: auto;
+  }
+  .observation-grid[data-report="list_emails"] tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 0.28em;
+    border-block-end: 1px solid #a8b6a6;
+  }
+  .observation-grid[data-report="list_emails"] tbody td {
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+  .observation-grid[data-report="list_emails"] td[data-field="subject"] {
+    grid-area: 1 / 1 / 2 / -1;
+    font-weight: bold;
+  }
+  .observation-grid[data-report="list_emails"] td[data-field="sender"] {
+    grid-area: 2 / 1;
+  }
+  .observation-grid[data-report="list_emails"] td[data-field="day"] {
+    grid-area: 2 / 2;
+    text-align: end;
+  }
+  .observation-grid[data-report="list_emails"] td[data-field="email_id"] {
+    grid-area: 3 / 1;
+    align-self: center;
+  }
+  .observation-grid[data-report="list_emails"] td:last-child {
+    grid-area: 3 / 2;
+  }
+  .sales-evidence td button {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
 }

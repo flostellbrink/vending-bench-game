@@ -11,7 +11,7 @@ type Props = Pick<ObservationProps, "state" | "t" | "runCommand" | "disabled"> &
 };
 export function SupplierDirectory({ suppliers, openObject, ...props }: Props) {
   return (
-    <section className="sheet">
+    <section className="sheet supplier-index">
       <DirectorySearch {...props} />
       {suppliers.length > 0 && (
         <ul className="supplier-directory">

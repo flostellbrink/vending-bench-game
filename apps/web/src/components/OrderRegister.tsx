@@ -32,11 +32,22 @@ export function OrderRegister({ orders, t, money, open }: Props) {
                     {order.order}
                   </button>
                 </td>
-                <td data-field="price">{money(order.paid)}</td>
+                <td data-field="price">
+                  <small className="order-cell-label" aria-hidden="true">
+                    {t("amountPaid")}
+                  </small>
+                  {money(order.paid)}
+                </td>
                 <td>
+                  <small className="order-cell-label" aria-hidden="true">
+                    {t("expectedClose")}
+                  </small>
                   {t("day")} {order.eta}
                 </td>
                 <td>
+                  <small className="order-cell-label" aria-hidden="true">
+                    {t("arrived")}
+                  </small>
                   {arrival ? (
                     <button className="receipt-link" onClick={() => open(arrival.id)}>
                       {t("day")} {arrival.day}

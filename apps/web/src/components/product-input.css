@@ -1,0 +1,58 @@
+.product-picker {
+  display: inline-flex;
+  position: relative;
+  max-width: 100%;
+}
+.product-picker::after {
+  content: "▾";
+  pointer-events: none;
+  position: absolute;
+  right: 0.45em;
+  top: 50%;
+  translate: 0 -50%;
+  color: #52695a;
+}
+.product-picker .control-input {
+  padding-right: 1.35em;
+}
+.product-choices {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 8px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #f2f4e9;
+  color: #273b30;
+  border: 1px solid #718775;
+  box-shadow: 0 3px 9px #182b2140;
+  font:
+    normal 0.91rem/1.35 ui-monospace,
+    monospace;
+}
+.product-choices ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.product-choices li,
+.product-choices p {
+  display: grid;
+  gap: 1px;
+  padding: 0.32em 0.6em;
+  margin: 0;
+}
+.product-choices li {
+  border-bottom: 1px solid #cad3c5;
+  cursor: pointer;
+}
+.product-choices li:hover,
+.product-choices li[aria-selected="true"] {
+  background: #d1e2c6;
+  color: #183422;
+}
+.product-choices small {
+  color: #415849;
+}

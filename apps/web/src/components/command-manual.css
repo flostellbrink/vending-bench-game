@@ -106,3 +106,35 @@
     gap: 0;
   }
 }
+@media (max-width: 600px) {
+  .command-manual {
+    min-width: 0;
+    grid-template-columns: minmax(7.5ch, 29%) minmax(0, 1fr);
+  }
+  .manual-index,
+  .manual-page {
+    padding: 0.32rem;
+  }
+  .manual-index section + section {
+    margin-top: 0.4rem;
+  }
+  .manual-index section div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .manual-index button {
+    overflow-wrap: anywhere;
+    padding: 0.16em 0.18em;
+  }
+  .manual-page pre,
+  .manual-page p,
+  .manual-page dl {
+    margin-block: 0.35em;
+  }
+  .manual-page h3 {
+    font-size: 1.12rem;
+    overflow-wrap: anywhere;
+  }
+  .manual-page p {
+    line-height: 1.35;
+  }
+}

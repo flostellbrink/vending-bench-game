@@ -9,8 +9,9 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
-import { ControlInput, ControlRow, Field, QuantityInput } from "./FormControls";
+import { ControlRow, Field, QuantityInput } from "./FormControls";
 import { GuiToolInfo, ToolReferenceContext } from "./GuiToolInfo";
+import { ProductInput } from "./ProductInput";
 import { useOrderDraft, useQuoteQuantity } from "./QuoteDrafts";
 import "./order-slip.css";
 
@@ -125,6 +126,7 @@ export function OrderSlip({
       {!supplierView && <QuoteRequest {...{ report, supplier, state, t, runCommand, disabled }} />}
       <form
         className="order-slip"
+        data-reference={rows.length > 0}
         onSubmit={(event) => {
           event.preventDefault();
           if (!command || locked) return;
@@ -218,13 +220,14 @@ export function OrderSlip({
               {manualLines.map((line) => (
                 <tr key={line.key} className="manual-order-line">
                   <td>
-                    <ControlInput
-                      aria-label={idLabel}
-                      autoComplete="off"
+                    <ProductInput
+                      reports={reports}
+                      t={t}
+                      label={idLabel}
                       value={line.product}
                       readOnly={!line.manual}
                       disabled={locked}
-                      onChange={(e) => amend({ ...line, product: e.currentTarget.value })}
+                      onChange={(product) => amend({ ...line, product })}
                     />
                   </td>
                   {rows.length > 0 && <td>—</td>}

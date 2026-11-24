@@ -9,6 +9,7 @@ import { syntax, toolFor } from "@/game/commands";
 import { toolDefaults } from "@/game/tool-defaults";
 
 import "./tool-info.css";
+import { ActionButton } from "./FormControls";
 
 interface Props {
   release: Release;
@@ -49,7 +50,7 @@ export function ToolInfo({ release, lang, verb, prediction }: Props) {
 
   return (
     <>
-      <button
+      <ActionButton
         ref={trigger}
         className="tool-info-trigger"
         type="button"
@@ -59,8 +60,12 @@ export function ToolInfo({ release, lang, verb, prediction }: Props) {
         popoverTarget={id}
         onClick={(event) => event.stopPropagation()}
       >
-        ⓘ
-      </button>
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+          <circle cx="8" cy="5" r=".9" fill="currentColor" />
+          <path d="M8 7v4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      </ActionButton>
       <div
         ref={panel}
         id={id}

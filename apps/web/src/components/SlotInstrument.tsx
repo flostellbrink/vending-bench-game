@@ -1,6 +1,6 @@
 import type { Report } from "games-common/benchmark";
 
-import { useId, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 import type { CabinetSlot } from "@/game/cabinet-layout";
 
@@ -13,6 +13,7 @@ import type { ObservationProps } from "./panel-props";
 
 import { ControlRow, ControlInput, Field, QuantityInput } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
+import { ProductInput } from "./ProductInput";
 
 const operations = ["refill", "price", "clear", "swap"] as const;
 type Props = ObservationProps & {
@@ -36,14 +37,11 @@ export function SlotInstrument({
   priceSource,
   openReport,
 }: Props) {
-  const productList = useId();
   const [verb, setVerb] = useState<(typeof operations)[number]>("refill");
   const [product, setProduct] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const needsProduct = verb === "refill" || verb === "swap";
-  const depot = reports.findLast((r) => r.tool === "get_storage_inventory");
-  const sizeMatches = depot?.rows.filter((row) => row[2] === slot.size && Number(row[3]) > 0);
   const changes = live ? [] : slotChanges(reports, slot.id, report.id);
   const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   const labels = {
@@ -148,23 +146,16 @@ export function SlotInstrument({
           {needsProduct && (
             <>
               <Field label={field("product_id")}>
-                <ControlInput
+                <ProductInput
+                  reports={reports}
+                  t={t}
+                  label={field("product_id")}
+                  preferSize={slot.size}
+                  disabled={disabled}
                   value={product}
-                  list={productList}
-                  spellCheck="false"
-                  autoComplete="off"
-                  onChange={(e) => setProduct(e.target.value)}
+                  onChange={setProduct}
                 />
               </Field>
-              <datalist id={productList}>
-                {depot &&
-                  sizeMatches?.map((r) => (
-                    <option key={r[0]} value={r[0]}>
-                      {r[1]} ×{r[3]} · {t("depot")} #{depot.id} · {t("day")} {depot.day}{" "}
-                      {clock(depot.minute)}
-                    </option>
-                  ))}
-              </datalist>
               <Field label={field("quantity")}>
                 <QuantityInput
                   disabled={!product}

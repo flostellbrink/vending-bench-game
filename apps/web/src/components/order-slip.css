@@ -86,6 +86,18 @@
 .manual-order-line td {
   border-block-start: 1px dashed #a6b7a5;
 }
+.order-slip[data-reference="false"] .slip-ledger table {
+  width: auto;
+  max-width: 100%;
+}
+.order-slip[data-reference="false"] .slip-ledger :is(td, th):first-child {
+  width: auto;
+  padding-right: 4px;
+}
+.order-slip[data-reference="false"] .slip-ledger :is(td, th):nth-child(2) {
+  padding-left: 0;
+  text-align: left;
+}
 .slip-ledger td:first-child {
   width: 55%;
   overflow-wrap: anywhere;
@@ -158,6 +170,43 @@
   padding: 0.45rem 0.65rem;
 }
 @container (max-width: 26rem) {
+  .slip-ledger table,
+  .order-slip[data-reference="false"] .slip-ledger table {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .slip-ledger th:first-child {
+    width: 45%;
+  }
+  .slip-ledger th:last-child {
+    width: 25%;
+  }
+  .order-slip[data-reference="false"] .slip-ledger th:first-child {
+    width: 68%;
+  }
+  .slip-ledger input[type="number"] {
+    width: min(100%, 5.5rem);
+  }
+  .manual-order-line .product-picker {
+    width: 100%;
+    min-width: 0;
+  }
+  .manual-order-line .product-picker input {
+    width: 100%;
+    min-width: 0;
+  }
+  .slip-ledger :is(th, td) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .slip-terms {
+    gap: 0.2rem 0.4rem;
+  }
+  .slip-terms .slip-source {
+    margin: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
   .slip-ledger :is(th, td) {
     padding-inline: 0.3rem;
   }

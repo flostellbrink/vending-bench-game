@@ -13,6 +13,7 @@ import {
   priceOrder,
   timing,
 } from "../src/game/commands.ts";
+import { observedProducts } from "../src/game/observed-products.ts";
 import { orderEntry } from "../src/game/order-entry.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { displayCell, knownOrders, observation, weatherObservations } from "../src/game/reports.ts";
@@ -233,6 +234,56 @@ await test("the order editor submits independent item quantities without requiri
     orderEntry("supplier", [{ key: "six", product: "", quantity: "10", manual: true }]).error,
     "incomplete",
   );
+});
+
+await test("product suggestions use returned IDs and dated stock, not unconfirmed command arguments", () => {
+  const base = {
+    id: 1,
+    day: 1,
+    minute: 540,
+    tool: "check_offers",
+    columns: ["product_id", "price"],
+    rows: [["cola", 1]],
+    slots: {},
+    args: {},
+  };
+  const found = observedProducts([
+    base,
+    {
+      ...base,
+      id: 2,
+      tool: "order_goods",
+      columns: ["product_id", "quantity", "price"],
+      rows: [["nuts", 40, 2]],
+      args: { items: { unconfirmed: 17 } },
+    },
+    {
+      ...base,
+      id: 3,
+      day: 2,
+      minute: 590,
+      tool: "get_storage_inventory",
+      columns: ["product_id", "product", "size", "quantity"],
+      rows: [["cola", "Cola Bottle", "large", "14"]],
+    },
+    {
+      ...base,
+      id: 4,
+      tool: "restock_machine",
+      columns: [],
+      rows: [],
+      args: { product_id: "invented", slot: "machine:A1" },
+    },
+  ]);
+  assert.deepEqual(found, [
+    {
+      id: "cola",
+      name: "Cola Bottle",
+      size: "large",
+      depot: { quantity: 14, day: 2, minute: 590, receipt: 3 },
+    },
+    { id: "nuts" },
+  ]);
 });
 
 await test("an observation carries overnight notices separately from a paid reply", () => {

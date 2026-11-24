@@ -1,18 +1,13 @@
 import type { Release, Snapshot } from "games-common/benchmark";
 
-import {
-  cloneElement,
-  createContext,
-  useContext,
-  type ComponentProps,
-  type ReactElement,
-} from "react";
+import { createContext, useContext, type ComponentProps, type ReactElement } from "react";
 
 import type { Lang, Translate } from "@/localization/messages";
 
 import { timing } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
 
+import { ActionButton } from "./FormControls";
 import { ToolInfo } from "./ToolInfo";
 
 export const ToolReferenceContext = createContext<{
@@ -35,14 +30,12 @@ export function GuiToolInfo({
   const span = timing(verb, state);
   return (
     <span className="tool-action-pair">
-      {span && verb !== "close"
-        ? cloneElement(
-            children,
-            {},
-            children.props.children,
-            <small className="action-duration"> · {span.minutes} min</small>,
-          )
-        : children}
+      <ActionButton {...children.props}>
+        {children.props.children}
+        {span && verb !== "close" && (
+          <small className="action-duration"> · {span.minutes} min</small>
+        )}
+      </ActionButton>
       <ToolInfo
         {...{ release, lang, verb }}
         prediction={span ? timeLabel(verb, state, t) : undefined}

@@ -7,8 +7,13 @@
   max-inline-size: 100%;
   vertical-align: middle;
 }
-.tool-action-pair > button:first-child:not(.tool-info-trigger),
-.station button.mail-compose-trigger {
+button.workbench-button {
+  appearance: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   height: var(--action-height);
   line-height: 1.15;
   padding-block: 0;
@@ -54,8 +59,12 @@ button.tool-info-trigger,
   cursor: help;
 }
 .tool-action-pair > button + button.tool-info-trigger {
-  border-inline-start: 0;
+  border-inline-start: 1px solid #758a7a;
   border-radius: 0 2px 2px 0;
+}
+.tool-info-trigger svg {
+  display: block;
+  flex: none;
 }
 .tool-action-pair .action-duration,
 .tool-info-panel .tool-prediction {

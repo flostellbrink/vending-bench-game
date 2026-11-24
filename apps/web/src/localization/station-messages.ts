@@ -3,6 +3,8 @@ import { msg } from "@/dictionary";
 export const stationMessages = {
   lineTotalFor: msg.operator.lineTotalFor,
   operator: {
+    noMatchingProducts: msg.operator.noMatchingProducts,
+    noObservedProducts: msg.operator.noObservedProducts,
     duplicateOrderProduct: msg.operator.duplicateOrderProduct,
     incompleteOrderLine: msg.operator.incompleteOrderLine,
     quotedAtQuantity: msg.operator.quotedAtQuantity,

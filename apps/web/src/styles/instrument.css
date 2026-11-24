@@ -287,10 +287,14 @@ footer button[aria-pressed="true"] {
     Menlo,
     monospace;
 }
-.clock-close > span {
+.clock-label {
+  display: inline-grid;
+  place-items: center;
+}
+.clock-label > span {
   grid-area: 1 / 1;
 }
-.clock-close > span[aria-hidden="true"] {
+.clock-label > span[aria-hidden="true"] {
   visibility: hidden;
 }
 .clock-close[data-armed="true"] {
@@ -1067,8 +1071,7 @@ footer button[aria-pressed="true"] {
   background: repeating-linear-gradient(135deg, #7c9c84 0 2px, #d0dacd 2px 4px);
 }
 @media (max-width: 760px) {
-  .shift small,
-  .clock-estimate {
+  .shift small {
     display: none;
   }
   .transport {
@@ -1145,10 +1148,12 @@ footer button[aria-pressed="true"] {
   border-right: 1px solid #869589;
 }
 .desk-trail {
+  block-size: calc(var(--action-height) + 4px);
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.2rem 0.4rem;
+  padding: 0 0.4rem;
   background: #c8cfc4;
   border: 1px solid #617466;
   font-size: 0.86rem;
@@ -1164,6 +1169,7 @@ footer button[aria-pressed="true"] {
   white-space: nowrap;
 }
 .desk-trail button {
+  height: var(--action-height);
   background: transparent;
   border: 0;
   text-align: left;

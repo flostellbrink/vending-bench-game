@@ -1,5 +1,9 @@
 import type { ComponentProps, ReactNode } from "react";
 
+export function ActionButton({ className = "", ...props }: ComponentProps<"button">) {
+  return <button {...props} className={("workbench-button " + className).trim()} />;
+}
+
 export function ControlRow({ className = "", ...props }: ComponentProps<"div">) {
   return <div {...props} className={("control-row " + className).trim()} />;
 }

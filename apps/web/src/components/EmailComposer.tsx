@@ -6,7 +6,7 @@ import type { Translate } from "@/localization/messages";
 
 import { quotedWord } from "@/game/command-words";
 
-import { ControlInput, ControlRow, Field, ControlTextarea } from "./FormControls";
+import { ActionButton, ControlInput, ControlRow, Field, ControlTextarea } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import "./email-composer.css";
 
@@ -43,7 +43,7 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
   const label = subject === undefined ? t("writeLetter") : t("replyToMail");
   return (
     <>
-      <button
+      <ActionButton
         type="button"
         ref={trigger}
         className="mail-compose-trigger"
@@ -62,7 +62,7 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
         }}
       >
         {label}
-      </button>
+      </ActionButton>
       <dialog
         ref={dialog}
         aria-labelledby={headingId}
@@ -113,9 +113,9 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
           </Field>
           <p>{t("supplierMailTerms")}</p>
           <ControlRow className="compose-actions">
-            <button type="button" onClick={() => dialog.current?.close()}>
+            <ActionButton type="button" onClick={() => dialog.current?.close()}>
               {t("cancelMail")}
-            </button>
+            </ActionButton>
             <GuiToolInfo verb="mail">
               <button
                 type="submit"

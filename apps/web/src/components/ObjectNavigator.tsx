@@ -63,7 +63,6 @@ export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
     },
     { id: "mail", label: t("mailbox") },
     { id: "sales", label: t("revenue") },
-    { id: "tabs", label: t("journal") },
     { id: "brief", label: t("rules") },
     { id: "help", label: t("help") },
   ];

@@ -184,25 +184,72 @@
 .slot-instrument input[type="number"] {
   width: 4.25rem;
 }
-.slot-submit button[data-clock-verb] {
-  padding: 0.3rem 0.65rem;
-  background: #354e3d;
-  color: #f4f3df;
-  border: 1px solid #293b2d;
-  font: inherit;
-  font-weight: bold;
-}
-.slot-submit button[data-clock-verb]:disabled {
-  background: #d9decf;
-  color: #667160;
-  border-color: #9ea895;
-}
-@media (max-width: 540px) {
+@media (max-width: 600px) {
   .cabinet-bench {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(8rem, 36%) minmax(0, 1fr);
+    gap: 0.22rem 0.55rem;
+    margin-block: 0.3rem;
+  }
+  .cabinet-face {
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    padding: 3px;
+  }
+  .cabinet-face header {
+    padding: 0 0 0.22rem;
+    font-size: 0.85rem;
+  }
+  .cabinet-shelf {
+    gap: 1px;
+    padding: 1px;
+    border-bottom-width: 2px;
+  }
+  .cabinet-shelf button {
+    min-height: 24px;
+    padding: 2px;
+  }
+  .cabinet-shelf button :is(b, span) {
+    font-size: 0.82rem;
+  }
+  .slot-instrument {
+    display: contents;
+  }
+  .slot-instrument > :is(header, dl, .slot-evidence, .slot-amendment) {
+    grid-column: 2;
+  }
+  .slot-instrument > header {
+    align-items: start;
+    gap: 0.32rem;
+  }
+  .slot-code {
+    font-size: 1rem;
+    padding: 0.1em 0.25em;
+  }
+  .slot-instrument h3 {
+    font-size: 1rem;
   }
   .slot-reading {
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    display: grid;
+    gap: 0.12rem;
+    margin: 0;
+  }
+  .slot-reading dd {
+    font-size: 1rem;
+  }
+  .slot-instrument > form {
+    grid-column: 1 / -1;
+    margin-top: 0.2rem;
+  }
+  .slot-operations {
+    margin-block: 0.18rem 0.35rem;
+  }
+  .slot-operations button {
+    padding-inline: 0.3em;
+  }
+  .slot-inputs {
+    gap: var(--control-gap);
+  }
+  .slot-inputs .product-picker {
+    max-width: min(10rem, 45vw);
   }
 }

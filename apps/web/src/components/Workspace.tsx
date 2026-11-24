@@ -1,12 +1,13 @@
 import type { Release } from "games-common/benchmark";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { ParentBalance } from "@/game/runs";
 import type { CommandLine, Run } from "@/hooks/useCommandLine";
 import type { Navigation } from "@/hooks/useNavigation";
 import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { readoutContext } from "@/game/readout-route";
 import { observedSuppliers } from "@/game/suppliers";
 
@@ -15,6 +16,7 @@ import { ObjectNavigator } from "./ObjectNavigator";
 import { OfficeDisplay } from "./OfficeDisplay";
 import { QuoteDrafts } from "./QuoteDrafts";
 import { WorkspaceReadout } from "./WorkspaceReadout";
+import "./mobile-workbench.css";
 
 export interface WorkspaceProps {
   run: Run;
@@ -40,6 +42,39 @@ export function Workspace(props: WorkspaceProps) {
   const { rememberObject } = nav;
   useEffect(() => rememberObject(context.object), [context.object, rememberObject]);
   const headingId = useId();
+  const directoryId = useId();
+  const directory = useRef<HTMLDialogElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const selected = useRef(false);
+  const [directoryOpen, setDirectoryOpen] = useState(false);
+  useEffect(() => {
+    if (!directoryOpen) return;
+    directory.current?.showModal();
+    directory.current?.querySelector<HTMLButtonElement>("button[aria-current]")?.focus();
+  }, [directoryOpen]);
+  const sections = msg.operator.sections({}, { locale: lang });
+  useEffect(() => {
+    const station = directory.current?.closest<HTMLElement>(".station");
+    const phone = matchMedia("(max-width: 600px)");
+    const viewport = window.visualViewport;
+    if (!station) return undefined;
+    function sizeWorkbench() {
+      if (!phone.matches && directory.current?.open) directory.current.close();
+      if (phone.matches && viewport?.scale === 1)
+        station?.style.setProperty("--phone-height", viewport.height + "px");
+      else station?.style.removeProperty("--phone-height");
+    }
+    sizeWorkbench();
+    phone.addEventListener("change", sizeWorkbench);
+    viewport?.addEventListener("resize", sizeWorkbench);
+    return () => {
+      phone.removeEventListener("change", sizeWorkbench);
+      viewport?.removeEventListener("resize", sizeWorkbench);
+      station.style.removeProperty("--phone-height");
+    };
+  }, []);
+  const directoryProps = { state: run.state, suppliers, t, value: context.object };
   const key = String(nav.tab);
   const supplier = context.object.startsWith("supplier:")
     ? suppliers.find((entry) => entry.id === context.object.slice(9))
@@ -78,21 +113,61 @@ export function Workspace(props: WorkspaceProps) {
           onOpen={nav.openObject}
         />
         <div className="desk-trail">
-          <h2 id={headingId}>{title}</h2>
+          <button
+            className="sections-trigger"
+            type="button"
+            ref={trigger}
+            aria-haspopup="dialog"
+            aria-controls={directoryId}
+            onClick={() => {
+              selected.current = false;
+              setDirectoryOpen(true);
+            }}
+          >
+            {sections}
+          </button>
+          <h2 id={headingId} ref={heading} tabIndex={-1}>
+            {title}
+          </h2>
           {context.history.length > 0 && !String(nav.tab).startsWith("past:") && (
             <button className="history-key" onClick={() => nav.setTab("past:" + context.object)}>
               {t("history")} ({context.history.length})
             </button>
           )}
         </div>
+        <dialog
+          className="sections-dialog"
+          id={directoryId}
+          ref={directory}
+          aria-label={sections}
+          onClose={() => {
+            setDirectoryOpen(false);
+            (selected.current ? heading.current : trigger.current)?.focus({ preventScroll: true });
+          }}
+        >
+          <header>
+            <h2>{sections}</h2>
+            <button
+              type="button"
+              aria-label={msg.operator.closeSections({}, { locale: lang })}
+              onClick={() => directory.current?.close()}
+            >
+              ×
+            </button>
+          </header>
+          {directoryOpen && (
+            <ObjectNavigator
+              {...directoryProps}
+              onOpen={(id) => {
+                selected.current = true;
+                nav.openObject(id);
+                directory.current?.close();
+              }}
+            />
+          )}
+        </dialog>
         <div className="work-surface">
-          <ObjectNavigator
-            state={run.state}
-            suppliers={suppliers}
-            t={t}
-            value={context.object}
-            onOpen={nav.openObject}
-          />
+          <ObjectNavigator {...directoryProps} onOpen={nav.openObject} />
           <QuoteDrafts>
             <section className="readout" aria-labelledby={headingId} key={nav.tab}>
               <WorkspaceReadout {...props} context={context} suppliers={suppliers} />
