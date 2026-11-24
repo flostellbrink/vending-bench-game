@@ -4,15 +4,15 @@ import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
 import { first } from "games-common/language";
-import { useId, useState, useSyncExternalStore } from "react";
+import { useId, useState } from "react";
 
 import type { Locale } from "@/dictionary/runtime";
 
 import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
-import { forkRun, readRecord, readSlotSnapshot, recordKey, slotSnapshot } from "@/game/runs";
+import { readRecord, readSlotSnapshot, recordKey, slotSnapshot } from "@/game/runs";
+import { unavailable, useLocationSearch, useStoredText } from "@/hooks/useSessionStorage";
 
-import SaveTree from "./SaveTree";
 import "./session-setup.css";
 
 interface Props {
@@ -24,32 +24,6 @@ interface Props {
   renderPage?: (release: Release, setup: ReactElement) => ReactElement;
 }
 
-const unavailable = Symbol("unavailable");
-
-function subscribeToNavigation(update: () => void) {
-  window.addEventListener("popstate", update);
-  return () => window.removeEventListener("popstate", update);
-}
-
-function subscribeToStorage(update: () => void) {
-  window.addEventListener("storage", update);
-  return () => window.removeEventListener("storage", update);
-}
-
-function useStoredText(read: () => string | null) {
-  return useSyncExternalStore<string | null | undefined | typeof unavailable>(
-    subscribeToStorage,
-    () => {
-      try {
-        return read();
-      } catch {
-        return unavailable;
-      }
-    },
-    () => undefined,
-  );
-}
-
 export default function SessionSetup({
   lang,
   initialRevision,
@@ -58,11 +32,7 @@ export default function SessionSetup({
   compact = false,
   renderPage,
 }: Props) {
-  const search = useSyncExternalStore(
-    subscribeToNavigation,
-    () => location.search,
-    () => "",
-  );
+  const search = useLocationSearch();
   const params = new URLSearchParams(search);
   const urlRevision = params.get("bench");
   const [choice, setChoice] = useState<string>();
@@ -77,26 +47,20 @@ export default function SessionSetup({
     const best = readRecord(localStorage.getItem(recordKey(current)));
     return best === null ? null : String(best.score);
   });
-  const [issue, setProblem] = useState<"branchFailed" | "unavailable">();
-  const problem = snapshot === unavailable ? "unavailable" : issue;
-  const [sending, setSending] = useState(false);
   const options = { locale: lang };
   const money = new Intl.NumberFormat(lang, { style: "currency", currency: current.currency });
-  const disabled = sending || typeof snapshot !== "string";
   const startForm = useId();
-  function branch(id: string, day: number) {
-    if (disabled) return;
-    setSending(true);
-    try {
-      const slot = forkRun(localStorage, current, id, day);
-      location.assign(
-        "/" + lang + "/run/?" + new URLSearchParams({ bench: current.revision, slot }),
-      );
-    } catch {
-      setProblem("branchFailed");
-      setSending(false);
-    }
-  }
+  const savedParams = new URLSearchParams({ bench: current.revision });
+  const selectedSlot =
+    current.revision === (initialRevision ?? urlRevision)
+      ? (activeSlot ?? params.get("slot"))
+      : null;
+  if (selectedSlot) savedParams.set("slot", selectedSlot);
+  if (initialDay !== undefined && current.revision === initialRevision)
+    savedParams.set("day", String(initialDay));
+  const latest = slots
+    .filter((s) => !s.damaged && !s.finished)
+    .toSorted((a, b) => (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0))[0];
 
   const setup = (
     <section className="session-setup" aria-label={msg.session.choose({}, options)}>
@@ -107,25 +71,30 @@ export default function SessionSetup({
           <h2>{msg.session.choose({}, options)}</h2>
         )}
       </header>
-      <label className="session-version">
-        {msg.session.version({}, options)}
-        <select
-          name="bench"
-          form={startForm}
-          value={current.revision}
-          disabled={sending}
-          onChange={(event) => {
-            setChoice(event.currentTarget.value);
-            setProblem(undefined);
-          }}
-        >
-          {releases.map((release) => (
-            <option key={release.revision} value={release.revision}>
-              {release.id}
-            </option>
-          ))}
-        </select>
-      </label>
+      {releases.length === 1 ? (
+        <div className="session-version">
+          {msg.session.version({}, options)} <b>{current.id}</b>
+          <input type="hidden" name="bench" form={startForm} value={current.revision} />
+        </div>
+      ) : (
+        <label className="session-version">
+          {msg.session.version({}, options)}
+          <select
+            name="bench"
+            form={startForm}
+            value={current.revision}
+            onChange={(event) => {
+              setChoice(event.currentTarget.value);
+            }}
+          >
+            {releases.map((release) => (
+              <option key={release.revision} value={release.revision}>
+                {release.id}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <dl className="session-terms">
         <div>
           <dt>{msg.session.opening({}, options)}</dt>
@@ -164,32 +133,32 @@ export default function SessionSetup({
       )}
       <form id={startForm} className="session-actions" method="get" action={"/" + lang + "/run/"}>
         <input name="slot" type="hidden" value="new" />
-        <button type="submit" disabled={sending}>
+        <button type="submit">
           {slots.length ? msg.session.again({}, options) : msg.session.start({}, options)}
         </button>
+        {!compact && latest && (
+          <a
+            href={
+              "/" +
+              lang +
+              "/run/?" +
+              new URLSearchParams({ bench: current.revision, slot: latest.id })
+            }
+          >
+            {msg.session.resume({}, options)}
+          </a>
+        )}
       </form>
-      <SaveTree
-        key={current.revision + ":" + (initialDay ?? "latest")}
-        release={current}
-        slots={slots}
-        lang={lang}
-        compact={compact}
-        activeSlot={
-          current.revision === (initialRevision ?? urlRevision)
-            ? (activeSlot ?? params.get("slot") ?? undefined)
-            : undefined
-        }
-        initialDay={current.revision === initialRevision ? initialDay : undefined}
-        disabled={disabled}
-        branch={branch}
-      />
-      {problem && (
-        <p role="alert">
-          {problem === "branchFailed"
-            ? msg.session.branchFailed({}, options)
-            : msg.session.unavailable({}, options)}
+      {slots.length > 0 && (
+        <p className="save-library-link">
+          <a href={"/" + lang + "/saves/?" + savedParams}>
+            {msg.session.library({}, options)} ({slots.length})
+            {savedParams.has("day") &&
+              " · " + msg.session.dayNumber({ day: Number(savedParams.get("day")) }, options)}
+          </a>
         </p>
       )}
+      {snapshot === unavailable && <p role="alert">{msg.session.unavailable({}, options)}</p>}
     </section>
   );
   return renderPage ? renderPage(current, setup) : setup;

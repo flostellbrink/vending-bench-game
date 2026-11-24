@@ -99,7 +99,7 @@ export function Station({ release, slot, runNumber, parentBalance, lang, changeL
             ? t("score") + " · " + money(state.final.reward)
             : "Vending Bench / " + release.id + " · Seed " + release.seed}
         </span>
-        <a href={"/" + lang + "/?" + new URLSearchParams({ bench: release.revision, slot })}>
+        <a href={"/" + lang + "/saves/?" + new URLSearchParams({ bench: release.revision, slot })}>
           {msg.session.library({}, { locale: lang })}
         </a>
       </footer>

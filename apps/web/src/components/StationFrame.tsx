@@ -9,12 +9,22 @@ interface Props {
   revision: string;
   label: string;
   children: ReactNode;
-  page?: "run" | "setup";
+  page?: "run" | "setup" | "saves";
   slot?: string;
+  day?: number;
 }
-export function StationFrame({ lang, revision, label, children, page = "setup", slot }: Props) {
+export function StationFrame({
+  lang,
+  revision,
+  label,
+  children,
+  page = "setup",
+  slot,
+  day,
+}: Props) {
   const query = new URLSearchParams({ bench: revision });
   if (slot) query.set("slot", slot);
+  if (day !== undefined) query.set("day", String(day));
   return (
     <main className="station-frame">
       <header className="mast">
@@ -30,7 +40,7 @@ export function StationFrame({ lang, revision, label, children, page = "setup", 
               key={l}
               lang={l}
               aria-current={l === lang ? "page" : undefined}
-              href={"/" + l + "/" + (page === "run" ? "run/" : "") + "?" + query}
+              href={"/" + l + "/" + (page === "setup" ? "" : page + "/") + "?" + query}
             >
               {l.toUpperCase()}
             </a>

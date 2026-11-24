@@ -1163,6 +1163,26 @@ landing:
     es: "Modelo"
     de: "Modell"
 session:
+  newSlot:
+    .id: SLTR0017
+    ^en: "New run"
+    es: "Nueva partida"
+    de: "Neuer Lauf"
+  saveTimeline:
+    .id: SLTR0014
+    ^en: "Open a day to branch from that morning. Open a run’s latest save to continue."
+    es: "Abre un día para crear una rama desde esa mañana. Abre el último guardado para continuar."
+    de: "Öffne einen Tag, um am Morgen einen neuen Zweig zu beginnen. Öffne den letzten Spielstand, um fortzufahren."
+  back:
+    .id: SLTR0015
+    ^en: "Back to setup"
+    es: "Volver a la configuración"
+    de: "Zur Spielauswahl"
+  newest:
+    .id: SLTR0016
+    ^en: "Latest"
+    es: "Último"
+    de: "Neuester"
   parentRun:
     .id: SLTR0013
     .inputs:

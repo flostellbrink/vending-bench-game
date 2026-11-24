@@ -1,0 +1,219 @@
+.save-console {
+  --scope: #17221c;
+  --luminous: #e3ead5;
+  --wire: #8ba595;
+  --hot: #e6b679;
+  max-width: 100rem;
+  min-width: 0;
+  margin: 8px auto 0;
+  padding: clamp(0.75rem, 2vw, 1.7rem);
+  background: var(--scope);
+  border: 3px inset #889588;
+  color: var(--luminous);
+  font:
+    normal 0.95rem/1.4 ui-monospace,
+    Menlo,
+    monospace;
+}
+.save-console > header,
+.save-console-actions,
+.save-focus-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.45rem 0.9rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.save-console > header {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #7f9585;
+}
+.save-console h1 {
+  font:
+    600 1.45rem/1.15 ui-monospace,
+    Menlo,
+    monospace;
+  margin: 0;
+}
+.save-console header p {
+  margin: 0.3rem 0 0;
+  color: #c6d2c4;
+}
+.save-console header small,
+.save-focus-note {
+  font-size: 0.84rem;
+  color: #b5c8b8;
+}
+.save-library {
+  min-width: 0;
+}
+.save-scroll {
+  max-height: 62svh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #758b7b #1d2b23;
+}
+.save-map,
+.save-map-lanes,
+.save-map-row {
+  position: relative;
+}
+.save-map-head {
+  position: sticky;
+  z-index: 3;
+  top: 0;
+  height: 44px;
+  background: var(--scope);
+  border-bottom: 1px solid #566a5c;
+}
+.save-map-head > span {
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #adbfad;
+}
+.save-new {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  top: 4px;
+  width: 100px;
+  white-space: nowrap;
+  height: 34px;
+  line-height: 1.05;
+  border: 1px dashed #abbba6;
+  color: var(--luminous);
+  background: var(--scope);
+  font: inherit;
+}
+.save-map-lanes > svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+.save-map-lanes > svg path {
+  stroke: var(--wire);
+  stroke-width: 1.5;
+  stroke-dasharray: 2.5 3.5;
+  fill: none;
+}
+.save-map-lanes > svg .current path {
+  stroke: #bdcdb5;
+}
+.save-lane-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 100px;
+  height: 100%;
+  padding: 15px 0.3rem 0 0;
+  box-sizing: border-box;
+  background: var(--scope);
+  color: #a9bcae;
+  line-height: 1.2;
+  font-size: 0.83rem;
+}
+.save-card {
+  position: absolute;
+  translate: -50% -50%;
+  box-sizing: border-box;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  height: 35px;
+  background: #1c2920;
+  border: 1px solid #b0c4b1;
+  border-radius: 1px;
+  color: var(--luminous);
+  padding: 1px 4px;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.08;
+  font-family: inherit;
+}
+.save-card small {
+  font-size: 0.75rem;
+  color: #b6c9b5;
+}
+.save-card b {
+  font-size: 0.88rem;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+}
+.save-card.tip {
+  border-style: double;
+  border-width: 3px;
+}
+.save-card.newest {
+  border-color: var(--hot);
+}
+.save-card em {
+  position: absolute;
+  top: 100%;
+  left: -3px;
+  margin-top: 3px;
+  font:
+    normal 0.68rem/0.9 ui-monospace,
+    monospace;
+  color: var(--hot);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.save-card[aria-current="true"] {
+  color: #18261d;
+  background: #c1d8c2;
+}
+.save-card[aria-current="true"] small {
+  color: #304b38;
+}
+.save-card:hover {
+  border-color: white;
+  color: white;
+  background: #35483a;
+}
+.save-card:hover small {
+  color: inherit;
+}
+.save-card.damaged {
+  line-height: 1.1;
+  font-size: 0.65rem;
+  border-style: dotted;
+}
+.save-focus-note {
+  justify-content: flex-start;
+  min-height: 2.2rem;
+  padding: 0.65rem 0 0.3rem;
+  border-block: 1px solid #586e5f;
+  margin: 0.4rem 0;
+}
+.save-console-actions {
+  padding: 0.55rem 0 0;
+}
+.save-console-actions a,
+.save-console-actions button {
+  font: inherit;
+  color: var(--luminous);
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+.save-console-actions button {
+  border: 0;
+  background: none;
+}
+.save-console :is(button, a):focus-visible {
+  outline: 2px solid var(--hot);
+  outline-offset: 2px;
+}
+@media (forced-colors: active) {
+  .save-map-lanes > svg path,
+  .save-map-lanes > svg .current path {
+    stroke: CanvasText;
+  }
+  .save-card[aria-current="true"] {
+    outline: 2px solid Highlight;
+  }
+}

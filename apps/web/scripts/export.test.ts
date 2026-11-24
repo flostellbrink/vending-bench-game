@@ -22,7 +22,11 @@ await test("each exported page ships only its own localized messages", async () 
     files.filter((f) => f.endsWith(".js")).map((f) => readFile(new URL(f, chunks), "utf8")),
   );
   for (const locale of locales)
-    for (const segment of ["", "run/"]) {
+    for (const [segment, landmarkId] of [
+      ["", "SX000001"],
+      ["run/", "VBBOOT03"],
+      ["saves/", "SLTR0014"],
+    ] as const) {
       const route = new URL(locale + "/" + segment, directory);
       const html = await readFile(new URL("index.html", route), "utf8");
       assert.ok(html.includes('<html lang="' + locale + '">'));
@@ -50,8 +54,9 @@ await test("each exported page ships only its own localized messages", async () 
       const dictionary = record[3].translations["vending-bench-game"];
       assert.deepEqual(Object.keys(dictionary), [locale]);
       const messages = assertValue(dictionary[locale]);
-      const landmark = assertValue(messages[segment ? "VBBOOT03" : "SX000001"]);
+      const landmark = assertValue(messages[landmarkId]);
       assert.equal("VBBOOT03" in messages, segment === "run/", "Wrong boot-hint scope");
+      assert.equal("SLTR0014" in messages, segment === "saves/", "Wrong save-library scope");
       assert.equal(
         "HN000001" in messages,
         segment === "",

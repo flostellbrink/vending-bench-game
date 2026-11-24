@@ -18,7 +18,7 @@ Use `balance` to review daily balances, `tabs` to list receipts, or `view <resul
 
 ## Saved runs
 
-Each new run gets its own slot in this browser. In **Saved runs**, select the diamond to resume a run at its latest command. Select a numbered day to start a separate branch from that morning. The original run, its later days and other branches remain available. A branch uses the same benchmark revision and seed as its parent.
+Each new run gets its own slot in this browser. Open **Saved runs** to resume a run at its latest command or start a branch from an earlier morning. The original run and its later days remain available. A branch uses its parent’s benchmark revision and seed. Its balance graph compares the two runs on days when both have a recorded closing balance.
 
 Older saves appear alongside new slots. Resume an older save once to reconstruct its morning checkpoints from its command journal.
 

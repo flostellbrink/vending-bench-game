@@ -6,6 +6,7 @@ import type { Locale } from "@/dictionary/runtime";
 import type { RunSlot } from "@/game/runs";
 
 import { msg } from "@/dictionary";
+import { clock } from "@/scene/clock";
 
 interface Selection {
   slot: string;
@@ -17,64 +18,81 @@ interface Props {
   lang: Locale;
   activeSlot?: string;
   initialDay?: number;
-  compact: boolean;
   disabled: boolean;
+  newForm: string;
   branch: (slot: string, day: number) => void;
 }
-
-const step = 34;
-const lane = 36;
-const margin = 14;
-const point = (day: number) => margin + (day - 1) * step;
-const height = (index: number) => margin + index * lane;
-const end = (slot: RunSlot) => Math.max(slot.parent?.day ?? 1, slot.day) + 0.75;
+const column = 112,
+  cardWidth = 94,
+  labelWidth = 100,
+  rowHeight = 91,
+  morningY = 24,
+  tipY = 66;
+const center = (day: number) => labelWidth + (day - 0.5) * column;
+const tipDay = (s: RunSlot, days: number) => Math.min(s.day, days);
+const visibleMornings = (s: RunSlot) =>
+  s.checkpoints.filter((c) => !s.parent || c.day > s.parent.day);
+const tipPosition = (s: RunSlot, day: number) =>
+  visibleMornings(s).some((c) => c.day === day) ? tipY : morningY;
 
 function orderSlots(slots: RunSlot[]) {
   const children = new Map<string, RunSlot[]>();
-  for (const slot of slots) {
-    if (!slot.parent) continue;
-    const siblings = children.get(slot.parent.slot);
-    if (siblings) siblings.push(slot);
-    else children.set(slot.parent.slot, [slot]);
+  for (const s of slots) {
+    if (s.parent) {
+      const list = children.get(s.parent.slot) ?? [];
+      list.push(s);
+      children.set(s.parent.slot, list);
+    }
   }
-  const rows: RunSlot[] = [];
-  const visited = new Set<string>();
-  const pending = [...slots.filter((slot) => !slot.parent), ...slots].toReversed();
-  for (let slot = pending.pop(); slot; slot = pending.pop()) {
-    if (visited.has(slot.id)) continue;
-    visited.add(slot.id);
-    rows.push(slot);
-    for (const child of children.get(slot.id)?.toReversed() ?? []) pending.push(child);
+  const visited = new Set<string>(),
+    rows: RunSlot[] = [];
+  const pending = [...slots.filter((s) => !s.parent), ...slots].toReversed();
+  for (let s = pending.pop(); s; s = pending.pop()) {
+    if (visited.has(s.id)) continue;
+    visited.add(s.id);
+    rows.push(s);
+    for (const child of children.get(s.id)?.toReversed() ?? []) pending.push(child);
   }
   return rows;
 }
 
-function selectAdjacent(event: KeyboardEvent<HTMLDivElement>) {
-  if (!(event.target instanceof HTMLButtonElement)) return;
+function moveFocus(event: KeyboardEvent<HTMLDivElement>) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || target.dataset.row === undefined) return;
   const controls = Array.from(
-    event.currentTarget.querySelectorAll<HTMLButtonElement>("button[data-row]:not(:disabled)"),
+    event.currentTarget.querySelectorAll<HTMLElement>("[data-row]:not(:disabled)"),
   );
-  const row = Number(event.target.dataset.row),
-    column = Number(event.target.dataset.column);
-  const offset = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-  const same = controls.filter((b) => Number(b.dataset.row) === row);
-  const index = same.indexOf(event.target);
-  let next: HTMLButtonElement | undefined;
-  if (offset)
+  const row = Number(target.dataset.row),
+    at = Number(target.dataset.day);
+  const peers = controls.filter((n) => Number(n.dataset.row) === row),
+    i = peers.indexOf(target);
+  let next: HTMLElement | undefined;
+  if (event.key === "ArrowLeft") next = peers[i - 1];
+  else if (event.key === "ArrowRight") next = peers[i + 1];
+  else if (event.key === "Home") next = peers[0];
+  else if (event.key === "End") next = peers.at(-1);
+  else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    const adjacent = row + (event.key === "ArrowDown" ? 1 : -1);
     next = controls
-      .filter((b) => Number(b.dataset.row) === row + offset)
+      .filter((n) => Number(n.dataset.row) === adjacent)
       .toSorted(
-        (a, b) =>
-          Math.abs(Number(a.dataset.column) - column) - Math.abs(Number(b.dataset.column) - column),
+        (a, b) => Math.abs(Number(a.dataset.day) - at) - Math.abs(Number(b.dataset.day) - at),
       )[0];
-  else if (event.key === "ArrowRight") next = same[index + 1];
-  else if (event.key === "ArrowLeft") next = same[index - 1];
-  else if (event.key === "Home") next = same[0];
-  else if (event.key === "End") next = same.at(-1);
-  else return;
+  } else return;
   event.preventDefault();
   next?.focus();
-  next?.click();
+}
+function inheritedMorning(slot: RunSlot, day: number | undefined, byId: Map<string, RunSlot>) {
+  if (day === undefined) return slot;
+  let selected = slot;
+  const seen = new Set<string>();
+  while (selected.parent && day <= selected.parent.day && !seen.has(selected.id)) {
+    seen.add(selected.id);
+    const parent = byId.get(selected.parent.slot);
+    if (!parent) break;
+    selected = parent;
+  }
+  return selected;
 }
 
 export default function SaveTree({
@@ -83,201 +101,203 @@ export default function SaveTree({
   lang,
   activeSlot,
   initialDay,
-  compact,
   disabled,
+  newForm,
   branch,
 }: Props) {
-  const [selection, select] = useState<Selection | undefined>(() =>
-    activeSlot && initialDay !== undefined ? { slot: activeSlot, day: initialDay } : undefined,
-  );
+  const [choice, setChoice] = useState<Selection>();
   const scroller = useRef<HTMLDivElement>(null);
   const rows = orderSlots(slots);
-  const runNumbers = new Map(slots.map((s, i) => [s.id, i + 1]));
-  const rowNumbers = new Map(rows.map((s, i) => [s.id, i]));
-  let slot =
-    slots.find((s) => s.id === selection?.slot) ??
-    slots.find((s) => s.id === activeSlot) ??
-    slots.at(-1);
-  const selectedDay = slot?.id === selection?.slot ? selection?.day : undefined;
-  if (selectedDay !== undefined) {
-    const seen = new Set<string>();
-    while (slot?.parent && selectedDay < slot.parent.day && !seen.has(slot.id)) {
-      seen.add(slot.id);
-      const parentId = slot.parent.slot;
-      const parent = slots.find((s) => s.id === parentId);
-      if (!parent) break;
-      slot = parent;
-    }
-  }
-  const selectedX = slot ? point(selectedDay ?? end(slot)) : 0;
+  const byId = new Map(slots.map((s) => [s.id, s]));
+  const rowIndex = new Map(rows.map((s, i) => [s.id, i]));
+  const runNumber = new Map(slots.map((s, i) => [s.id, i + 1]));
+  const newest = slots
+    .filter((s) => !s.damaged)
+    .toSorted((a, b) => (a.updatedAt ?? a.createdAt ?? 0) - (b.updatedAt ?? b.createdAt ?? 0))
+    .at(-1);
+  const candidate = byId.get(choice?.slot ?? activeSlot ?? "") ?? newest ?? slots[0];
+  const selectedDay = choice ? choice.day : initialDay;
+  const selected = candidate ? inheritedMorning(candidate, selectedDay, byId) : undefined;
+  const selectedPoint = selected?.checkpoints.find((p) => p.day === selectedDay);
+  const col = selectedPoint?.day ?? (selected ? tipDay(selected, release.days) : 1);
+  const row = selected ? (rowIndex.get(selected.id) ?? 0) : 0;
   useEffect(() => {
     const box = scroller.current;
     if (!box) return;
-    if (selectedX - margin < box.scrollLeft) box.scrollLeft = selectedX - margin;
-    else if (selectedX + margin > box.scrollLeft + box.clientWidth)
-      box.scrollLeft = selectedX + margin - box.clientWidth;
-  }, [selectedX]);
-  if (!slot) return null;
+    const x = center(col);
+    if (x - cardWidth / 2 - labelWidth < box.scrollLeft)
+      box.scrollLeft = x - cardWidth / 2 - labelWidth;
+    else if (x + cardWidth / 2 + 8 > box.scrollLeft + box.clientWidth)
+      box.scrollLeft = x + cardWidth / 2 + 8 - box.clientWidth;
+    const y = row * rowHeight;
+    if (y < box.scrollTop) box.scrollTop = y;
+    if (y + rowHeight + 40 > box.scrollTop + box.clientHeight)
+      box.scrollTop = y + rowHeight + 40 - box.clientHeight;
+  }, [col, row]);
+  if (!selected) return null;
   const options = { locale: lang };
   const currency = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
-  const runName = (id: string) =>
-    msg.session.runNumber({ index: runNumbers.get(id) ?? 1 }, options);
-  const dayName = (day: number) => msg.session.dayNumber({ day }, options);
-  const checkpoint = slot.checkpoints.find((c) => c.day === selectedDay);
-  const day = checkpoint?.day ?? slot.day;
-  const balance = checkpoint?.cash ?? slot.cash;
-  const destination =
-    "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot: slot.id });
-  const width = point(Math.max(...slots.map(end))) + margin;
-  const chartHeight = height(rows.length - 1) + margin;
-  const parentNumber = slot.parent && runNumbers.get(slot.parent.slot);
-  const parentMorning =
-    checkpoint && slot.parent
-      ? slots
-          .find((s) => s.id === slot.parent?.slot)
-          ?.checkpoints.find((c) => c.day === checkpoint.day)
+  const name = (s: RunSlot) => msg.session.runNumber({ index: runNumber.get(s.id) ?? 1 }, options);
+  const dayLabel = (day: number) => msg.session.dayNumber({ day }, options);
+  const width = labelWidth + Math.max(...slots.map((s) => tipDay(s, release.days))) * column;
+  const chartHeight = rows.length * rowHeight;
+  const parent = selected.parent && byId.get(selected.parent.slot);
+  const comparison = selectedPoint && parent?.checkpoints.find((p) => p.day === selectedPoint.day);
+  const change =
+    selectedPoint && comparison
+      ? (Math.round(selectedPoint.cash * 100) - Math.round(comparison.cash * 100)) / 100
       : undefined;
-  const difference =
-    checkpoint && parentMorning
-      ? (Math.round(checkpoint.cash * 100) - Math.round(parentMorning.cash * 100)) / 100
-      : undefined;
-  const description =
-    slot.parent && parentNumber
-      ? msg.session.from({ run: parentNumber, day: slot.parent.day }, options)
-      : null;
   return (
     <section className="save-library" aria-label={msg.session.library({}, options)}>
-      <h3>{msg.session.library({}, options)}</h3>
-      <div className="save-chart">
-        <div className="save-lanes" style={{ height: chartHeight }}>
-          {rows.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              style={{ top: height(i) }}
-              className={s.id === slot.id ? "chosen" : undefined}
-              onClick={() => select({ slot: s.id })}
-            >
-              {runName(s.id)}
+      <div ref={scroller} className="save-scroll" onKeyDown={moveFocus}>
+        <div className="save-map" style={{ minWidth: width }}>
+          <div className="save-map-head">
+            <button type="submit" form={newForm} className="save-new">
+              {msg.session.newSlot({}, options)}
             </button>
-          ))}
-        </div>
-        <div ref={scroller} className="save-scroll" onKeyDown={selectAdjacent}>
-          <div className="save-graph" style={{ minWidth: width, height: chartHeight }}>
-            <svg width={width} height={chartHeight} aria-hidden="true">
+            {Array.from({ length: (width - labelWidth) / column }, (_, i) => (
+              <span key={i} style={{ left: center(i + 1) }}>
+                {dayLabel(i + 1)}
+              </span>
+            ))}
+          </div>
+          <div className="save-map-lanes" style={{ height: chartHeight }}>
+            <svg
+              viewBox={`0 0 ${width} ${chartHeight}`}
+              width={width}
+              height={chartHeight}
+              aria-hidden="true"
+            >
               {rows.map((s, i) => {
-                const from = s.parent?.day ?? 1,
-                  y = height(i);
-                const parentIndex = s.parent ? rowNumbers.get(s.parent.slot) : undefined;
+                const first = s.parent?.day ?? 1,
+                  day = tipDay(s, release.days),
+                  y = i * rowHeight + morningY,
+                  x = center(day);
+                const p = s.parent ? rowIndex.get(s.parent.slot) : undefined;
                 return (
-                  <g key={s.id} className={s.id === slot.id ? "chosen" : undefined}>
-                    <path d={`M${point(from)} ${y} H${point(end(s))}`} />
-                    {parentIndex !== undefined && (
-                      <path
-                        className="save-fork-line"
-                        d={`M${point(from)} ${height(parentIndex)} v8 q0 4 4 7 l3 3 V${y - 6} q0 6 -7 6`}
-                      />
+                  <g key={s.id} className={s.id === selected.id ? "current" : undefined}>
+                    {p !== undefined && (
+                      <path d={`M${center(first)} ${p * rowHeight + morningY} V${y}`} />
                     )}
+                    <path
+                      d={`M${center(first)} ${y} H${x} V${i * rowHeight + tipPosition(s, day)}`}
+                    />
                   </g>
                 );
               })}
             </svg>
-            {rows.map((s, i) => (
-              <div key={s.id}>
-                {s.checkpoints
-                  .filter((c) => c.day >= (s.parent?.day ?? 1))
-                  .map((c) => (
-                    <button
-                      type="button"
-                      key={c.day}
-                      style={{ left: point(c.day), top: height(i) }}
-                      data-row={i}
-                      data-column={c.day}
-                      className="save-node"
-                      tabIndex={s.id === slot.id && c.day === checkpoint?.day ? 0 : -1}
-                      aria-pressed={s.id === slot.id && c.day === checkpoint?.day}
-                      aria-label={
-                        runName(s.id) +
-                        " · " +
-                        dayName(c.day) +
-                        " · " +
-                        msg.session.checkpoint({}, options)
-                      }
-                      title={dayName(c.day) + " · " + currency.format(c.cash)}
-                      onClick={() => select({ slot: s.id, day: c.day })}
+            {rows.map((s, i) => {
+              const isHead = s.id === selected.id && !selectedPoint;
+              const tip = tipDay(s, release.days);
+              const tipLabel = s.finished
+                ? msg.session.reopen({}, options)
+                : msg.session.resume({}, options);
+              const newestTip = s.id === newest?.id;
+              return (
+                <div className="save-map-row" key={s.id} style={{ height: rowHeight }}>
+                  <div className="save-lane-name">{name(s)}</div>
+                  {visibleMornings(s).map((c) => {
+                    const active = s.id === selected.id && c.day === selectedPoint?.day;
+                    return (
+                      <button
+                        type="button"
+                        key={c.day}
+                        disabled={disabled}
+                        data-row={i}
+                        data-day={c.day}
+                        tabIndex={active ? 0 : -1}
+                        aria-current={active ? "true" : undefined}
+                        className="save-card morning"
+                        style={{ left: center(c.day), top: morningY, width: cardWidth }}
+                        title={msg.session.fork({ day: c.day }, options)}
+                        aria-label={
+                          name(s) +
+                          " · " +
+                          msg.session.fork({ day: c.day }, options) +
+                          " · " +
+                          currency.format(c.cash)
+                        }
+                        onFocus={() => setChoice({ slot: s.id, day: c.day })}
+                        onClick={() => branch(s.id, c.day)}
+                      >
+                        <small>{clock(release.network.opens)}</small>
+                        <b>{currency.format(c.cash)}</b>
+                      </button>
+                    );
+                  })}
+                  {s.damaged ? (
+                    <span
+                      className="save-card damaged"
+                      style={{ left: center(tip), top: tipPosition(s, tip), width: cardWidth }}
                     >
-                      {c.day}
-                    </button>
-                  ))}
-                <button
-                  type="button"
-                  className="save-head"
-                  style={{ left: point(end(s)), top: height(i) }}
-                  data-row={i}
-                  data-column={end(s)}
-                  tabIndex={s.id === slot.id && !checkpoint ? 0 : -1}
-                  aria-pressed={s.id === slot.id && !checkpoint}
-                  aria-label={runName(s.id) + " · " + msg.session.latest({}, options)}
-                  title={msg.session.latest({}, options)}
-                  onClick={() => select({ slot: s.id })}
-                >
-                  <span aria-hidden="true">◆</span>
-                </button>
-              </div>
-            ))}
+                      {msg.session.damaged({}, options)}
+                    </span>
+                  ) : (
+                    <a
+                      href={
+                        "/" +
+                        lang +
+                        "/run/?" +
+                        new URLSearchParams({ bench: release.revision, slot: s.id })
+                      }
+                      data-row={i}
+                      data-day={tip + 0.5}
+                      tabIndex={isHead ? 0 : -1}
+                      aria-current={isHead ? "true" : undefined}
+                      className={"save-card tip" + (newestTip ? " newest" : "")}
+                      style={{ left: center(tip), top: tipPosition(s, tip), width: cardWidth }}
+                      title={tipLabel}
+                      aria-label={
+                        name(s) +
+                        " · " +
+                        tipLabel +
+                        (s.cash === null ? "" : " · " + currency.format(s.cash))
+                      }
+                      onFocus={() => setChoice({ slot: s.id })}
+                    >
+                      <small>
+                        <span aria-hidden="true">{s.finished ? "■ " : "▶ "}</span>
+                        {s.finished
+                          ? msg.session.finished({}, options)
+                          : s.minute === undefined
+                            ? msg.session.latest({}, options)
+                            : clock(s.minute)}
+                      </small>
+                      <b>{s.cash === null ? "—" : currency.format(s.cash)}</b>
+                      {newestTip && <em>{msg.session.newest({}, options)}</em>}
+                    </a>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
-      <div className="save-key">
-        <span>○ {msg.session.checkpoint({}, options)}</span>
-        <span>◆ {msg.session.latest({}, options)}</span>
-      </div>
-      <div className="save-reading">
-        <strong>
-          {runName(slot.id)}
-          {balance != null && " · " + dayName(day)}
-        </strong>
-        {balance != null && <b>{currency.format(balance)}</b>}
-        {description && <small>{description}</small>}
-        {difference !== undefined && parentNumber && (
-          <small>
+      <div className="save-focus-note" aria-live="polite">
+        <b>{name(selected)}</b>
+        {parent && selected.parent && (
+          <span>
+            {msg.session.from(
+              { run: runNumber.get(parent.id) ?? 1, day: selected.parent.day },
+              options,
+            )}
+          </span>
+        )}
+        {change !== undefined && parent && (
+          <span>
             {msg.session.parentDifference(
               {
-                run: parentNumber,
-                difference: (difference > 0 ? "+" : "") + currency.format(difference),
+                run: runNumber.get(parent.id) ?? 1,
+                difference: (change > 0 ? "+" : "") + currency.format(change),
               },
               options,
             )}
-          </small>
+          </span>
         )}
-        {slot.damaged ? (
-          <small>{msg.session.damaged({}, options)}</small>
-        ) : (
-          !checkpoint && slot.finished && <small>{msg.session.finished({}, options)}</small>
-        )}
-        {!slot.damaged && slot.cash === null && slot.moves > 0 && (
-          <small>{msg.session.recoverDays({}, options)}</small>
+        {!selected.damaged && selected.cash === null && selected.moves > 0 && (
+          <span>{msg.session.recoverDays({}, options)}</span>
         )}
       </div>
-      {!slot.damaged && (
-        <div className="session-actions">
-          {checkpoint ? (
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => branch(slot.id, checkpoint.day)}
-            >
-              {msg.session.fork({ day: checkpoint.day }, options)}
-            </button>
-          ) : (
-            !(compact && slot.finished && slot.id === activeSlot) && (
-              <a href={destination}>
-                {slot.finished ? msg.session.reopen({}, options) : msg.session.resume({}, options)}
-              </a>
-            )
-          )}
-        </div>
-      )}
     </section>
   );
 }

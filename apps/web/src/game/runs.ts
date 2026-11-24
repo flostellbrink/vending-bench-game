@@ -34,10 +34,12 @@ const checkpointSchema = v.object({
 export type RunTimeline = v.InferOutput<typeof timelineSchema>;
 const timelineSchema = v.object({
   ...checkpointSchema.entries,
+  minute: v.optional(v.number()),
   checkpoints: v.pipe(v.array(checkpointSchema), v.minLength(1)),
 });
 const lineageSchema = v.object({
   createdAt: v.nullable(v.number()),
+  updatedAt: v.optional(v.number()),
   parent: v.nullable(
     v.object({ slot: v.pipe(v.string(), v.check(isSlotId)), day: checkpointSchema.entries.day }),
   ),
@@ -79,23 +81,26 @@ const slotSchema = v.object({
   moves: checkpointSchema.entries.moveCount,
   finished: v.boolean(),
   day: checkpointSchema.entries.day,
+  minute: v.optional(v.number()),
   cash: v.nullable(v.number()),
   damaged: v.boolean(),
 });
 
 export function runTimeline(
   release: Release,
-  receipts: readonly Pick<Receipt, "day" | "endDay" | "closingCash">[],
+  receipts: readonly (Pick<Receipt, "day" | "endDay" | "closingCash"> &
+    Partial<Pick<Receipt, "endMinute">>)[],
   finished: boolean,
   previous?: RunTimeline,
 ): RunTimeline {
   const opening = { day: 1, moveCount: 0, cash: release.startingBalance };
   const timeline = previous
     ? { ...previous, checkpoints: [...previous.checkpoints] }
-    : { ...opening, checkpoints: [opening] };
+    : { ...opening, minute: release.network.opens, checkpoints: [opening] };
   for (const [index, receipt] of receipts.entries()) {
     timeline.moveCount++;
     timeline.day = receipt.endDay;
+    timeline.minute = receipt.endMinute;
     timeline.cash = receipt.closingCash;
     if (receipt.endDay !== receipt.day && !(finished && index === receipts.length - 1)) {
       timeline.checkpoints.push({
@@ -118,7 +123,7 @@ export function readRun(serialized: string | null, record: PersonalBest | null):
   return decode(serialized);
 }
 
-function decode(raw: string): SavedRun & Pick<RunSlot, "createdAt" | "parent"> {
+function decode(raw: string): SavedRun & Pick<RunSlot, "createdAt" | "parent" | "updatedAt"> {
   const saved: unknown = JSON.parse(raw);
   if (Array.isArray(saved)) {
     const moves = saved.map((input: unknown): Entry => {
@@ -154,6 +159,7 @@ function decode(raw: string): SavedRun & Pick<RunSlot, "createdAt" | "parent"> {
     finished,
     timeline: metadata?.timeline,
     createdAt: metadata?.createdAt ?? null,
+    updatedAt: metadata?.updatedAt,
     parent: metadata?.parent ?? null,
   };
 }
@@ -181,6 +187,8 @@ export function saveRun(
     metadata: nextTimeline
       ? {
           createdAt: metadata?.createdAt ?? null,
+          updatedAt:
+            metadata?.timeline.moveCount === moves.length ? metadata.updatedAt : Date.now(),
           parent: metadata?.parent ?? null,
           timeline: nextTimeline,
         }
@@ -201,6 +209,7 @@ function newSlot(
     key = runKey(release, id);
   if (storage.getItem(key) !== null) throw Error("Save slot already exists");
   const opponent = readRecord(storage.getItem(recordKey(release)));
+  const now = Date.now();
   storage.setItem(
     key,
     JSON.stringify({
@@ -208,7 +217,7 @@ function newSlot(
       moves,
       opponent,
       finished: false,
-      metadata: { createdAt: Date.now(), parent, timeline },
+      metadata: { createdAt: now, updatedAt: now, parent, timeline },
     }),
   );
   return id;
@@ -246,7 +255,7 @@ export function forkRun(
     storage,
     release,
     parent.moves.slice(0, point.moveCount),
-    { ...point, checkpoints },
+    { ...point, minute: release.network.opens, checkpoints },
     { slot: owner, day },
   );
 }
@@ -269,9 +278,15 @@ function summary(raw: string, release: Release, id: string): RunSlot {
     return {
       ...empty,
       createdAt: saved.createdAt,
+      updatedAt: saved.updatedAt,
       parent: saved.parent,
       checkpoints: timeline.checkpoints,
       day: timeline.day,
+      minute: saved.timeline
+        ? timeline.minute
+        : saved.moves.length
+          ? undefined
+          : release.network.opens,
       cash: saved.timeline || !saved.moves.length ? timeline.cash : null,
       moves: saved.moves.length,
       finished: saved.finished,
