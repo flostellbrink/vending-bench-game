@@ -81,7 +81,7 @@ export function WorkspaceReadout({
   if (
     state &&
     typeof tab === "string" &&
-    (tab.startsWith("machine:") || tab === "machines" || tab === "site:depot") &&
+    (tab.startsWith("machine:") || tab === "site:depot") &&
     cmd
   ) {
     const report = context.selected;
@@ -100,7 +100,13 @@ export function WorkspaceReadout({
           disabled={disabled}
           data-clock-verb={verb}
           onClick={() => shell.runCommand(cmd, "inline")}
-        />
+        >
+          {tab.startsWith("machine:") ? (
+            <>
+              {msg.commands.get_machine_inventory()} · {msg.operator.allMachines()}
+            </>
+          ) : undefined}
+        </button>
       </GuiToolInfo>
     );
     const instrument = scoped ? (

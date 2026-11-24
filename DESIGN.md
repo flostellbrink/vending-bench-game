@@ -34,7 +34,9 @@ Use a flat display. The enclosure, controls, type and illustration supply the wo
 
 The shift strip is optional. Ctrl+Enter or Cmd+Enter places the current command on the strip without spending time. Move, edit or remove a step to see what fits before closing. The timing comes from the selected benchmark. The strip does not predict future inventory, reserve prices or run commands automatically. Execute the first step to spend its time. Keep dated evidence beside the proposed action.
 
-Use the GUI for every benchmark tool. The console logs the same call and accepts the published MCP tool name and a JSON object with its named arguments. Only `help` is local. Use the directory, not console commands, for navigation. A syntax error costs nothing. A valid command that the simulator refuses can cost time.
+Expose each meaningful benchmark choice in the GUI. Omit a variant only if another available action gives the player at least the same information and outcome, costs no more time or money, and has no additional risk or side effect. A rare or advanced use is not a reason to omit it. In v3, a cabinet inspection therefore reads all machines in one call and shows the selected cabinet. Reassess the exception if the benchmark changes.
+
+The console retains the full published MCP signatures and logs the exact calls made by the GUI. Only `help` is local. Use the directory, not console commands, for navigation. A syntax error costs nothing. A valid command that the simulator refuses can cost time.
 
 Use the published parameter names, types and defaults in forms, help and completion. Omit optional keys to use the benchmark defaults. For example, `order_goods {"supplier_id":"zuidas-groothandel","items":{"stroopwafel-2pk":120}}` buys one product. Add another entry to `items` to buy both in one order.
 
