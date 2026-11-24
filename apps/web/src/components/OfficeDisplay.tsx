@@ -1,6 +1,6 @@
 import type { Release, Report, Snapshot } from "games-common/benchmark";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 
 import type { Lang, Translate } from "@/localization/messages";
 
@@ -17,6 +17,8 @@ interface Props {
   sceneObject: string | null;
   onOpen: (id: string) => void;
   previewVerb: string;
+  disabled: boolean;
+  closeDay: () => void;
 }
 export const OfficeDisplay = memo(function OfficeDisplay({
   state,
@@ -27,7 +29,12 @@ export const OfficeDisplay = memo(function OfficeDisplay({
   sceneObject,
   onOpen,
   previewVerb,
+  disabled,
+  closeDay,
 }: Props) {
+  const [armedAt, arm] = useState<number | null>(null);
+  const targetTime = state ? state.day * 1440 + state.minute : null;
+  const armed = armedAt !== null && armedAt === targetTime;
   const last = reports.at(-1);
   const visitEnd =
     state && last && last.endDay > last.day && (last.args.machine_id || last.args.slot)
@@ -40,7 +47,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
     new Intl.DateTimeFormat(lang, { day: "numeric", month: "short", timeZone: "UTC" }).format(
       Date.parse(state.startDate + "T00:00Z") + day * 86400000,
     );
-  const estimate = timing(previewVerb, state);
+  const estimate = timing(armed ? "close" : previewVerb, state);
   const shift = state ? state.closes - state.opens : 1;
   const spent = state ? Math.max(0, Math.min(1, ((time % 1440) - state.opens) / shift)) : 0;
   const preview = estimate ? Math.min(1 - spent, estimate.minutes / shift) : 0;
@@ -73,6 +80,40 @@ export const OfficeDisplay = memo(function OfficeDisplay({
         )}
         {estimate && <small className="clock-estimate">+{estimate.minutes} min</small>}
         <strong>{state ? clock(time) : "—"}</strong>
+        <button
+          className="clock-close"
+          type="button"
+          data-clock-verb="close"
+          data-armed={armed}
+          disabled={disabled || !state || state.over}
+          title={
+            state
+              ? (state.day === state.days ? t("endRun") : t("closeShift")) +
+                " · " +
+                (state.closes - state.minute) +
+                " min"
+              : undefined
+          }
+          onBlur={() => arm(null)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.preventDefault();
+              arm(null);
+            }
+            if (event.repeat && (event.key === "Enter" || event.key === " "))
+              event.preventDefault();
+          }}
+          onClick={() => {
+            if (!armed) {
+              arm(targetTime);
+              return;
+            }
+            arm(null);
+            closeDay();
+          }}
+        >
+          {armed ? t("confirmClose") : t("closeShift")}
+        </button>
       </div>
     </>
   );

@@ -274,6 +274,22 @@ footer button[aria-pressed="true"] {
   line-height: 1.1;
   background: #171e1d;
 }
+.clock-close {
+  min-inline-size: 10ch;
+  padding: 0.25em 0.55em;
+  border: 1px outset #afb8ad;
+  background: var(--key);
+  color: #1d3027;
+  font:
+    bold 0.86rem/1.4 ui-monospace,
+    Menlo,
+    monospace;
+}
+.clock-close[data-armed="true"] {
+  background: #f3d383;
+  color: #342b1d;
+  border-style: inset;
+}
 .scope {
   background: #e2e3cf;
   border: 2px inset #95a38e;

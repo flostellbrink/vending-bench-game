@@ -38,15 +38,7 @@ export function WorkspaceReadout({
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
   const controls = { t, lang, money, reports, disabled, runCommand: shell.runCommand };
   if (tab === "desk")
-    return (
-      <DispatchDesk
-        {...controls}
-        state={state}
-        orders={orders}
-        onView={setTab}
-        onClose={() => shell.runCommand("close")}
-      />
-    );
+    return <DispatchDesk {...controls} state={state} orders={orders} onView={setTab} />;
   if (tab === "world")
     return (
       <BalanceScope

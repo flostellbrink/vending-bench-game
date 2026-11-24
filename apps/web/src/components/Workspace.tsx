@@ -51,6 +51,8 @@ export function Workspace(props: WorkspaceProps) {
         lang={lang}
         reports={run.reports}
         t={t}
+        disabled={run.busy || Boolean(run.runtimeError)}
+        closeDay={() => shell.runCommand("close")}
         previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
         sceneObject={
           context.object.startsWith("machine:") || context.object === "site:depot"

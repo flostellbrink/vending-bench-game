@@ -255,9 +255,14 @@ operator:
     de: "Keine Lieferungen erwartet."
   closeShift:
     .id: DS000004
-    ^en: "Prepare shift close"
-    es: "Preparar cierre"
-    de: "Tagesabschluss vorbereiten"
+    ^en: "Close day"
+    es: "Cerrar día"
+    de: "Tag beenden"
+  confirmClose:
+    .id: DSCL0001
+    ^en: "Confirm"
+    es: "Confirmar"
+    de: "Bestätigen"
   remaining:
     .id: DS000005
     ^en: "Time left"
