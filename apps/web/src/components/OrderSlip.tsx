@@ -7,6 +7,8 @@ import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
+
+import "./order-slip.css";
 interface Props extends ObservationProps {
   terms: QuoteTerms;
   openReport: (id: number) => void;
@@ -120,105 +122,130 @@ export function OrderSlip({
         <h3>{t("compose")}</h3>
         <b>{supplier}</b>
       </div>
-      <div className="quote-controls">
-        <label>
-          {t("nextQuoteQuantity")}{" "}
-          <input
-            aria-label={t("nextQuoteQuantity")}
-            inputMode="numeric"
-            type="number"
-            min="1"
-            value={qty}
-            onChange={(e) => stageCommand("quote " + supplier + " " + e.target.value)}
-          />
-        </label>
-        <button
-          data-clock-verb="quote"
-          disabled={disabled || !validQty}
-          onClick={() => runCommand("quote " + supplier + " " + qty, editingQuote)}
-        >
-          {t("reprice")} · {assertValue(timing("quote", state)).minutes} min
-        </button>
-      </div>
-      <p>
-        {t("expires")} {terms.until} · {t("minimum")} {money(terms.minimum)}
-      </p>
-      {previous && (
-        <p className="quote-comparison">
-          {t("versusQuote")} #{previous.id} · {t("day")} {previous.day} · {clock(previous.minute)}
-        </p>
-      )}
-      <table>
-        <thead>
-          <tr>
-            <th>{t("include")}</th>
-            <th>{t("product")}</th>
-            <th>{msg.fields.price({}, { locale: lang })}</th>
-            <th>{t("bundle")}</th>
-            <th>{t("total")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(({ product: id, price, discount }) => (
-            <tr key={id}>
-              <td>
-                <input
-                  type="checkbox"
-                  checked={Object.hasOwn(items, id)}
-                  disabled={disabled || (editingQuote && Number(qty) !== terms.quantity)}
-                  aria-label={t("include") + " " + id}
-                  onChange={() => toggle(id)}
-                />
-              </td>
-              <td>{id}</td>
-              <td>
-                {money(price)}
-                {discount !== "0%" && <small> (−{discount})</small>}
-                {oldPrices.has(id) && oldPrices.get(id) !== price && (
-                  <small className="unit-delta">
-                    Δ {price > assertValue(oldPrices.get(id)) ? "+" : ""}
-                    {money(price - assertValue(oldPrices.get(id)))}
-                  </small>
-                )}
-              </td>
-              <td>{items[id] ?? terms.quantity}</td>
-              <td>
-                {items[id] != null && items[id] !== terms.quantity
-                  ? "—"
-                  : money(price * terms.quantity)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="dispatch">
-        <div>
-          <b>
-            {t("quoted")} {total == null ? "—" : money(total)}
-          </b>
-          <small>
-            {t("afterOrder")}: {total == null ? "—" : money(state.cash - total)}
-          </small>
-          {invalid && (selection.length > 0 || expired || editingQuote) && (
-            <small>{t(invalid)}</small>
+      <div className="slip-layout">
+        <div className="slip-catalog">
+          <div className="slip-terms">
+            <span>
+              {t("expires")} <b>{terms.until}</b>
+            </span>
+            <span>
+              {t("minimum")} <b>{money(terms.minimum)}</b>
+            </span>
+          </div>
+          {previous && (
+            <p className="quote-comparison">
+              {t("versusQuote")} #{previous.id} · {t("day")} {previous.day} ·{" "}
+              {clock(previous.minute)}
+            </p>
           )}
-          {!complete && selection.length > 0 && <small>{syntax("order")}</small>}
+          <div className="slip-ledger" tabIndex={0} role="region" aria-label={t("product")}>
+            <table>
+              <thead>
+                <tr>
+                  <th>{t("include")}</th>
+                  <th>{t("product")}</th>
+                  <th>{msg.fields.price({}, { locale: lang })}</th>
+                  <th>{t("bundle")}</th>
+                  <th>{t("total")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(({ product: id, price, discount }) => (
+                  <tr key={id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={Object.hasOwn(items, id)}
+                        disabled={disabled || (editingQuote && Number(qty) !== terms.quantity)}
+                        aria-label={t("include") + " " + id}
+                        onChange={() => toggle(id)}
+                      />
+                    </td>
+                    <td>{id}</td>
+                    <td>
+                      {money(price)}
+                      {discount !== "0%" && <small> (−{discount})</small>}
+                      {oldPrices.has(id) && oldPrices.get(id) !== price && (
+                        <small className="unit-delta">
+                          Δ {price > assertValue(oldPrices.get(id)) ? "+" : ""}
+                          {money(price - assertValue(oldPrices.get(id)))}
+                        </small>
+                      )}
+                    </td>
+                    <td>{items[id] ?? terms.quantity}</td>
+                    <td>
+                      {items[id] != null && items[id] !== terms.quantity
+                        ? "—"
+                        : money(price * terms.quantity)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-        {newer ? (
-          <button onClick={() => openReport(newer.id)}>
-            {t("newerQuote")} #{newer.id} · {t("noCharge")}
-          </button>
-        ) : (
-          <button
-            data-clock-verb="order"
-            disabled={disabled || !complete || !selection.length || Boolean(invalid)}
-            onClick={() => runCommand(commandLine.trim(), true)}
-          >
-            {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
-          </button>
-        )}
+        <div className="slip-controls">
+          <div className="quote-controls">
+            <label>
+              {t("nextQuoteQuantity")}{" "}
+              <input
+                aria-label={t("nextQuoteQuantity")}
+                inputMode="numeric"
+                type="number"
+                min="1"
+                value={qty}
+                onChange={(e) => stageCommand("quote " + supplier + " " + e.target.value)}
+              />
+            </label>
+            <button
+              data-clock-verb="quote"
+              disabled={disabled || !validQty}
+              onClick={() => runCommand("quote " + supplier + " " + qty, editingQuote)}
+            >
+              {t("reprice")} · {assertValue(timing("quote", state)).minutes} min
+            </button>
+          </div>
+          <div className="dispatch">
+            <div>
+              <b>
+                {t("quoted")} <output>{total == null ? "—" : money(total)}</output>
+              </b>
+              <small>
+                {t("afterOrder")}: {total == null ? "—" : money(state.cash - total)}
+              </small>
+              {invalid && (selection.length > 0 || expired || editingQuote) && (
+                <small>
+                  {t(invalid)}
+                  {total !== null && (invalid === "belowMinimum" || invalid === "lowCash") && (
+                    <>
+                      {" "}
+                      · {t("shortBy")}:{" "}
+                      {money(
+                        invalid === "belowMinimum" ? terms.minimum - total : total - state.cash,
+                      )}
+                    </>
+                  )}
+                </small>
+              )}
+              {!complete && selection.length > 0 && <small>{syntax("order")}</small>}
+            </div>
+            {newer ? (
+              <button onClick={() => openReport(newer.id)}>
+                {t("newerQuote")} #{newer.id} · {t("noCharge")}
+              </button>
+            ) : (
+              <button
+                data-clock-verb="order"
+                disabled={disabled || !complete || !selection.length || Boolean(invalid)}
+                onClick={() => runCommand(commandLine.trim(), true)}
+              >
+                {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
+              </button>
+            )}
+          </div>
+          <small>{t("latestQuote")}</small>
+        </div>
       </div>
-      <small>{t("latestQuote")}</small>
     </div>
   );
 }

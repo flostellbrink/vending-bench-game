@@ -1,0 +1,124 @@
+.report .order-slip {
+  container-type: inline-size;
+  color: #20322c;
+  background: #eff0e8;
+  border: 1px solid #7a8c80;
+  padding: 0;
+}
+.order-slip .slip-head {
+  padding: 0.3rem 0.65rem;
+  background: #34463d;
+  color: #f2f4e9;
+}
+.order-slip .slip-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.order-slip .slip-head b {
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+.slip-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(11rem, 27%, 15rem);
+}
+.slip-catalog {
+  min-width: 0;
+}
+.slip-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+  padding: 0.35rem 0.55rem;
+  border-bottom: 1px solid #a4afa2;
+}
+.slip-layout .quote-comparison {
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+}
+.slip-ledger {
+  overflow: auto;
+  max-height: clamp(11rem, 32dvh, 22rem);
+}
+.slip-ledger table {
+  width: 100%;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.slip-ledger :is(td, th) {
+  padding: 0.25rem 0.4rem;
+  text-align: right;
+}
+.order-slip .slip-ledger th {
+  position: sticky;
+  top: 0;
+  background: #d4ddcf;
+  color: #293c31;
+  font-size: 0.78rem;
+  line-height: 1.15;
+}
+.slip-ledger :is(td, th):nth-child(2) {
+  text-align: left;
+}
+.slip-ledger tr:has(:checked) {
+  background: #ccdebf;
+}
+.slip-controls {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 0.55rem;
+  border-left: 1px solid #9aa797;
+  background: #e2e6d9;
+}
+.slip-controls .quote-controls,
+.slip-controls .dispatch {
+  display: grid;
+  gap: 0.4rem;
+  justify-content: stretch;
+}
+.slip-controls .quote-controls label {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+.slip-controls .quote-controls input {
+  width: 100%;
+  padding: 0.2rem 0.4rem;
+}
+.slip-controls .dispatch {
+  padding: 0.55rem 0 0;
+  border: 0;
+  border-top: 1px solid #93a08f;
+  background: transparent;
+}
+.slip-controls output {
+  display: block;
+  margin-block: 0.1rem 0.2rem;
+  font:
+    bold 1.45rem/1.1 ui-monospace,
+    monospace;
+}
+.slip-controls > small {
+  color: #465649;
+  line-height: 1.25;
+}
+@container (max-width: 37rem) {
+  .slip-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .slip-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border: 0;
+    border-top: 1px solid #9aa797;
+  }
+  .slip-controls .dispatch {
+    padding: 0 0 0 0.5rem;
+    border: 0;
+    border-left: 1px solid #93a08f;
+  }
+  .slip-controls > small {
+    grid-column: 1 / -1;
+  }
+}

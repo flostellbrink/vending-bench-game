@@ -179,7 +179,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             {orderEstimate.status === "belowMinimum" && (
               <>
                 {" "}
-                · {t("minimum")}: {money(orderEstimate.minimum)}
+                · {t("shortBy")}: {money(orderEstimate.minimum - orderEstimate.cost)}
               </>
             )}
           </div>

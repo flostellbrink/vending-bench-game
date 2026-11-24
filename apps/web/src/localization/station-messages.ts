@@ -2,6 +2,7 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    shortBy: msg.operator.shortBy,
     averageCost: msg.operator.averageCost,
     resumeSavedRun: msg.operator.resumeSavedRun,
     otherCash: msg.operator.otherCash,

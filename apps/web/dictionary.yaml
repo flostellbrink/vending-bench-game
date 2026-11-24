@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  shortBy:
+    .id: ORSH0001
+    ^en: Short by
+    es: Faltan
+    de: Fehlbetrag
   averageCost:
     .id: DS000101
     ^en: Average unit cost
