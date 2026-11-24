@@ -30,6 +30,7 @@ const metadataSchema = v.object({
 });
 type Metadata = v.InferOutput<typeof metadataSchema>;
 export interface SnapshotRelease extends Metadata {
+  browserTools: string;
   revision: string;
   adapter: string;
   id: string;
@@ -94,7 +95,7 @@ async function metadata(revision: string) {
   if (!/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(release.version)) {
     throw Error("Invalid upstream task version: " + release.version);
   }
-  return release;
+  return { ...release, browserTools: v.parse(v.string(), python.runPython("browser_tools()")) };
 }
 
 export async function readReleases(pins: Pin[]): Promise<SnapshotRelease[]> {

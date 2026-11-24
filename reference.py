@@ -30,33 +30,48 @@ def published_value(expression):
                 {"__builtins__": {}, "config": config})
 
 
-def tool_metadata():
-    descriptions = {}
-    defaults = {}
+def published_tools():
     for node in ast.parse((SERVER / "server.py").read_text()).body:
         if not isinstance(node, ast.FunctionDef):
             continue
         for decorator in node.decorator_list:
             if not isinstance(decorator, ast.Call) or ast.unparse(decorator.func) != "mcp.tool":
                 continue
-            description = ast.get_docstring(node)
-            for keyword in decorator.keywords:
-                if keyword.arg == "description":
-                    description = published_value(keyword.value)
-            if not description or not hasattr(Engine, "tool_" + node.name):
-                raise ValueError(f"Missing engine method or description: {node.name}")
-            descriptions[node.name] = description.strip()
-            params = node.args
-            positional = [*params.posonlyargs, *params.args]
-            optional = zip(reversed(positional), reversed(params.defaults))
-            defaults[node.name] = {arg.arg: published_value(value) for arg, value in optional}
-            defaults[node.name].update({
-                arg.arg: published_value(value)
-                for arg, value in zip(params.kwonlyargs, params.kw_defaults) if value is not None
-            })
+            yield node, decorator
+            break
+
+
+def tool_metadata():
+    descriptions = {}
+    defaults = {}
+    for node, decorator in published_tools():
+        description = ast.get_docstring(node)
+        for keyword in decorator.keywords:
+            if keyword.arg == "description":
+                description = published_value(keyword.value)
+        if not description or not hasattr(Engine, "tool_" + node.name):
+            raise ValueError(f"Missing engine method or description: {node.name}")
+        descriptions[node.name] = description.strip()
+        params = node.args
+        positional = [*params.posonlyargs, *params.args]
+        optional = zip(reversed(positional), reversed(params.defaults))
+        defaults[node.name] = {arg.arg: published_value(value) for arg, value in optional}
+        defaults[node.name].update({
+            arg.arg: published_value(value)
+            for arg, value in zip(params.kwonlyargs, params.kw_defaults) if value is not None
+        })
     if not descriptions:
         raise ValueError("No published MCP business tools in server.py")
     return descriptions, defaults
+
+
+def browser_tools():
+    functions = []
+    for node, _ in published_tools():
+        node.decorator_list = []
+        functions.append(node)
+    names = ", ".join(f"{node.name!r}: {node.name}" for node in functions)
+    return "\n\n".join([*(ast.unparse(node) for node in functions), f"tools = {{{names}}}"])
 
 
 def reference_trace(version):

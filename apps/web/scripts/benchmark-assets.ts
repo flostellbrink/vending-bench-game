@@ -37,7 +37,7 @@ function writeJSON(path: string, data: unknown) {
   renameSync(temporary, path);
 }
 
-function assets(release: SnapshotRelease): Release {
+function assets({ browserTools, ...release }: SnapshotRelease): Release {
   const { revision, adapter } = release;
   const folder = "benchmarks/" + revision;
   mkdirSync(join(publicDir, folder), { recursive: true });
@@ -69,7 +69,7 @@ function assets(release: SnapshotRelease): Release {
   for (const notice of ["LICENSE", "NOTICE"]) {
     writeFileSync(join(publicDir, folder, notice), git("show", revision + ":" + notice));
   }
-  const adapterSource = readFileSync(join(publicDir, adapter));
+  const adapterSource = readFileSync(join(publicDir, adapter), "utf8") + "\n" + browserTools + "\n";
   const hash = createHash("sha256").update(adapterSource).digest("hex");
   const adapterAsset = folder + "/adapter-" + hash.slice(0, 16) + ".py";
   writeFileSync(join(publicDir, adapterAsset), adapterSource);

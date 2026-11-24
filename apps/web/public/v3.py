@@ -20,20 +20,20 @@ class OperatorEngine(Engine):
 
 
 def start(seed):
-    global engine, available
+    global engine, ENGINE, available
     engine = OperatorEngine.new(seed)
+    ENGINE = engine
     available = describe_actions()
 
 
 def describe_actions():
-    tools = {}
-    for name, method in inspect.getmembers(engine, inspect.ismethod):
-        if name.startswith("tool_"):
-            tools[name[5:]] = [
-                [p.name, str(p.annotation), p.default is inspect.Parameter.empty]
-                for p in inspect.signature(method).parameters.values()
-            ]
-    return tools
+    return {
+        name: [
+            [p.name, inspect.formatannotation(p.annotation), p.default is inspect.Parameter.empty]
+            for p in inspect.signature(method).parameters.values()
+        ]
+        for name, method in tools.items()
+    }
 
 
 def actions():
@@ -45,7 +45,7 @@ def act(name, arguments):
         raise ValueError("Action unavailable")
     engine.reply_body = ""
     engine.notices = []
-    return getattr(engine, "tool_" + name)(**json.loads(arguments))
+    return tools[name](**json.loads(arguments))
 
 
 def receipt():

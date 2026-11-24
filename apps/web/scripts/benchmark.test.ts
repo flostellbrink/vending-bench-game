@@ -45,6 +45,15 @@ await test("quote defaults come from the published MCP signature, not a frontend
     { check_offers: "Quote this quantity." },
     { check_offers: { quantity: 37 } },
   ]);
+  assert.equal(
+    python.runPython(`
+import inspect
+scope = {}
+exec(browser_tools(), scope)
+str(inspect.signature(scope["tools"]["check_offers"]))
+`),
+    "(supplier_id: str, quantity: int = 37)",
+  );
 });
 const calibrationSchema = v.object({
   seed: v.number(),
