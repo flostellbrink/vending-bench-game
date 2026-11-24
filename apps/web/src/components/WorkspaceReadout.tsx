@@ -155,7 +155,11 @@ export function WorkspaceReadout({
             <h3>
               {t("orders")} <small>{purchases.length}</small>
             </h3>
-            <OrderRegister {...{ t, money }} orders={purchases} open={setTab} />
+            <OrderRegister
+              {...{ t, money, reports, lang }}
+              supplier={contact?.name ?? supplier}
+              orders={purchases}
+            />
           </section>
         )}
       </article>

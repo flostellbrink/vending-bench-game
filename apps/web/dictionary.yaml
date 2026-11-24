@@ -5,6 +5,11 @@ operator:
     ^en: Sections
     es: Secciones
     de: Bereiche
+  closeDialog:
+    .id: DLGCLS01
+    ^en: Close
+    es: Cerrar
+    de: Schließen
   closeSections:
     .id: MOB00002
     ^en: Close sections

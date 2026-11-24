@@ -76,6 +76,11 @@ export function Workspace(props: WorkspaceProps) {
   }, []);
   const directoryProps = { state: run.state, suppliers, t, value: context.object };
   const key = String(nav.tab);
+  const parent = key.startsWith("supplier:")
+    ? { id: "suppliers", label: t("supply") }
+    : key.startsWith("machine:")
+      ? { id: "site:depot", label: t("depot") }
+      : null;
   const supplier = context.object.startsWith("supplier:")
     ? suppliers.find((entry) => entry.id === context.object.slice(9))
     : undefined;
@@ -129,6 +134,17 @@ export function Workspace(props: WorkspaceProps) {
           <h2 id={headingId} ref={heading} tabIndex={-1}>
             {title}
           </h2>
+          {parent && (
+            <button
+              type="button"
+              onClick={() => {
+                nav.openObject(parent.id);
+                heading.current?.focus({ preventScroll: true });
+              }}
+            >
+              ↑ {parent.label}
+            </button>
+          )}
           {context.history.length > 0 && !String(nav.tab).startsWith("past:") && (
             <button className="history-key" onClick={() => nav.setTab("past:" + context.object)}>
               {t("history")} ({context.history.length})
