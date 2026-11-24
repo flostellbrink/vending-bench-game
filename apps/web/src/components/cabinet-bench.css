@@ -13,8 +13,7 @@
   color: #edf0d9;
 }
 .cabinet-face header,
-.slot-instrument > header,
-.slot-depot header {
+.slot-instrument > header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -147,8 +146,7 @@ button[aria-pressed="true"] .slot-level i {
 .slot-instrument input[type="number"] {
   width: 4.75rem;
 }
-.slot-instrument form button,
-.slot-depot > button {
+.slot-instrument form button {
   padding: 0.25rem 0.45rem;
   border: 1px solid #6b7d6d;
   background: #d5dfcf;
@@ -158,33 +156,37 @@ button[aria-pressed="true"] .slot-level i {
   background: #344f3c;
   color: #f4f7e8;
 }
-.slot-amendment,
-.slot-depot {
+.slot-amendment {
   padding: 0.4rem 0.55rem;
   border-top: 1px solid #aab6a8;
 }
 .slot-amendment {
   font-size: 0.85rem;
 }
-.stock-picks {
+.slot-operations {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-  gap: 2px;
-  margin: 0.2rem 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-bottom: 1px solid #a0b09e;
 }
-.stock-picks button {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.1rem 0.4rem;
-  padding: 0.25rem 0.4rem;
+.slot-operations button {
+  display: grid;
+  gap: 0.1rem;
+  align-content: start;
+  padding: 0.35rem;
   font: inherit;
   font-size: 0.8rem;
   text-align: left;
   background: #e0e7d8;
   color: #203a2b;
-  border: 1px solid #a0b09e;
+  border: 0;
+  border-right: 1px solid #a0b09e;
+}
+.slot-operations button[aria-pressed="true"] {
+  background: #c7d9bd;
+  box-shadow: inset 0 -3px #406447;
+}
+.slot-operations button small {
+  font-size: 0.75rem;
 }
 @media (max-width: 540px) {
   .cabinet-bench {

@@ -16,7 +16,9 @@ export default function CabinetBench(props: Omit<ObservationProps, "money">) {
   const [first = "", slotWord] = commandLine.trim().split(/\s+/);
   const verb = first.toLowerCase();
   const commandSlot =
-    (verb === "refill" || verb === "price") && slotWord ? slots.get(address(slotWord)) : undefined;
+    slotWord && ["refill", "price", "clear", "swap"].includes(verb)
+      ? slots.get(address(slotWord))
+      : undefined;
   const slot =
     commandSlot ?? (picked ? slots.get(picked) : undefined) ?? slots.values().next().value;
   if (!slot) return null;
@@ -61,7 +63,6 @@ export default function CabinetBench(props: Omit<ObservationProps, "money">) {
                   key={s.id}
                   type="button"
                   aria-pressed={s === slot}
-                  className={s.quantity > 0 ? "occupied" : ""}
                   aria-label={s.code + " · " + s.product + " · " + s.quantity + " / " + s.capacity}
                   onClick={() => pick(s)}
                 >
