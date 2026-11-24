@@ -14,7 +14,7 @@ import {
   timing,
 } from "../src/game/commands.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
-import { knownOrders, observation } from "../src/game/reports.ts";
+import { displayCell, knownOrders, observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
@@ -306,4 +306,37 @@ await test("only delivery notices update an order, and a short shipment applies 
       ["PO-1", { id: 4, day: 4, short: true }],
     ],
   );
+});
+await test("a sales receipt keeps original evidence and exposes sortable amounts in the selected locale", () => {
+  const body = ["   1 2026-01-05  clear  30  €1,100.00", "   2 2026-01-06  clear  12  €95.00"].join(
+    "\n",
+  );
+  const report = observation(
+    {
+      day: 3,
+      endDay: 3,
+      minute: 540,
+      endMinute: 565,
+      minutes: 25,
+      openingCash: 1500,
+      closingCash: 1500,
+      body,
+      output: body,
+      notices: [],
+    },
+    ["get_sales_report", {}],
+    1,
+  );
+  assert.equal(report.output, body);
+  assert.deepEqual(
+    report.rows.map((row) => row[4]),
+    [1100, 95],
+  );
+  for (const locale of ["en", "de", "es"]) {
+    const currency = new Intl.NumberFormat(locale, { style: "currency", currency: "EUR" });
+    assert.equal(
+      displayCell(assertValue(report.rows[0]?.[4]), "revenue", (v) => currency.format(v)),
+      currency.format(1100),
+    );
+  }
 });
