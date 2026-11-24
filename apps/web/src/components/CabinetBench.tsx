@@ -16,7 +16,7 @@ interface Props extends ObservationProps {
   openReport: (id: number) => void;
 }
 export default function CabinetBench(props: Props) {
-  const { report, reports, live, money, t } = props;
+  const { report, reports, live, t } = props;
   const readings = useMemo(() => {
     const layout = cabinetLayout(report.rows);
     const stockSources = new Map<string, Report>();
@@ -36,8 +36,8 @@ export default function CabinetBench(props: Props) {
             ? source.rows.find(([id]) => typeof id === "string" && address(id) === slot.id)
             : undefined;
         let price;
-        if (inspection?.[5] != null) price = String(inspection[5]);
-        else if (change.price !== undefined) price = money(change.price);
+        if (inspection?.[5] != null) price = inspection[5];
+        else if (change.price !== undefined) price = change.price;
         else if (source.tool === "clear_slot" || source.display.includes("has no price set"))
           price = "—";
         if (price !== undefined) {
@@ -47,7 +47,7 @@ export default function CabinetBench(props: Props) {
       }
     }
     return { ...layout, stockSources, priceSources };
-  }, [report, reports, live, money]);
+  }, [report, reports, live]);
   const { machines, slots } = readings;
   const [picked, setPicked] = useState(() => slots.keys().next().value);
   const slot = (picked ? slots.get(picked) : undefined) ?? slots.values().next().value;

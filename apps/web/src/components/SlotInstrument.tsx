@@ -11,7 +11,7 @@ import { clock } from "@/scene/clock";
 import type { ObservationProps } from "./panel-props";
 
 const operations = ["refill", "price", "clear", "swap"] as const;
-type Props = Omit<ObservationProps, "money"> & {
+type Props = ObservationProps & {
   slot: CabinetSlot;
   live: boolean;
   stockSource: Report;
@@ -20,6 +20,7 @@ type Props = Omit<ObservationProps, "money"> & {
 };
 export function SlotInstrument({
   report,
+  money,
   reports,
   state,
   lang,
@@ -84,7 +85,7 @@ export function SlotInstrument({
         </div>
         <div>
           <dt>{field("price")}</dt>
-          <dd>{slot.price}</dd>
+          <dd>{typeof slot.price === "number" ? money(slot.price) : slot.price}</dd>
         </div>
       </dl>
       <div className="slot-evidence">
@@ -121,7 +122,7 @@ export function SlotInstrument({
                   change.observation.qty +
                   "/" +
                   (change.observation.capacity ?? slot.capacity)
-                : field("price") + ": " + change.price}
+                : field("price") + ": " + (change.price === undefined ? "—" : money(change.price))}
             </div>
           ))}
         </div>

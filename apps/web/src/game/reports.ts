@@ -84,7 +84,7 @@ export function observation(
     for (const line of lines) {
       const m = /^(\S+:\w\d+)\s+(\w+)\s+(.+?)\s{2,}(\d+)\s+(\d+)\s+(.+)$/.exec(line);
       if (m) {
-        rows.push(m.slice(1));
+        rows.push([...m.slice(1, 6), monetaryValue(capture(m, 6))]);
         rendered.add(line);
         slots[capture(m, 1)] = {
           item: capture(m, 3),

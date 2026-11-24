@@ -9,7 +9,7 @@ export interface CabinetSlot {
   product: string;
   quantity: number;
   capacity: number;
-  price: string;
+  price: string | number;
 }
 export function cabinetLayout(rows: Report["rows"]) {
   const machines = new Map<string, Map<string, CabinetSlot[]>>();
@@ -37,7 +37,7 @@ export function cabinetLayout(rows: Report["rows"]) {
       product: String(product),
       quantity: Number(quantity),
       capacity: Number(capacity),
-      price: String(price),
+      price,
     };
     const shelves = machines.get(machine) ?? new Map<string, CabinetSlot[]>();
     const lanes = shelves.get(shelf) ?? [];

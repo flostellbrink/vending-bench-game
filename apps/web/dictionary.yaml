@@ -873,9 +873,9 @@ fields:
     de: "Produkt-ID"
   price:
     .id: VF000007
-    ^en: "Unit price (€)"
-    es: "Precio unitario (€)"
-    de: "Stückpreis (€)"
+    ^en: "Unit price"
+    es: "Precio unitario"
+    de: "Stückpreis"
   location:
     .id: VF000008
     ^en: "Location"
