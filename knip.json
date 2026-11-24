@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "includeEntryExports": true,
+  "ignoreIssues": {
+    "packages/common/src/language.ts": ["exports", "types"],
+    "packages/localize/src/index.ts": ["exports", "types"],
+    "packages/localize/src/loader.ts": ["exports"],
+    "packages/localize/src/schema-helpers.ts": ["exports"],
+    "packages/localize/src/schema.ts": ["exports", "types"],
+    "packages/localize/src/server.ts": ["exports"],
+    "scripts/oxlint-*.ts": ["exports"]
+  },
+  "workspaces": {
+    ".": { "entry": ["scripts/*.ts"], "project": ["scripts/*.ts"] },
+    "apps/web": {
+      "entry": ["scripts/**/*.ts", "src/worker/worker.ts"],
+      "project": ["src/**/*.{ts,tsx,css}", "scripts/**/*.ts"]
+    },
+    "packages/*": { "project": "src/**/*.{ts,tsx}" }
+  }
+}

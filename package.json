@@ -8,13 +8,17 @@
     "build": "pnpm generate && pnpm --filter vending-bench-game build",
     "test": "pnpm generate && pnpm --filter vending-bench-game test",
     "typecheck": "pnpm generate && pnpm --filter vending-bench-game typegen && tsc -b",
-    "quality:check": "node apps/web/scripts/check-source.ts && pnpm typecheck && pnpm quality:check:lint && pnpm quality:check:format && pnpm --filter vending-bench-game test",
+    "quality:check": "node apps/web/scripts/check-source.ts && pnpm typecheck && pnpm quality:check:lint && pnpm quality:check:format && pnpm quality:check:dead && pnpm --filter vending-bench-game test",
     "quality:check:format": "oxfmt --check",
     "quality:fix:format": "oxfmt",
-    "quality:check:lint": "oxlint"
+    "quality:check:lint": "oxlint",
+    "quality:fix:lint": "oxlint --fix",
+    "quality:check:dead": "knip",
+    "quality:fix:dead": "knip --fix --allow-remove-files"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "knip": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
