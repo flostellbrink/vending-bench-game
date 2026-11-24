@@ -1,16 +1,33 @@
-import type { Entry } from "games-common/benchmark";
+import type { Entry, Move } from "games-common/benchmark";
 
 import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import test from "node:test";
 
 import { commandWords, quotedWord } from "../src/game/command-words.ts";
-import { draftMachine, priceOrder, timing } from "../src/game/commands.ts";
+import { commandForMove, draftMachine, parse, priceOrder, timing } from "../src/game/commands.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
+
+await test("inherited commands can be recalled and submitted with the same arguments", () => {
+  const geometry = { machines: ["AI-HOUSE:SNACK"], slots: ["AI-HOUSE:SNACK:A1"] };
+  const moves: Move[] = [
+    ["list_emails", { folder: "inbox", unread_only: true, limit: 20 }],
+    ["order_goods", { supplier_id: "supplier", items: { chocolate: 12, juice: 8 } }],
+    ["restock_machine", { slot: geometry.slots[0], product_id: "chocolate", quantity: 12 }],
+    [
+      "send_email",
+      { to: "vendor@example.test", subject: 'A "quote"', body: "First line\nNext line" },
+    ],
+    ["wait_for_next_day", {}],
+  ];
+  for (const move of moves) {
+    assert.deepEqual(parse(commandForMove(move), geometry, { [move[0]]: [] }), move);
+  }
+});
 
 await test("a cabinet draws only its declared cells on uneven shelves", () => {
   const slots = [

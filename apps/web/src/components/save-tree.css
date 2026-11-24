@@ -182,9 +182,7 @@
   border-top: 1px dotted #566a5c;
 }
 .save-map-row.reference .save-lane-name {
-  display: grid;
-  align-content: center;
-  padding-top: 0;
+  padding-top: 0.6rem;
 }
 .save-card.reference {
   background: transparent;

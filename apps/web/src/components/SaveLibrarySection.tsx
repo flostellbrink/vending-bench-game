@@ -7,7 +7,13 @@ import type { Locale } from "@/dictionary/runtime";
 
 import { msg } from "@/dictionary";
 import { loadRival } from "@/game/rival-balances";
-import { forkRun, readSlotSnapshot, slotSnapshot } from "@/game/runs";
+import {
+  forkRun,
+  forkScriptedRun,
+  scriptedSlot,
+  readSlotSnapshot,
+  slotSnapshot,
+} from "@/game/runs";
 import { unavailable, useStoredText } from "@/hooks/useSessionStorage";
 
 import SaveTree from "./SaveTree";
@@ -49,11 +55,14 @@ export function SaveLibrarySection({
     [sending, setSending] = useState(false);
   const options = { locale: lang };
   const newForm = useId();
-  function branch(id: string, startDay: number) {
+  async function branch(id: string, startDay: number) {
     if (sending || typeof snapshot !== "string") return;
     setSending(true);
     try {
-      const child = forkRun(localStorage, release, id, startDay);
+      const child =
+        id === scriptedSlot
+          ? await forkScriptedRun(localStorage, release, startDay)
+          : forkRun(localStorage, release, id, startDay);
       location.assign(
         "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot: child }),
       );

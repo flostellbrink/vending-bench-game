@@ -2,6 +2,7 @@ import {
   entrySchema,
   moveSchema,
   personalBestSchema,
+  scriptedReplaySchema,
   type Entry,
   type PersonalBest,
   type Receipt,
@@ -9,7 +10,10 @@ import {
 } from "games-common/benchmark";
 import * as v from "valibot";
 
+import { commandForMove } from "./commands.ts";
+
 export const legacySlot = "legacy";
+export const scriptedSlot = "scripted-reference";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function isSlotId(id: string): boolean {
@@ -41,7 +45,10 @@ const lineageSchema = v.object({
   createdAt: v.nullable(v.number()),
   updatedAt: v.optional(v.number()),
   parent: v.nullable(
-    v.object({ slot: v.pipe(v.string(), v.check(isSlotId)), day: checkpointSchema.entries.day }),
+    v.object({
+      slot: v.union([v.literal(scriptedSlot), v.pipe(v.string(), v.check(isSlotId))]),
+      day: checkpointSchema.entries.day,
+    }),
   ),
 });
 const metadataSchema = v.object({ ...lineageSchema.entries, timeline: timelineSchema });
@@ -227,6 +234,44 @@ export function createRun(storage: StorageWriter, release: Release): string {
   return newSlot(storage, release, [], runTimeline(release, [], false), null);
 }
 
+export async function forkScriptedRun(
+  storage: StorageWriter,
+  release: Release,
+  day: number,
+): Promise<string> {
+  if (!release.scriptedReplay) throw Error("Missing scripted replay");
+  const response = await fetch("/" + release.scriptedReplay);
+  if (!response.ok) throw Error("Reference replay unavailable");
+  const replay = v.parse(scriptedReplaySchema, await response.json());
+  if (
+    replay.revision !== release.revision ||
+    replay.seed !== release.seed ||
+    replay.checkpoints.some(
+      (point, i, all) =>
+        point.day !== i + 1 ||
+        point.day > release.days ||
+        !Number.isInteger(point.moveCount) ||
+        point.moveCount > replay.moves.length ||
+        (i === 0
+          ? point.moveCount !== 0 || point.cash !== release.startingBalance
+          : point.moveCount <= (all[i - 1]?.moveCount ?? 0)),
+    )
+  )
+    throw Error("Incompatible scripted replay");
+  const point = replay.checkpoints.find((p) => p.day === day);
+  if (!point) throw Error("Missing scripted morning");
+  const moves = replay.moves
+    .slice(0, point.moveCount)
+    .map((move) => ({ move, line: commandForMove(move) }));
+  return newSlot(
+    storage,
+    release,
+    moves,
+    { ...point, minute: release.network.opens, checkpoints: replay.checkpoints.slice(0, day) },
+    { slot: scriptedSlot, day },
+  );
+}
+
 export function forkRun(
   storage: StorageWriter,
   release: Release,
@@ -243,7 +288,7 @@ export function forkRun(
   }
   let owner = parentSlot,
     parent = load(owner);
-  while (parent.parent && day <= parent.parent.day) {
+  while (parent.parent && parent.parent.slot !== scriptedSlot && day <= parent.parent.day) {
     owner = parent.parent.slot;
     parent = load(owner);
   }
@@ -256,7 +301,10 @@ export function forkRun(
     release,
     parent.moves.slice(0, point.moveCount),
     { ...point, minute: release.network.opens, checkpoints },
-    { slot: owner, day },
+    {
+      slot: parent.parent?.slot === scriptedSlot && day <= parent.parent.day ? scriptedSlot : owner,
+      day,
+    },
   );
 }
 

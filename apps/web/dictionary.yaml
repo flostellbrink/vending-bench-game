@@ -1185,9 +1185,9 @@ session:
     de: "Neuer Lauf"
   saveTimeline:
     .id: SLTR0014
-    ^en: "Open a day to branch from that morning. Open a run’s latest save to continue."
-    es: "Abre un día para crear una rama desde esa mañana. Abre el último guardado para continuar."
-    de: "Öffne einen Tag, um am Morgen einen neuen Zweig zu beginnen. Öffne den letzten Spielstand, um fortzufahren."
+    ^en: "Choose a morning to take over the scripted run or branch your own. Choose your latest save to continue."
+    es: "Elige una mañana para tomar el relevo del operador programado o crear una rama de tu partida. Abre tu último guardado para continuar."
+    de: "Wähle einen Morgen, um den Skriptlauf zu übernehmen oder deinen Lauf zu verzweigen. Öffne deinen letzten Spielstand, um fortzufahren."
   back:
     .id: SLTR0015
     ^en: "Back to setup"

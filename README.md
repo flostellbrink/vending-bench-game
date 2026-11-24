@@ -22,6 +22,8 @@ Each new run gets its own slot in this browser. Open **Saved runs** to resume a 
 
 Older saves appear alongside new slots. Resume an older save once to reconstruct its morning checkpoints from its command journal.
 
+Select a morning in the scripted reference row to take over the operator’s business in a new slot. The game replays its commands up to that morning, including orders, deliveries and price changes. The final closing balance is a result, not another playable day.
+
 ## Static export
 
 Run `pnpm build`. Serve `apps/web/out/` with a static web server or use it as the output directory for Cloudflare Pages. The export includes the Python runtime and the simulation. Play needs no server code, external service or API key.

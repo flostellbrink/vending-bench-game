@@ -1,6 +1,6 @@
 import type { Actions, CommandArgs, Move, Report, Snapshot } from "games-common/benchmark";
 
-import { commandWords } from "./command-words.ts";
+import { commandWords, quotedWord } from "./command-words.ts";
 
 const verbs = {
   find: ["search_web", "query..."],
@@ -71,6 +71,34 @@ export function syntax(verb: string) {
 }
 export const toolFor = (verb: string) => definitionFor(verb)?.[0];
 const gameNames = Object.fromEntries(Object.entries(verbs).map(([verb, [name]]) => [name, verb]));
+const shellWord = (s: string) => (s && !/[\s"\\]/.test(s) ? s : quotedWord(s));
+export function commandForMove([tool, args]: Move): string {
+  const verb = gameNames[tool];
+  if (!verb || !isVerb(verb)) throw Error("Unsupported replay operation: " + tool);
+  const words: string[] = [verb];
+  for (const spec of verbs[verb][1].split(" ")) {
+    const key = spec.replace(/[?.]/g, "");
+    if (!key) continue;
+    if (key === "items" && args.items) {
+      for (const [id, quantity] of Object.entries(args.items))
+        words.push(shellWord(id), String(quantity));
+      continue;
+    }
+    const value = Object.entries(args).find(([name]) => name === key)?.[1];
+    if (typeof value === "number") words.push(String(value));
+    if (typeof value === "string") {
+      words.push(
+        shellWord(
+          key === "slot" || key === "machine_id" || key === "location" ? address(value) : value,
+        ),
+      );
+    }
+  }
+  if (args.unread_only) words.push("--unread");
+  if (args.by_product) words.push("--by-product");
+  if (args.limit !== undefined) words.push("--limit", String(args.limit));
+  return words.join(" ");
+}
 const toolNames = new RegExp(
   "\\b(" + Object.keys(gameNames).join("|") + ")\\b(\\([\\w ,]+\\))?",
   "g",

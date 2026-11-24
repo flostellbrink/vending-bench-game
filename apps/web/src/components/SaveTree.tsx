@@ -6,6 +6,7 @@ import type { Locale } from "@/dictionary/runtime";
 import type { RunSlot } from "@/game/runs";
 
 import { msg } from "@/dictionary";
+import { scriptedSlot } from "@/game/runs";
 import { clock } from "@/scene/clock";
 
 interface Selection {
@@ -119,10 +120,19 @@ export default function SaveTree({
     .at(-1);
   const candidate = byId.get(choice?.slot ?? activeSlot ?? "") ?? newest ?? slots[0];
   const selectedDay = choice ? choice.day : initialDay;
-  const selected = candidate ? inheritedMorning(candidate, selectedDay, byId) : undefined;
+  const fromScript =
+    choice?.slot === scriptedSlot ||
+    (!choice &&
+      candidate?.parent?.slot === scriptedSlot &&
+      initialDay !== undefined &&
+      initialDay <= candidate.parent.day);
+  const selected =
+    candidate && !fromScript ? inheritedMorning(candidate, selectedDay, byId) : undefined;
   const selectedPoint = selected?.checkpoints.find((p) => p.day === selectedDay);
-  const col = selectedPoint?.day ?? (selected ? tipDay(selected, release.days) : 1);
-  const row = selected ? (rowIndex.get(selected.id) ?? 0) : 0;
+  const col = fromScript
+    ? (selectedDay ?? 1)
+    : (selectedPoint?.day ?? (selected ? tipDay(selected, release.days) : 1));
+  const row = fromScript ? rows.length : selected ? (rowIndex.get(selected.id) ?? 0) : 0;
   useEffect(() => {
     const box = scroller.current;
     if (!box) return;
@@ -143,7 +153,8 @@ export default function SaveTree({
   const dayLabel = (day: number) => msg.session.dayNumber({ day }, options);
   const width =
     labelWidth + Math.max(closings.length, ...slots.map((s) => tipDay(s, release.days))) * column;
-  const chartHeight = rows.length * rowHeight + (closings.length ? 52 : 0);
+  const chartHeight = rows.length * rowHeight + (closings.length ? rowHeight : 0);
+  const openings = [release.startingBalance, ...closings.slice(0, -1)];
   const parent = selected?.parent && byId.get(selected.parent.slot);
   const comparison = selectedPoint && parent?.checkpoints.find((p) => p.day === selectedPoint.day);
   const change =
@@ -176,7 +187,12 @@ export default function SaveTree({
                   day = tipDay(s, release.days),
                   y = i * rowHeight + morningY,
                   x = center(day);
-                const p = s.parent ? rowIndex.get(s.parent.slot) : undefined;
+                const p =
+                  s.parent?.slot === scriptedSlot && closings.length
+                    ? rows.length
+                    : s.parent
+                      ? rowIndex.get(s.parent.slot)
+                      : undefined;
                 return (
                   <g key={s.id} className={s.id === selected?.id ? "current" : undefined}>
                     {p !== undefined && (
@@ -274,18 +290,50 @@ export default function SaveTree({
               );
             })}
             {closings.length > 0 && (
-              <div className="save-map-row reference">
+              <div className="save-map-row reference" style={{ height: rowHeight }}>
                 <div className="save-lane-name">{msg.session.scriptReference({}, options)}</div>
-                {closings.map((cash, i) => (
-                  <span
-                    className="save-card reference"
-                    key={i}
-                    style={{ left: center(i + 1), top: morningY, width: cardWidth }}
-                  >
-                    <small>{msg.session.closeLabel({}, options)}</small>
-                    <b>{currency.format(cash)}</b>
-                  </span>
-                ))}
+                {release.scriptedReplay &&
+                  openings.map((cash, i) => (
+                    <button
+                      type="button"
+                      className="save-card morning scripted"
+                      key={i}
+                      data-row={rows.length}
+                      data-day={i + 1}
+                      disabled={disabled}
+                      tabIndex={i + 1 === (fromScript ? selectedDay : 1) ? 0 : -1}
+                      title={msg.session.fork({ day: i + 1 }, options)}
+                      aria-label={
+                        msg.session.scriptReference({}, options) +
+                        " · " +
+                        msg.session.fork({ day: i + 1 }, options) +
+                        " · " +
+                        currency.format(cash)
+                      }
+                      style={{ left: center(i + 1), top: morningY, width: cardWidth }}
+                      onFocus={() => setChoice({ slot: scriptedSlot, day: i + 1 })}
+                      onClick={() => branch(scriptedSlot, i + 1)}
+                    >
+                      <small>{clock(release.network.opens)}</small>
+                      <b>{currency.format(cash)}</b>
+                    </button>
+                  ))}
+                {closings.map((cash, i) =>
+                  !release.scriptedReplay || i === closings.length - 1 ? (
+                    <span
+                      className="save-card reference"
+                      key={i}
+                      style={{
+                        left: center(i + 1),
+                        top: release.scriptedReplay ? tipY : morningY,
+                        width: cardWidth,
+                      }}
+                    >
+                      <small>{msg.session.closeLabel({}, options)}</small>
+                      <b>{currency.format(cash)}</b>
+                    </span>
+                  ) : null,
+                )}
               </div>
             )}
           </div>
@@ -294,6 +342,11 @@ export default function SaveTree({
       {selected && (
         <div className="save-focus-note" aria-live="polite">
           <b>{name(selected)}</b>
+          {selected.parent?.slot === scriptedSlot && (
+            <span>
+              {msg.session.scriptReference({}, options)} · {dayLabel(selected.parent.day)}
+            </span>
+          )}
           {parent && selected.parent && (
             <span>
               {msg.session.from(
