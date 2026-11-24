@@ -1,5 +1,6 @@
 import type { Release } from "games-common/benchmark";
 
+import { includes } from "games-common/language";
 import { useLocale } from "games-localize/react";
 
 import type { ParentBalance } from "@/game/runs";
@@ -11,7 +12,6 @@ import { useCommandLine } from "@/hooks/useCommandLine";
 import { useNavigation } from "@/hooks/useNavigation";
 import { useRun } from "@/hooks/useRun";
 import { useCurrency } from "@/localization/formatters";
-import { isLang } from "@/localization/locale";
 import { type Lang } from "@/localization/messages";
 
 import { OperatorTerminal } from "./OperatorTerminal";
@@ -64,7 +64,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
           value={lang}
           disabled={busy}
           onChange={(e) => {
-            if (isLang(e.target.value)) changeLang(e.target.value);
+            if (includes(locales, e.target.value)) changeLang(e.target.value);
           }}
         >
           {locales.map((l) => (

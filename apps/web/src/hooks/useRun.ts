@@ -29,7 +29,7 @@ import {
   type RunTimeline,
 } from "@/game/runs";
 
-export interface LocalLine {
+interface LocalLine {
   id: string;
   line: string;
   day: number;

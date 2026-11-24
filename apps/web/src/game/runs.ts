@@ -29,7 +29,6 @@ export function recordKey(release: Release) {
   return runKey(release) + ":" + release.days + ":record";
 }
 
-export type DayCheckpoint = v.InferOutput<typeof checkpointSchema>;
 const checkpointSchema = v.object({
   day: v.pipe(v.number(), v.integer(), v.minValue(1)),
   moveCount: v.pipe(v.number(), v.integer(), v.minValue(0)),

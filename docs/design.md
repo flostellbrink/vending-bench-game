@@ -33,7 +33,7 @@ The player is a remote operator. The goal is the highest final bank balance. Bus
 
 Ctrl+Enter or Cmd+Enter puts a command on the strip without spending time. The strip shows which steps fit before closing, using the benchmark's time costs. It does not predict stock, sales or prices.
 
-Reason: the hard choice late in a day is what to postpone. At 16:00 on day 6, seed 1, refilling and pricing before closing sold 3 units (€4.50). Inspecting first pushed the price change past closing, and nothing sold that night. A reviewer saw from the strip that the inspection moved pricing to the next morning. `apps/web/scripts/studies/last-hour.ts` reproduces both plays.
+Reason: the hard choice late in a day is what to postpone. At 16:00 on day 6, seed 1, refilling and pricing before closing sold 3 units (€4.50). Inspecting first pushed the price change past closing, and nothing sold that night. A reviewer saw from the strip that the inspection moved pricing to the next morning.
 
 Rejected: a route-and-van metaphor. Vehicle capacity and travel times are not rules of this benchmark.
 

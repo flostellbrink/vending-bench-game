@@ -4,7 +4,7 @@ export type JSONValue = string | number | boolean | null | JSONObject | JSONValu
 export interface JSONObject {
   [key: string]: JSONValue;
 }
-export const jsonValueSchema: v.GenericSchema<JSONValue> = v.lazy(() =>
+const jsonValueSchema: v.GenericSchema<JSONValue> = v.lazy(() =>
   v.union([
     v.string(),
     v.number(),
@@ -14,7 +14,7 @@ export const jsonValueSchema: v.GenericSchema<JSONValue> = v.lazy(() =>
     v.record(v.string(), jsonValueSchema),
   ]),
 );
-export const jsonObjectSchema = v.record(v.string(), jsonValueSchema);
+const jsonObjectSchema = v.record(v.string(), jsonValueSchema);
 
 export type Rival = v.InferOutput<typeof rivalSchema>;
 export const rivalSchema = v.object({
@@ -85,8 +85,7 @@ export function parseReleases(input: unknown): Release[] {
   return v.parse(v.pipe(v.array(releaseSchema), v.minLength(1)), input);
 }
 
-export type FinalScore = v.InferOutput<typeof finalScoreSchema>;
-export const finalScoreSchema = v.object({
+const finalScoreSchema = v.object({
   reward: v.number(),
   gross_revenue: v.number(),
   fees_paid: v.number(),
@@ -94,9 +93,7 @@ export const finalScoreSchema = v.object({
   final_balance: v.number(),
   completed: v.boolean(),
 });
-export type Site = v.InferOutput<typeof siteSchema>;
-export const siteSchema = v.object({ id: v.string(), name: v.string() });
-export type Progress = v.InferOutput<typeof progressSchema>;
+const siteSchema = v.object({ id: v.string(), name: v.string() });
 export const progressSchema = v.object({
   day: v.number(),
   minute: v.number(),
@@ -156,7 +153,6 @@ export const commandArgsSchema = v.objectWithRest(
 );
 export type Move = v.InferOutput<typeof moveSchema>;
 export const moveSchema = v.tuple([v.string(), commandArgsSchema]);
-export type ScriptedReplay = v.InferOutput<typeof scriptedReplaySchema>;
 export const scriptedReplaySchema = v.object({
   revision: v.string(),
   seed: v.number(),
@@ -173,14 +169,13 @@ export const actionsSchema = v.record(
   v.string(),
   v.array(v.tuple([v.string(), v.string(), v.boolean()])),
 );
-export type AdapterReceipt = v.InferOutput<typeof adapterReceiptSchema>;
 export const adapterReceiptSchema = v.object({
   body: v.string(),
   notices: v.array(v.string()),
   demand: v.optional(v.nullable(jsonObjectSchema)),
 });
 export type Receipt = v.InferOutput<typeof receiptSchema>;
-export const receiptSchema = v.object({
+const receiptSchema = v.object({
   ...adapterReceiptSchema.entries,
   output: v.string(),
   day: v.number(),
@@ -197,7 +192,7 @@ export const workerRequestSchema = v.object({
   release: v.optional(releaseSchema),
 });
 export type WorkerReply = v.InferOutput<typeof workerReplySchema>;
-export const workerReplySchema = v.union([
+const workerReplySchema = v.union([
   v.object({ boot: v.picklist(["runtime", "mount"]) }),
   v.object({ error: v.string() }),
   v.object({
