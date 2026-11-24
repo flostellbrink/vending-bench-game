@@ -13,20 +13,34 @@ interface Props {
   backToBalance?: () => void;
 }
 export function ReportList({ reports, title, t, money, open, backToBalance }: Props) {
+  const days = Map.groupBy(reports.toReversed(), (report) => report.day);
   return (
-    <section className="sheet">
-      <h2>{title}</h2>
+    <section className="sheet journal-sheet" aria-label={title}>
       {backToBalance && (
         <button className="receipt-link" onClick={backToBalance}>
           {t("bank")}
         </button>
       )}
       {reports.length === 0 && <p>{t("empty")}</p>}
-      {reports.toReversed().map((r) => (
-        <button key={r.id} className="catalog" onClick={() => open(r.id)}>
-          #{r.id} · {t("day")} {r.day} · {clock(r.minute)} · {r.line}
-          {r.openingCash !== r.closingCash && " · " + money(r.closingCash - r.openingCash)}
-        </button>
+      {Array.from(days, ([day, entries]) => (
+        <section className="journal-day" key={day}>
+          <h3>
+            {t("day")} {day}
+          </h3>
+          {entries.map((r) => (
+            <button key={r.id} onClick={() => open(r.id)}>
+              <small>#{r.id}</small>
+              <time>{clock(r.minute)}</time>
+              <span>{r.line}</span>
+              {r.openingCash !== r.closingCash && (
+                <b>
+                  {r.closingCash > r.openingCash ? "+" : ""}
+                  {money(r.closingCash - r.openingCash)}
+                </b>
+              )}
+            </button>
+          ))}
+        </section>
       ))}
     </section>
   );

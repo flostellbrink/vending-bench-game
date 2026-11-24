@@ -29,7 +29,9 @@ export default function SiteDesk({
 }: Props) {
   const depot = site === "depot";
   const ids = state.machines.filter((id) => address(id).split(".")[0] === site);
-  const name = depot ? t("depot") : (ids[0]?.split(":")[0] ?? site);
+  const name = depot
+    ? t("depot")
+    : (state.sites.find((entry) => address(entry.id) === site)?.name ?? site);
   function observed(tool: string, id?: string) {
     return reports.findLast(
       (r) => r.tool === tool && (!id || !r.args.machine_id || r.args.machine_id === id),
@@ -39,18 +41,19 @@ export default function SiteDesk({
     return (
       <div className="site-actions">
         <button data-clock-verb={tool} disabled={disabled} onClick={() => runCommand(line)}>
-          {t("inspectNow")} · {timeLabel(tool, state, t)}
+          <b>{t("inspectNow")}</b>
+          <small>{timeLabel(tool, state, t)}</small>
         </button>
         {prior && (
           <button className="receipt-link" onClick={() => openReport(prior.id)}>
-            {t("seen")} · {t("day")} {prior.day}, {clock(prior.minute)} · {t("noCharge")}
+            #{prior.id} · {t("day")} {prior.day}, {clock(prior.minute)} · {t("noCharge")}
           </button>
         )}
       </div>
     );
   }
   return (
-    <section className="sheet">
+    <section className="sheet site-instrument">
       <h2>{name}</h2>
       {depot ? (
         <>
@@ -60,7 +63,7 @@ export default function SiteDesk({
       ) : (
         ids.map((id) => (
           <article className="machine-entry" key={id}>
-            <h3>{address(id)}</h3>
+            <h3>{id.split(":").at(-1)}</h3>
             {inspection("inspect", "inspect " + address(id), observed("get_machine_inventory", id))}
           </article>
         ))

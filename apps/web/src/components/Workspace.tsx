@@ -27,7 +27,6 @@ export interface WorkspaceProps {
 
 export function Workspace(props: WorkspaceProps) {
   const { run, nav, shell, release, lang, t } = props;
-  const [tree, setTree] = useState(true);
   const [preview, setPreview] = useState("");
   const context = useMemo(() => readoutContext(nav.tab, run.reports), [nav.tab, run.reports]);
   const title = context.name ?? t(context.label);
@@ -55,9 +54,6 @@ export function Workspace(props: WorkspaceProps) {
         onSiteSelect={nav.setSite}
       />
       <nav className="desk-trail" aria-label={t("dispatchDesk")}>
-        <button aria-label={t("network")} aria-expanded={tree} onClick={() => setTree((v) => !v)}>
-          ☷
-        </button>
         {nav.tab !== "desk" && (
           <>
             <button onClick={nav.back} aria-label={t("back")}>
@@ -77,16 +73,14 @@ export function Workspace(props: WorkspaceProps) {
           {t("journal")}
         </button>
       </nav>
-      <div className={"work-surface" + (tree ? " navigable" : "")}>
-        {tree && (
-          <ObjectNavigator
-            state={run.state}
-            reports={run.reports}
-            t={t}
-            value={context.object}
-            onOpen={nav.openObject}
-          />
-        )}
+      <div className="work-surface">
+        <ObjectNavigator
+          state={run.state}
+          reports={run.reports}
+          t={t}
+          value={context.object}
+          onOpen={nav.openObject}
+        />
         <div className="readout" key={nav.tab}>
           <WorkspaceReadout {...props} context={context} />
         </div>

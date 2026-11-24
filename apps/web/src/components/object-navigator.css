@@ -1,0 +1,57 @@
+.object-directory {
+  --wire: #63786b;
+  font:
+    normal 0.85rem/1.3 ui-monospace,
+    Menlo,
+    monospace;
+  scrollbar-width: thin;
+  scrollbar-color: #8d9b8e #d4dbcf;
+}
+.object-directory ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.object-directory :is(button, .object-group) {
+  display: flex;
+  align-items: baseline;
+  gap: 0.23em;
+  width: 100%;
+  min-height: 1.55em;
+  padding: 0.12em 0.16em;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+.object-directory button {
+  cursor: pointer;
+}
+.object-directory .object-group {
+  font-weight: 700;
+}
+.object-wires {
+  color: var(--wire);
+  font-weight: 400;
+  white-space: pre;
+  user-select: none;
+}
+.object-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.object-directory button:hover {
+  background: #bfccbd;
+}
+.object-directory button[aria-current] {
+  --wire: #a9bcae;
+  background: #405b4b;
+  color: #fff;
+}
+.object-directory button:focus-visible {
+  outline: 2px solid #152d21;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 3px #f1eacb;
+}

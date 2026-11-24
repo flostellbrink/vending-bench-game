@@ -529,7 +529,7 @@ footer button[aria-pressed="true"] {
   position: relative;
 }
 .station .workspace {
-  grid-template-rows: minmax(0, 3fr) auto auto minmax(0, 2fr);
+  grid-template-rows: minmax(0, 1fr) auto auto minmax(0, 2fr);
 }
 .readout {
   min-height: 0;
@@ -553,6 +553,90 @@ footer button[aria-pressed="true"] {
 .readout .sheet,
 .readout .report {
   padding: 0.55rem 0.75rem;
+}
+.station .readout {
+  font:
+    0.93rem/1.34 ui-monospace,
+    "SFMono-Regular",
+    Consolas,
+    monospace;
+  scrollbar-width: thin;
+}
+.readout .brief h3 {
+  margin: 0.9em 0 0.3em;
+  padding-top: 0.45em;
+  border-top: 1px solid #aab6a7;
+}
+.readout .brief :is(p, ul) {
+  margin-block: 0.5em;
+}
+.readout .journal-sheet {
+  padding: 0;
+}
+.journal-day h3 {
+  position: sticky;
+  top: 0;
+  margin: 0;
+  padding: 0.3em 0.65em;
+  background: #cad6c9;
+  border-block: 1px solid #a0b19e;
+  font: inherit;
+  font-weight: bold;
+}
+.journal-day button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 4ch 5ch minmax(0, 1fr) auto;
+  gap: 1ch;
+  align-items: baseline;
+  border: 0;
+  border-bottom: 1px solid #c7cfc3;
+  background: none;
+  padding: 0.3em 0.65em;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+.journal-day button:is(:focus-visible, :hover) {
+  background: #cedecf;
+}
+.journal-day button span {
+  overflow-wrap: anywhere;
+}
+.journal-day button small {
+  color: #4c6152;
+  font-size: inherit;
+}
+.readout .observation-grid {
+  margin: 0.45em 0;
+  font-variant-numeric: tabular-nums;
+}
+.observation-grid :is(th, td) {
+  border: 0;
+  border-bottom: 1px solid #bbc7b7;
+  padding: 0.33em 0.55em;
+  vertical-align: baseline;
+}
+.observation-grid th {
+  color: #e7eee5;
+  background: #354c40;
+}
+.observation-grid th button {
+  padding: 0;
+  color: inherit;
+  text-align: inherit;
+}
+.observation-grid tbody tr:nth-child(even) {
+  background: #dce3d8;
+}
+.observation-grid
+  :is(
+    [data-field="units"],
+    [data-field="quantity"],
+    [data-field="averageCost"],
+    [data-field="revenue"],
+    [data-field="price"]
+  ) {
+  text-align: right;
 }
 .shell-reply {
   font: inherit;
@@ -869,6 +953,42 @@ footer button[aria-pressed="true"] {
 .machine-entry {
   border-top: 1px solid var(--rule);
 }
+.site-instrument > h2 {
+  margin: 0;
+  padding-block: 0.35em;
+  border-bottom: 2px solid #718577;
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.site-instrument .machine-entry {
+  display: grid;
+  grid-template-columns: minmax(7ch, 0.4fr) minmax(0, 2fr);
+  align-items: baseline;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.site-instrument .machine-entry h3 {
+  margin: 0;
+  font-size: 1em;
+}
+.site-instrument .site-actions {
+  align-items: baseline;
+  gap: 0.4em 1em;
+}
+.site-instrument .site-actions button small {
+  display: block;
+  color: #42554a;
+  font-size: 0.9em;
+}
+.site-instrument .site-actions button {
+  text-align: start;
+}
+.site-instrument .site-actions .receipt-link {
+  background: none;
+  border: 0;
+  padding: 0;
+}
 .supplier-entry {
   display: flex;
   align-items: start;
@@ -981,11 +1101,8 @@ footer button[aria-pressed="true"] {
 .work-surface {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: clamp(10.5rem, 14vw, 16rem) minmax(0, 1fr);
   overflow: hidden;
-}
-.work-surface.navigable {
-  grid-template-columns: minmax(8rem, 19%) minmax(0, 1fr);
 }
 .object-tree {
   overflow: auto;
@@ -995,27 +1112,6 @@ footer button[aria-pressed="true"] {
   color: #273931;
   font-size: 0.88rem;
   border-right: 1px solid #869589;
-}
-.tree-leaf,
-.object-tree summary {
-  display: block;
-  text-align: left;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  padding: 0.16rem 0.32rem;
-  cursor: pointer;
-}
-.object-tree summary {
-  display: list-item;
-}
-.tree-leaf[aria-current] {
-  background: #425c4e;
-  color: white;
-}
-.tree-branch {
-  margin-left: 0.5em;
 }
 .desk-trail {
   display: flex;
@@ -1071,7 +1167,67 @@ footer button[aria-pressed="true"] {
     font-size: 87.5%;
   }
   .station {
-    padding: 7px;
+    padding: 5px;
+    row-gap: 4px;
+  }
+  .station .mast {
+    padding: 0.2rem 0.65rem;
+  }
+  .station > footer {
+    font:
+      0.78rem/1.25 ui-monospace,
+      Menlo,
+      monospace;
+  }
+  .station > footer a {
+    color: var(--phosphor);
+    text-underline-offset: 0.15em;
+  }
+  .station .desk {
+    grid-template-columns: minmax(17.5rem, 28%) minmax(0, 1fr);
+  }
+  .station .shell {
+    font:
+      0.88rem/1.3 ui-monospace,
+      "SFMono-Regular",
+      Consolas,
+      monospace;
+  }
+  .station .scrollback {
+    padding: 0.45rem 0.55rem;
+    margin: 3px 3px 0;
+  }
+  .station .scrollback > p {
+    margin: 0.45em 0;
+  }
+  .station .receipt {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    column-gap: 0.65ch;
+    padding: 0.22em 0;
+  }
+  .station .receipt > small {
+    font-size: 0.84em;
+    white-space: nowrap;
+  }
+  .station .receipt > :nth-child(n + 3) {
+    grid-column: 2;
+  }
+  .station .receipt > button {
+    font-size: inherit;
+    line-height: inherit;
+    padding-block: 0;
+  }
+  .station .receipt .shell-reply,
+  .station .receipt .receipt-peek {
+    grid-column: 1 / -1;
+  }
+  .station .shell-reply {
+    line-height: 1.3;
+  }
+  .station .shell .input-zone {
+    padding-inline: 0.6rem;
   }
   .desk {
     gap: 7px;
@@ -1087,8 +1243,8 @@ footer button[aria-pressed="true"] {
   .settlement-body {
     grid-template-columns: 1fr;
   }
-  .work-surface.navigable {
-    grid-template-columns: 5rem minmax(0, 1fr);
+  .work-surface {
+    grid-template-columns: minmax(6.5rem, 25%) minmax(0, 1fr);
   }
 }
 .plan-evidence {

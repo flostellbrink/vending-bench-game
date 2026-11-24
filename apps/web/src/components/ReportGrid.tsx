@@ -42,16 +42,18 @@ export function ReportGrid({
     );
   }, [report, sort, lang]);
   return (
-    <table>
+    <table className="observation-grid">
       <thead>
         <tr>
           {report.columns.map((c, i) => (
             <th
               key={c}
+              data-field={c}
+              scope="col"
               aria-sort={sort?.index === i ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
             >
               <button onClick={() => setSort({ index: i, dir: sort?.index === i ? -sort.dir : 1 })}>
-                {fieldLabel(c, lang)} {sort?.index === i ? (sort.dir === 1 ? "↑" : "↓") : "↕"}
+                {fieldLabel(c, lang)} {sort?.index === i && (sort.dir === 1 ? "↑" : "↓")}
               </button>
             </th>
           ))}
@@ -64,7 +66,7 @@ export function ReportGrid({
           return (
             <tr key={i}>
               {r.map((c, j) => (
-                <td key={j}>
+                <td key={j} data-field={report.columns[j]}>
                   {c}
                   {j === 1 && report.batches && (
                     <StorageBatches report={report} product={String(r[0])} lang={lang} />
