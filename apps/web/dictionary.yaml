@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  serviceReceipts:
+    .id: SRDAT001
+    ^en: Cabinet service receipts
+    es: Recibos de servicio de las máquinas
+    de: Wartungsbelege der Automaten
   allOrders:
     .id: POACT002
     ^en: All orders
