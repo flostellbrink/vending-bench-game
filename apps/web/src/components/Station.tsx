@@ -27,7 +27,7 @@ interface Props {
 export function Station({ release, slot, parentBalance, changeLang, newRun }: Props) {
   const lang = useLocale();
   const nav = useNavigation(newRun ? "brief" : "suppliers"),
-    run = useRun(release, slot, nav.setTab);
+    run = useRun(release, slot, nav.showResult);
   const currency = useCurrency(release.currency);
   const money = (value: number) => currency.format(value);
   const shell = useCommandLine(run, nav, release);

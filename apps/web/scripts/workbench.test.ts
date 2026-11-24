@@ -16,10 +16,22 @@ import {
 import { observedProducts } from "../src/game/observed-products.ts";
 import { orderEntry } from "../src/game/order-entry.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
+import { enterReadout } from "../src/game/readout-path.ts";
 import { displayCell, knownOrders, observation, weatherObservations } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
+
+await test("receipt drill-down keeps its originating section and history list", () => {
+  const section = ["mail"];
+  const list = enterReadout(section, "past:mail");
+  const receipt = enterReadout(list, 12);
+  assert.deepEqual(receipt.slice(0, -1), list);
+  assert.deepEqual(enterReadout(receipt, "past:mail"), list);
+  assert.deepEqual(enterReadout(receipt, "sales"), ["sales"]);
+  assert.deepEqual(enterReadout(section, "machine:A", true), ["mail", "machine:A"]);
+  assert.deepEqual(enterReadout(enterReadout(["scores"], "day:3"), 7), ["scores", "day:3", 7]);
+});
 
 const actions: Actions = {
   get_sales_report: [

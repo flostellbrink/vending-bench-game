@@ -22,9 +22,11 @@ import { UninspectedMachine } from "./SlotInstrument";
 import { SupplierDirectory } from "./SupplierDirectory";
 
 interface Props extends WorkspaceProps {
+  tab: NavigationView;
   context: ReadoutContext;
   suppliers: ObservedSupplier[];
 }
+type NavigationView = WorkspaceProps["nav"]["tab"];
 export function WorkspaceReadout({
   run,
   nav,
@@ -32,11 +34,12 @@ export function WorkspaceReadout({
   release,
   money,
   context,
+  tab,
   suppliers,
   parentBalance,
 }: Props) {
   const { state, reports } = run;
-  const { tab, setTab } = nav;
+  const { setTab } = nav;
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
   const controls = { money, reports, disabled, runCommand: shell.runCommand };
   if (
@@ -214,10 +217,9 @@ export function WorkspaceReadout({
   const byDay = typeof tab === "string" && tab.startsWith("day:");
   return (
     <ReportList
-      reports={byDay ? reports.filter((r) => r.day === nav.balanceDay) : reports}
+      reports={byDay ? reports.filter((r) => r.day === Number(tab.slice(4))) : reports}
       {...{ money }}
       open={setTab}
-      backToBalance={byDay ? () => setTab("world") : undefined}
     />
   );
 }

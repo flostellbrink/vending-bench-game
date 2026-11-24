@@ -1138,6 +1138,9 @@ footer button[aria-pressed="true"] {
   grid-template-columns: clamp(16.5rem, 18vw, 20rem) minmax(0, 1fr);
   overflow: hidden;
 }
+.work-surface > .readout[hidden] {
+  display: none;
+}
 .object-tree {
   overflow: auto;
   min-width: 0;

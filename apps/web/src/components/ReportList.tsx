@@ -10,25 +10,17 @@ interface Props {
 
   money: Money;
   open: (id: number) => void;
-  backToBalance?: () => void;
 }
-export function ReportList({ reports, money, open, backToBalance }: Props) {
+export function ReportList({ reports, money, open }: Props) {
   const days = Map.groupBy(reports.toReversed(), (report) => report.day);
   return (
     <div className="sheet journal-sheet">
-      {backToBalance && (
-        <button className="receipt-link" onClick={backToBalance}>
-          {msg.operator.bank()}
-        </button>
-      )}
       {reports.length === 0 && <p>{msg.operator.empty()}</p>}
       {Array.from(days, ([day, entries]) => (
         <section className="journal-day" key={day}>
-          {!backToBalance && (
-            <h3>
-              {msg.operator.day()} {day}
-            </h3>
-          )}
+          <h3>
+            {msg.operator.day()} {day}
+          </h3>
           {entries.map((r) => (
             <button key={r.id} onClick={() => open(r.id)}>
               <small>#{r.id}</small>

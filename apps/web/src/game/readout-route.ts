@@ -50,7 +50,13 @@ export function readoutContext(tab: View, reports: Report[]) {
     : typeof tab === "number" && selected
       ? recordObject(selected)
       : objectKey;
-  const history = reports.filter((r) => belongsTo(r, object));
+  const history = reports.filter(
+    (r) =>
+      belongsTo(r, object) ||
+      (object.startsWith("supplier:") &&
+        r.tool === "send_email" &&
+        purchaseSupplier(r, reports) === object.slice(9)),
+  );
   const name = objectKey.startsWith("machine:")
     ? address(objectKey.slice(8))
     : objectKey.startsWith("supplier:")

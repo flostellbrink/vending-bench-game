@@ -74,6 +74,7 @@ export function Workspace(props: WorkspaceProps) {
   }, []);
   const directoryProps = { state: run.state, suppliers, value: context.object };
   const key = String(nav.tab);
+  const detail = nav.path.length > 1;
   const parent = key.startsWith("supplier:")
     ? { id: "suppliers", label: msg.operator.supply() }
     : key === "machines" || key.startsWith("machine:")
@@ -134,7 +135,18 @@ export function Workspace(props: WorkspaceProps) {
           <h2 id={headingId} ref={heading} tabIndex={-1}>
             {title}
           </h2>
-          {parent && (
+          {detail && (
+            <button
+              type="button"
+              onClick={() => {
+                nav.leaveDetail();
+                heading.current?.focus({ preventScroll: true });
+              }}
+            >
+              ← {msg.operator.back()}
+            </button>
+          )}
+          {!detail && parent && (
             <button
               type="button"
               onClick={() => {
@@ -185,9 +197,23 @@ export function Workspace(props: WorkspaceProps) {
         <div className="work-surface">
           <ObjectNavigator {...directoryProps} onOpen={nav.openObject} />
           <QuoteDrafts>
-            <section className="readout" aria-labelledby={headingId} key={nav.tab}>
-              <WorkspaceReadout {...props} context={context} suppliers={suppliers} />
-            </section>
+            {nav.path
+              .filter((view) => typeof view === "string" || view === nav.tab)
+              .map((view) => (
+                <section
+                  className="readout"
+                  aria-labelledby={headingId}
+                  key={view}
+                  hidden={view !== nav.tab}
+                >
+                  <WorkspaceReadout
+                    {...props}
+                    tab={view}
+                    context={view === nav.tab ? context : readoutContext(view, run.reports)}
+                    suppliers={suppliers}
+                  />
+                </section>
+              ))}
           </QuoteDrafts>
         </div>
       </section>

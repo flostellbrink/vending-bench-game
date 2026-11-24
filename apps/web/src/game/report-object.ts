@@ -18,7 +18,8 @@ export function recordObject(report: Report): string {
 }
 
 export function belongsTo(report: Report, object: string): boolean {
-  if (object === "world") return report.openingCash !== report.closingCash;
+  if (object === "world")
+    return recordObject(report) === "world" || report.openingCash !== report.closingCash;
   if (object === "orders")
     return (
       Boolean(report.terms && "order" in report.terms) ||
