@@ -7,7 +7,9 @@ import type { ParentBalance } from "@/game/runs";
 import type { Lang, Translate } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
-const ink = ["#1d5941", "#6b496b", "#536879", "#765e39"];
+
+import "./financial-readouts.css";
+const ink = ["#bbeb9b", "#eac177", "#9dd4e6", "#d9bbd8"];
 
 interface BalanceScopeProps {
   embedded?: boolean;
@@ -57,7 +59,7 @@ export function BalanceScope({
           {
             name: msg.session.sourceTrack({}, { locale: lang }),
             values: parentBalance.values,
-            color: "#9a431c",
+            color: "#ff997e",
           },
         ]
       : []),
@@ -72,8 +74,17 @@ export function BalanceScope({
   const x = (d: number) => 6 + (988 * d) / release.days,
     y = (v: number) => 5 + (88 * (top - v)) / (top - bottom);
   const format = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
-  const tick = new Intl.NumberFormat(lang, { maximumFractionDigits: 0 });
+  const tick = new Intl.NumberFormat(lang, {
+    style: "currency",
+    currency: release.currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
   const valueAt = (s: Trace) => s.values?.[day] ?? (day === s.endDay ? s.finalBalance : undefined);
+  const days = Array.from(
+    new Set(Array.from({ length: 7 }, (_, i) => Math.round((i * release.days) / 6))),
+  );
+  const playerBalance = history[day];
   function cursorFromPointer(e: PointerEvent<SVGSVGElement>) {
     const box = e.currentTarget.getBoundingClientRect();
     setSelected(
@@ -83,13 +94,13 @@ export function BalanceScope({
   return (
     <section className="scope balance-scope">
       <header>
-        <b>
-          {!embedded && t("bank") + " / "}
-          {release.currency}
-        </b>
-        <small>
-          {t("day")} {day} / {release.days}
-        </small>
+        <div className="balance-reading">
+          <small>
+            {!embedded && t("bank") + " · "}
+            {day === 0 ? t("opening") : t("closing")} · {t("day")} {day} / {release.days}
+          </small>
+          <strong>{playerBalance === undefined ? "—" : format.format(playerBalance)}</strong>
+        </div>
         {day > 0 && day < history.length && (
           <button className="receipt-link" onClick={() => showReceipts(day)}>
             {t("cashChange")}{" "}
@@ -100,9 +111,11 @@ export function BalanceScope({
       </header>
       <div className="scope-graph">
         <div className="scale" aria-hidden="true">
-          <span>{tick.format(top)}</span>
-          <span>{tick.format((top + bottom) / 2)}</span>
-          <span>{tick.format(bottom)}</span>
+          {[top, (top + bottom) / 2, bottom].map((amount) => (
+            <span key={amount} style={{ top: y(amount) + "%" }}>
+              {tick.format(amount)}
+            </span>
+          ))}
         </div>
         <svg
           viewBox="0 0 1000 100"
@@ -113,8 +126,8 @@ export function BalanceScope({
           {[0, 0.25, 0.5, 0.75, 1].map((f) => (
             <path key={f} d={`M6 ${5 + 88 * f} H994`} className="graticule" />
           ))}
-          {Array.from({ length: 7 }, (_, i) => (
-            <path key={i} d={`M${6 + (988 * i) / 6} 5 V93`} className="graticule" />
+          {days.map((d) => (
+            <path key={d} d={`M${x(d)} 5 V93`} className="graticule" />
           ))}
           {series.map((s, index) => {
             const points = s.values ?? [];
@@ -141,16 +154,32 @@ export function BalanceScope({
             );
           })}
           <path d={`M${x(day)} 3 V96`} className="chart-cursor" />
+          {playerBalance !== undefined && (
+            <path
+              d={`M${x(day) - 4} ${y(playerBalance)} h8`}
+              stroke={ink[0]}
+              strokeWidth={5}
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
+        <small className="axis-unit">{t("day")}</small>
+        <div className="scope-days" aria-hidden="true">
+          {days.map((d) => (
+            <span key={d} style={{ left: x(d) / 10 + "%" }}>
+              {d}
+            </span>
+          ))}
+        </div>
+        <input
+          aria-label={t("day")}
+          type="range"
+          min="0"
+          max={release.days}
+          value={day}
+          onChange={(e) => setSelected(Number(e.target.value))}
+        />
       </div>
-      <input
-        aria-label={t("day")}
-        type="range"
-        min="0"
-        max={release.days}
-        value={day}
-        onChange={(e) => setSelected(Number(e.target.value))}
-      />
       <div className="legend">
         {series.map((s, i) => {
           const style: CSSProperties & { "--ink": string } = {
@@ -158,7 +187,11 @@ export function BalanceScope({
           };
           const value = valueAt(s);
           return (
-            <span key={s.name} style={style}>
+            <span
+              key={s.name}
+              style={style}
+              className={i === 0 ? "player-key" : i % 2 === 1 ? "dashed-key" : "dotted-key"}
+            >
               {s.name} <b>{value == null ? "—" : format.format(value)}</b>
             </span>
           );

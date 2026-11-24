@@ -1,5 +1,15 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  timeCost:
+    .id: TMCST001
+    ^en: Time cost
+    es: Tiempo
+    de: Zeitbedarf
+  scoreOperator:
+    .id: RANK0001
+    ^en: Operator
+    es: Operador
+    de: Betreiber
   toolInformation:
     .id: TI000001
     ^en: Tool information

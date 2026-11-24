@@ -1,4 +1,6 @@
 import type { ObservationProps } from "./panel-props";
+
+import "./financial-readouts.css";
 type Props = Pick<ObservationProps, "report" | "reports" | "state" | "t" | "money"> & {
   openReport: (id: number) => void;
 };
@@ -15,9 +17,12 @@ export function DayStatement({ report, reports, state, t, money, openReport }: P
     100;
   return (
     <section className="day-statement">
-      <h3>
-        {t("statement")} / {report.day}
-      </h3>
+      <header>
+        <h3>{t("statement")}</h3>
+        <span>
+          {t("day")} {report.day}
+        </span>
+      </header>
       <dl>
         <div>
           <dt>{t("opening")}</dt>
@@ -48,7 +53,7 @@ export function DayStatement({ report, reports, state, t, money, openReport }: P
             ["closing", report.closingCash],
           ] as const
         ).map(([key, value]) => (
-          <div key={key}>
+          <div key={key} className={key === "closing" ? "statement-total" : undefined}>
             <dt>{t(key)}</dt>
             <dd>{money(value)}</dd>
           </div>

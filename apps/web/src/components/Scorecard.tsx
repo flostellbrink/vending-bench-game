@@ -11,6 +11,7 @@ import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
 import { PaceReview } from "./PaceReview";
+import "./financial-readouts.css";
 interface Props {
   embedded?: boolean;
   state: Snapshot | null;
@@ -47,12 +48,6 @@ export function Scorecard({
           {state?.over ? (state.failed ? t("bankrupt") : screen("complete")) : t("standings")}
         </h2>
       )}
-      {score === null ? (
-        <p>{t("unfinished")}</p>
-      ) : (
-        <strong className="final-score">{money(score)}</strong>
-      )}
-      {!rivals.some((r) => r.kind === "model") && <p>{t("noRivals")}</p>}
       {state?.final && (
         <dl className="end-totals">
           <div>
@@ -69,15 +64,22 @@ export function Scorecard({
           </div>
         </dl>
       )}
-      <table>
+      <table className="score-ranking">
         <thead>
           <tr>
-            <th>{t("standings")}</th>
-            <th>{t("score")}</th>
+            <th>{t("scoreOperator")}</th>
+            <th>{translate(msg.fields.score, lang)}</th>
             <th>{t("difference")}</th>
           </tr>
         </thead>
         <tbody>
+          <tr className="player-score">
+            <th scope="row">{translate(msg.fields.player, lang)}</th>
+            <td>
+              <strong>{score === null ? "—" : money(score)}</strong>
+            </td>
+            <td>—</td>
+          </tr>
           {[
             ...(best ? [{ name: t("previousBest"), score: best.score }] : []),
             ...rivals.map((r) => ({
@@ -86,13 +88,17 @@ export function Scorecard({
             })),
           ].map((row) => (
             <tr key={row.name}>
-              <td>{row.name}</td>
+              <th scope="row">{row.name}</th>
               <td>{money(row.score)}</td>
               <td>{score === null ? "—" : money(score - row.score)}</td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="score-notes">
+        {score === null && <p>{t("unfinished")}</p>}
+        {!rivals.some((r) => r.kind === "model") && <p>{t("noRivals")}</p>}
+      </div>
       <PaceReview
         {...{ history, rivals, best, t, money, reviewDay }}
         playerName={translate(msg.fields.player, lang)}

@@ -36,6 +36,9 @@ export function PaceReview({
   const rival = opponents.find((r) => r.key === choice) ?? opponents[0];
   if (!rival || history.length < 2) return null;
   const loss = largestPaceLoss(history, rival.values);
+  const day = Math.min(history.length, rival.values.length) - 1;
+  const playerClose = history[day];
+  const rivalClose = rival.values[day];
   const signed = (value: number) => (value > 0 ? "+" : "") + money(value);
   return (
     <section className="pace-review">
@@ -57,6 +60,27 @@ export function PaceReview({
           <span>{rival.name}</span>
         )}
       </header>
+      {day > 0 && playerClose !== undefined && rivalClose !== undefined && (
+        <div className="pace-checkpoint">
+          <span>
+            {t("closing")} · {t("day")} {day}
+          </span>
+          <dl>
+            <div>
+              <dt>{playerName}</dt>
+              <dd>{money(playerClose)}</dd>
+            </div>
+            <div>
+              <dt>{rival.name}</dt>
+              <dd>{money(rivalClose)}</dd>
+            </div>
+            <div>
+              <dt>{t("difference")}</dt>
+              <dd>{signed(playerClose - rivalClose)}</dd>
+            </div>
+          </dl>
+        </div>
+      )}
       {loss ? (
         <>
           <p>
