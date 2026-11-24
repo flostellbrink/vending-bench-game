@@ -1175,3 +1175,7 @@ footer button[aria-pressed="true"] {
   display: block;
   font-variant-numeric: tabular-nums;
 }
+.storage-batch {
+  display: block;
+  font-variant-numeric: tabular-nums;
+}

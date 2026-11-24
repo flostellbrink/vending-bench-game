@@ -49,6 +49,7 @@ export function observation(
   const products: string[] = [];
   let columns: string[] = [];
   const rows: ReportRow[] = [];
+  const batches = new Map<string, NonNullable<Report["batches"]>[string]>();
   let terms: QuoteTerms | OrderTerms | null = null;
   const slots: Record<string, SlotObservation> = {};
   let channels: Campaigns | null = null,
@@ -78,13 +79,23 @@ export function observation(
     }
     omit(/^slot\s+takes\s+product|^Prosus Vending Bench —/);
   } else if (move[0] === "get_storage_inventory") {
-    columns = ["product_id", "product", "size", "quantity", "price"];
-    for (const line of output.split("\n")) {
-      const m = /^(\S+)\s{2,}(.+?)\s{2,}(small|large)\s+(\d+)\s+(€[\d.,]+)/.exec(line);
+    columns = ["product_id", "product", "size", "quantity", "averageCost"];
+    let product: string | undefined;
+    for (const line of lines) {
+      const m = /^(\S+)\s{2,}(.+?)\s{2,}(\S+)\s+(\d+)\s+(\S*[\d.,]+)\s*$/.exec(line);
       if (m) {
         rows.push(m.slice(1));
-        products.push(capture(m, 1));
+        product = capture(m, 1);
+        products.push(product);
         rendered.add(line);
+      } else {
+        const batch = /^\s+batch of (\d+) expires day (\d+)\s*$/.exec(line);
+        if (product && batch) {
+          const lots = batches.get(product) ?? [];
+          lots.push({ quantity: Number(capture(batch, 1)), expiryDay: Number(capture(batch, 2)) });
+          batches.set(product, lots);
+          rendered.add(line);
+        } else product = undefined;
       }
     }
     omit(/^product_id\s+name\s+size/);
@@ -198,6 +209,7 @@ export function observation(
     line: commandLine,
     columns,
     rows,
+    batches: batches.size ? Object.fromEntries(batches) : undefined,
     products,
     suppliers,
     slots,

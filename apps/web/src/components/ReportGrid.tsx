@@ -5,6 +5,8 @@ import { timing } from "@/game/commands";
 import { fieldLabel } from "@/localization/messages";
 
 import type { ObservationProps } from "./panel-props";
+
+import { StorageBatches } from "./StorageBatches";
 type Props = Pick<
   ObservationProps,
   "report" | "reports" | "t" | "lang" | "state" | "runCommand" | "disabled"
@@ -62,7 +64,12 @@ export function ReportGrid({
           return (
             <tr key={i}>
               {r.map((c, j) => (
-                <td key={j}>{c}</td>
+                <td key={j}>
+                  {c}
+                  {j === 1 && report.batches && (
+                    <StorageBatches report={report} product={String(r[0])} lang={lang} />
+                  )}
+                </td>
               ))}
               {command && (
                 <td>

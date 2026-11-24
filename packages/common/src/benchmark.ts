@@ -225,6 +225,7 @@ export const campaignsSchema = v.object({
 });
 export type ReportRow = (string | number)[];
 export interface Report extends Receipt {
+  batches?: Record<string, { quantity: number; expiryDay: number }[]>;
   id: number;
   line: string;
   tool: string;

@@ -11,6 +11,7 @@ import { clock } from "@/scene/clock";
 import type { ObservationProps } from "./panel-props";
 
 import { DirectorySearch } from "./DirectorySearch";
+import { StorageBatches } from "./StorageBatches";
 type Props = Omit<ObservationProps, "money"> & { slot: CabinetSlot; targeted: boolean };
 export function SlotInstrument({
   report,
@@ -111,6 +112,7 @@ export function SlotInstrument({
             onClick={() => stageCommand("refill " + slot.id + " " + id + " ")}
           >
             {name} · {size} × {count}
+            {depot && <StorageBatches report={depot} product={String(id)} lang={lang} />}
           </button>
         ))}
         {depot && !depot.rows.length && <p>{depot.display}</p>}

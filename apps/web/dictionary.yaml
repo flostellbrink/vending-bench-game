@@ -1,5 +1,18 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  averageCost:
+    .id: DS000101
+    ^en: Average unit cost
+    es: Coste medio por unidad
+    de: Mittlere Stückkosten
+  storageBatch:
+    .id: DS000102
+    .inputs:
+      - $quantity :integer
+      - $day :integer
+    ^en: "{$quantity} units expire on day {$day}"
+    es: "{$quantity} unidades caducan el día {$day}"
+    de: "{$quantity} Stück verfallen an Tag {$day}"
   resumeSavedRun:
     .id: VR000001
     ^en: Reload saved run

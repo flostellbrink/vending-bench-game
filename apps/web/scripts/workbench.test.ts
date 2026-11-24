@@ -180,3 +180,39 @@ await test("an observation carries overnight notices separately from a paid repl
     { minutes: 45, rolls: true, from: 990, to: 540 },
   );
 });
+
+await test("a depot receipt keeps each expiry with its product and leaves undated goods unmarked", () => {
+  const body = [
+    "fresh-juice  Fresh juice  large  10  €1.10",
+    "    batch of 3 expires day 6",
+    "    batch of 7 expires day 8",
+    "water  Water  large  20  €0.45",
+    "yogurt  Yogurt  small  4  €0.90",
+    "    batch of 4 expires day 7",
+  ].join("\n");
+  const result = observation(
+    {
+      day: 4,
+      endDay: 4,
+      minute: 540,
+      endMinute: 565,
+      minutes: 25,
+      openingCash: 300,
+      closingCash: 300,
+      body,
+      output: body,
+      notices: [],
+    },
+    ["get_storage_inventory", {}],
+    1,
+  );
+  assert.deepEqual(result.batches, {
+    "fresh-juice": [
+      { quantity: 3, expiryDay: 6 },
+      { quantity: 7, expiryDay: 8 },
+    ],
+    yogurt: [{ quantity: 4, expiryDay: 7 }],
+  });
+  assert.equal(result.rows.length, 3);
+  assert.doesNotMatch(result.display, /batch of/);
+});

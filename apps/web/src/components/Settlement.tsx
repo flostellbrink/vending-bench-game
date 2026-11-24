@@ -6,6 +6,7 @@ import type { ParentBalance } from "@/game/runs";
 import type { Run } from "@/hooks/useCommandLine";
 import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
 
+import { fieldLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
 import { BalanceScope } from "./BalanceScope";
@@ -13,6 +14,7 @@ import { DayStatement } from "./DayStatement";
 import { Scorecard } from "./Scorecard";
 import SessionSetup from "./SessionSetup";
 import { StationFrame } from "./StationFrame";
+import { StorageBatches } from "./StorageBatches";
 
 interface Props {
   parentBalance?: ParentBalance;
@@ -105,11 +107,29 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
               )}
               {selected.rows.length > 0 && (
                 <table>
+                  <thead>
+                    <tr>
+                      {selected.columns.map((column) => (
+                        <th scope="col" key={column}>
+                          {fieldLabel(column, lang)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
                   <tbody>
                     {selected.rows.map((row, i) => (
                       <tr key={i}>
                         {row.map((cell, j) => (
-                          <td key={j}>{cell}</td>
+                          <td key={j}>
+                            {cell}
+                            {j === 1 && selected.batches && (
+                              <StorageBatches
+                                report={selected}
+                                product={String(row[0])}
+                                lang={lang}
+                              />
+                            )}
+                          </td>
                         ))}
                       </tr>
                     ))}
