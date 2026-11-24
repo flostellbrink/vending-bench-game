@@ -39,7 +39,7 @@ export interface LocalLine {
 export type LogLine = Report | LocalLine;
 type BootStage = "runtime" | "mount" | "ready";
 type SaveIssue = "" | "saveConflict" | "saveFailed";
-type View = number | "scores" | "desk";
+type View = number | "scores" | "desk" | `machine:${string}`;
 type SimulatorResult = Extract<WorkerReply, { state: Snapshot }>;
 
 interface RunView {
@@ -237,8 +237,14 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         boot: !entry ? (first ? [...(old.boot ?? []), "ready"] : null) : old.boot,
       }));
       if (data.state.over) onView("scores");
-      else if (request && !request.keepInstrument && reports[0] && opensInstrument(reports[0]))
-        onView(reports[0].id);
+      else if (request && !request.keepInstrument && reports[0] && opensInstrument(reports[0])) {
+        const report = reports[0];
+        onView(
+          report.tool === "get_machine_inventory" && report.args.machine_id && report.rows.length
+            ? `machine:${report.args.machine_id}`
+            : report.id,
+        );
+      }
     }
 
     current.addEventListener("error", (e) => fail(e.message), { signal: abort.signal });
