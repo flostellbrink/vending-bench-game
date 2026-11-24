@@ -78,11 +78,6 @@ export function Workspace(props: WorkspaceProps) {
           onOpen={nav.openObject}
         />
         <div className="desk-trail">
-          {nav.canGoBack && (
-            <button onClick={nav.back} aria-label={t("back")}>
-              ‹
-            </button>
-          )}
           <h2 id={headingId}>{title}</h2>
           {context.history.length > 0 && !String(nav.tab).startsWith("past:") && (
             <button className="history-key" onClick={() => nav.setTab("past:" + context.object)}>
