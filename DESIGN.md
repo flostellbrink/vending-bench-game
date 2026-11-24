@@ -8,7 +8,9 @@ You are the remote operator, not a person walking between machines. Finish the c
 
 Keep one persistent command buffer at the foot of the terminal. The prompt has no box or submit button. Completions appear above it and do not move it. Enter runs the command; Shift+Enter inserts a continuation line. Keep the page inside the viewport; scroll the transcript and reports independently.
 
-The upper-right display shows the addressed office and a small plan of each other site. Selecting a site opens its desk without spending time. No action requires a map click. The lower display holds one instrument. Its navigator follows durable objects such as sites and suppliers; a receipt is not a new navigation tab. A paid inquiry opens its observation. An action such as buying or refilling reports back to the terminal without closing the instrument. Typing `help` prints a short index in the terminal.
+The upper-right display shows the selected office. All site thumbnails stay in a fixed order. Selecting an office opens a cabinet there; selecting a cabinet opens that cabinet and lights it in the scene. Selecting the depot opens shared inventory. Selection costs no time and does not inspect anything. All destinations are also available from the directory.
+
+The lower display holds one instrument. Each form owns its inputs. Editing an order, price, letter or search must not change the terminal draft, and typing a command must not change a form. Both interfaces produce the same receipt when the player executes an action.
 
 Use a graphite enclosure and slate keys. Show depth through the light and shadow on a key, not a different background hue for each panel. Reserve pale green phosphor for live readings and keyboard focus. Keep daylight and material colors in the office drawing. Separate comparison traces by line pattern as well as tone.
 
@@ -25,7 +27,7 @@ Use a flat display. The enclosure, controls, type and illustration supply the wo
 - **Find a supplier.** Start with a searchable directory, not a list of secret supplier IDs. Open an offer from the search result, compare its prices and minimum, then place an order without losing the quote.
 - **Fill and price a machine.** Inspect the depot for delivered stock. Inspect the cabinet to learn its capacity and contents. Keep both observations open. Complete a slot address and product, review the time cost, refill, then set a price. A full but unpriced slot earns nothing.
 - **Spend the afternoon.** Before execution, show the command cost. While executing, ease the clock and office light toward the actual new simulator time. Closing a day crosses the night. Receipts report what happened; a preview is never a promise of success.
-- **Compare performance.** At the end of the run, show the score and its difference from the reference operator. Retain the best completed balance trace for these rules, seed and horizon when the player starts another run. Show older final scores separately. Do not invent daily trajectories.
+- **Compare performance.** At the end of the run, show the score and its difference from the reference operator. Retain the best completed balance trace for these rules, seed and horizon. Do not show scores from different rules or invent daily trajectories.
 - **Resume.** Restore the run, discovered identifiers and previous observations without charging for the same command twice.
 
 ## Commands and results

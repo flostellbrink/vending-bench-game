@@ -1,8 +1,9 @@
-import { useId, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 
 import type { CabinetSlot } from "@/game/cabinet-layout";
 
-import { parse, timing } from "@/game/commands";
+import { quotedWord } from "@/game/command-words";
+import { timing } from "@/game/commands";
 import { slotChanges } from "@/game/slot-evidence";
 import { timeLabel } from "@/game/time-label";
 import { stationMessages as msg } from "@/localization/station-messages";
@@ -11,31 +12,36 @@ import { clock } from "@/scene/clock";
 import type { ObservationProps } from "./panel-props";
 
 const operations = ["refill", "price", "clear", "swap"] as const;
-type Props = Omit<ObservationProps, "money"> & { slot: CabinetSlot; targeted: boolean };
+type Props = Omit<ObservationProps, "money"> & {
+  slot: CabinetSlot;
+  live: boolean;
+  stockSource: Report;
+  priceSource: Report;
+  openReport: (id: number) => void;
+};
 export function SlotInstrument({
   report,
   reports,
   state,
   lang,
   t,
-  commandLine,
-  stageCommand,
   runCommand,
   disabled,
   slot,
-  targeted,
+  live,
+  stockSource,
+  priceSource,
+  openReport,
 }: Props) {
   const productList = useId();
-  const [first = "", , ...args] = commandLine.trim().split(/\s+/);
-  const verb =
-    (targeted && operations.find((action) => action === first.toLowerCase())) || "refill";
+  const [verb, setVerb] = useState<(typeof operations)[number]>("refill");
+  const [product, setProduct] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState("");
   const needsProduct = verb === "refill" || verb === "swap";
-  const product = targeted && needsProduct ? (args[0] ?? "") : "";
-  const quantity = targeted && needsProduct ? (args[1] ?? "") : "";
-  const price = targeted && verb === "price" ? (args[0] ?? "") : "";
   const depot = reports.findLast((r) => r.tool === "get_storage_inventory");
   const sizeMatches = depot?.rows.filter((row) => row[2] === slot.size && Number(row[3]) > 0);
-  const changes = slotChanges(reports, slot.id, report.id);
+  const changes = live ? [] : slotChanges(reports, slot.id, report.id);
   const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   const labels = {
     refill: t("refill"),
@@ -43,26 +49,20 @@ export function SlotInstrument({
     clear: msg.commands.clear_slot({}, { locale: lang }),
     swap: msg.commands.swap_item({}, { locale: lang }),
   };
-  function canDispatch() {
-    if (disabled || !targeted) return false;
-    try {
-      const [, parsed] = parse(commandLine, state, {
-        restock_machine: [],
-        set_price: [],
-        clear_slot: [],
-        swap_item: [],
-      });
-      if (verb === "clear") return true;
-      if (verb === "price") return parsed.price !== undefined && parsed.price >= 0;
-      return parsed.quantity !== undefined && parsed.quantity > 0 && Boolean(parsed.product_id);
-    } catch {
-      return false;
-    }
-  }
+  const valid = needsProduct
+    ? product.trim() !== "" && Number.isSafeInteger(Number(quantity)) && Number(quantity) > 0
+    : verb === "clear" || (price !== "" && Number.isFinite(Number(price)) && Number(price) >= 0);
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (canDispatch()) runCommand(commandLine.trim(), true);
+    if (!disabled && valid) {
+      const args = needsProduct
+        ? [quotedWord(product.trim()), quantity]
+        : verb === "price"
+          ? [price]
+          : [];
+      runCommand([verb, slot.id, ...args].join(" "), false, live);
+    }
   }
   return (
     <section className="slot-instrument">
@@ -71,7 +71,16 @@ export function SlotInstrument({
           <b>{slot.code}</b> {slot.product}
         </h3>
         <small>
-          {t("seen")} · {t("day")} {report.day} / {clock(report.minute)}
+          {t("seen")} · {t("day")} {stockSource.day} / {clock(stockSource.minute)}
+          {live && (
+            <button
+              type="button"
+              className="slot-source"
+              onClick={() => openReport(stockSource.id)}
+            >
+              #{stockSource.id}
+            </button>
+          )}
         </small>
       </header>
       <dl className="slot-reading">
@@ -88,6 +97,18 @@ export function SlotInstrument({
         <div>
           <dt>{field("price")}</dt>
           <dd>{slot.price}</dd>
+          {live && priceSource.id !== stockSource.id && (
+            <small>
+              {t("day")} {priceSource.day} / {clock(priceSource.minute)}
+              <button
+                type="button"
+                className="slot-source"
+                onClick={() => openReport(priceSource.id)}
+              >
+                #{priceSource.id}
+              </button>
+            </small>
+          )}
         </div>
       </dl>
       {changes.length > 0 && (
@@ -116,9 +137,7 @@ export function SlotInstrument({
             key={action}
             aria-pressed={action === verb}
             data-clock-verb={action}
-            onClick={() => {
-              if (!targeted || action !== verb) stageCommand(action + " " + slot.id + " ");
-            }}
+            onClick={() => setVerb(action)}
           >
             {labels[action]} <small>{timing(action, state)?.minutes} min</small>
           </button>
@@ -134,12 +153,7 @@ export function SlotInstrument({
                 list={productList}
                 spellCheck="false"
                 autoComplete="off"
-                onChange={(e) => {
-                  const next = e.target.value.trim();
-                  stageCommand(
-                    verb + " " + slot.id + " " + (next && quantity ? next + " " + quantity : next),
-                  );
-                }}
+                onChange={(e) => setProduct(e.target.value)}
               />
             </label>
             <datalist id={productList}>
@@ -159,9 +173,7 @@ export function SlotInstrument({
                 step="1"
                 disabled={!product}
                 value={quantity}
-                onChange={(e) =>
-                  stageCommand(verb + " " + slot.id + " " + product + " " + e.target.value)
-                }
+                onChange={(e) => setQuantity(e.target.value)}
               />
             </label>
           </>
@@ -174,14 +186,15 @@ export function SlotInstrument({
               min="0"
               step=".01"
               value={price}
-              onChange={(e) => stageCommand("price " + slot.id + " " + e.target.value)}
+              onChange={(e) => setPrice(e.target.value)}
             />
           </label>
         )}
-        <button data-clock-verb={verb} disabled={!canDispatch()}>
+        <button data-clock-verb={verb} disabled={disabled || !valid}>
           {labels[verb]} · {timeLabel(verb, state, t)}
         </button>
       </form>
     </section>
   );
 }
+import type { Report } from "games-common/benchmark";

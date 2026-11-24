@@ -37,20 +37,11 @@ export default function ObservationView({
   money,
   runCommand,
   disabled,
-  commandLine,
-  stageCommand,
   openReport,
   action,
 }: ObservationProps & { openReport: (id: number) => void; action?: ReactNode }) {
   const text = report.display;
-  const letterProps = {
-    line: commandLine,
-    state,
-    t,
-    disabled,
-    stage: stageCommand,
-    send: runCommand,
-  };
+  const letterProps = { state, t, disabled, send: runCommand };
   const contact =
     report.terms?.minimum === undefined
       ? undefined
@@ -76,6 +67,7 @@ export default function ObservationView({
           <pre>{report.mail.body}</pre>
           {from && (
             <SupplierLetter
+              key={report.id}
               {...letterProps}
               to={sent ? report.mail.to : from}
               subject={
@@ -108,23 +100,13 @@ export default function ObservationView({
               </button>
             </article>
           ))}
-          {contact && <SupplierLetter {...letterProps} to={contact.email} />}
+          {contact && <SupplierLetter key={contact.email} {...letterProps} to={contact.email} />}
           {report.terms?.minimum !== undefined ? (
             <OrderSlip
+              key={report.id}
               terms={report.terms}
               openReport={openReport}
-              {...{
-                report,
-                reports,
-                state,
-                lang,
-                t,
-                money,
-                runCommand,
-                disabled,
-                commandLine,
-                stageCommand,
-              }}
+              {...{ report, reports, state, lang, t, money, runCommand, disabled }}
             />
           ) : (
             <>
@@ -137,17 +119,9 @@ export default function ObservationView({
               {!!report.rows.length &&
                 (report.tool === "get_machine_inventory" ? (
                   <CabinetBench
-                    {...{
-                      report,
-                      reports,
-                      state,
-                      lang,
-                      t,
-                      commandLine,
-                      stageCommand,
-                      runCommand,
-                      disabled,
-                    }}
+                    live={Boolean(action)}
+                    openReport={openReport}
+                    {...{ report, reports, state, lang, t, money, runCommand, disabled }}
                   />
                 ) : (
                   <ReportGrid

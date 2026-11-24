@@ -2,6 +2,7 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    newOrder: msg.operator.newOrder,
     incomingMail: msg.operator.incomingMail,
     sentMail: msg.operator.sentMail,
     checkFolder: msg.operator.checkFolder,

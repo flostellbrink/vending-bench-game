@@ -36,16 +36,7 @@ export function WorkspaceReadout({
   const { tab, setTab } = nav;
   const orders = useMemo(() => knownOrders(reports), [reports]);
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
-  const controls = {
-    t,
-    lang,
-    money,
-    reports,
-    disabled,
-    runCommand: shell.runCommand,
-    commandLine: shell.line,
-    stageCommand: shell.edit,
-  };
+  const controls = { t, lang, money, reports, disabled, runCommand: shell.runCommand };
   if (tab === "desk")
     return (
       <DispatchDesk
@@ -53,10 +44,7 @@ export function WorkspaceReadout({
         state={state}
         orders={orders}
         onView={setTab}
-        onCloseDraft={() => {
-          if (shell.line.trim() === "close") shell.runCommand("close", true);
-          else shell.edit("close");
-        }}
+        onClose={() => shell.runCommand("close")}
       />
     );
   if (tab === "world")

@@ -2,10 +2,9 @@ import type { ObservationProps } from "./panel-props";
 
 import { DirectorySearch } from "./DirectorySearch";
 
-type Props = Pick<
-  ObservationProps,
-  "state" | "t" | "reports" | "runCommand" | "commandLine" | "stageCommand" | "disabled"
-> & { openObject: (id: string) => void };
+type Props = Pick<ObservationProps, "state" | "t" | "reports" | "runCommand" | "disabled"> & {
+  openObject: (id: string) => void;
+};
 export function SupplierDirectory({ reports, openObject, ...props }: Props) {
   const contacts = [...new Map(reports.flatMap((r) => r.directory.map((s) => [s.id, s]))).values()];
   return (

@@ -108,6 +108,14 @@ button[aria-pressed="true"] .slot-level i {
   background: #dce3d5;
   border-bottom: 1px solid #9ba896;
 }
+.slot-instrument .slot-source {
+  background: none;
+  border: 0;
+  padding: 0 0.25rem;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+}
 .slot-reading > div {
   padding: 0.3rem 0.55rem;
 }

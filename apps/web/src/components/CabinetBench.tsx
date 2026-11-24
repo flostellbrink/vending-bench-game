@@ -1,33 +1,58 @@
+import type { Report } from "games-common/benchmark";
 import { assertValue, first as firstValue } from "games-common/language";
 import { useMemo, useState } from "react";
 
-import { cabinetLayout, type CabinetSlot } from "@/game/cabinet-layout";
+import { cabinetLayout } from "@/game/cabinet-layout";
 import { address } from "@/game/commands";
+import { slotChanges } from "@/game/slot-evidence";
 import { stationMessages as msg } from "@/localization/station-messages";
 
 import type { ObservationProps } from "./panel-props";
 
 import { SlotInstrument } from "./SlotInstrument";
 import "./cabinet-bench.css";
-export default function CabinetBench(props: Omit<ObservationProps, "money">) {
-  const { report, lang, t, commandLine, stageCommand } = props;
-  const { machines, slots } = useMemo(() => cabinetLayout(report.rows), [report]);
+interface Props extends ObservationProps {
+  live: boolean;
+  openReport: (id: number) => void;
+}
+export default function CabinetBench(props: Props) {
+  const { report, reports, live, money, lang, t } = props;
+  const readings = useMemo(() => {
+    const layout = cabinetLayout(report.rows);
+    const stockSources = new Map<string, Report>();
+    const priceSources = new Map<string, Report>();
+    const later = live ? reports.filter((r) => r.id > report.id) : [];
+    for (const slot of layout.slots.values()) {
+      for (const change of slotChanges(later, slot.id, report.id)) {
+        const source = change.report;
+        if (change.observation) {
+          slot.product = change.observation.item ?? "—";
+          slot.quantity = change.observation.qty;
+          slot.capacity = change.observation.capacity ?? slot.capacity;
+          stockSources.set(slot.id, source);
+        }
+        const inspection =
+          source.tool === "get_machine_inventory"
+            ? source.rows.find(([id]) => typeof id === "string" && address(id) === slot.id)
+            : undefined;
+        let price;
+        if (inspection?.[5] != null) price = String(inspection[5]);
+        else if (change.price !== undefined) price = money(change.price);
+        else if (source.tool === "clear_slot" || source.display.includes("has no price set"))
+          price = "—";
+        if (price !== undefined) {
+          slot.price = price;
+          priceSources.set(slot.id, source);
+        }
+      }
+    }
+    return { ...layout, stockSources, priceSources };
+  }, [report, reports, live, money]);
+  const { machines, slots } = readings;
   const [picked, setPicked] = useState(() => slots.keys().next().value);
-  const [first = "", slotWord] = commandLine.trim().split(/\s+/);
-  const verb = first.toLowerCase();
-  const commandSlot =
-    slotWord && ["refill", "price", "clear", "swap"].includes(verb)
-      ? slots.get(address(slotWord))
-      : undefined;
-  const slot =
-    commandSlot ?? (picked ? slots.get(picked) : undefined) ?? slots.values().next().value;
+  const slot = (picked ? slots.get(picked) : undefined) ?? slots.values().next().value;
   if (!slot) return null;
   const shelves = assertValue(machines.get(slot.machine));
-  function pick(next: CabinetSlot) {
-    setPicked(next.id);
-    // Retarget the instrument without carrying a quantity or price to the new slot.
-    if (commandSlot && next !== commandSlot) stageCommand(verb + " " + next.id + " ");
-  }
 
   return (
     <div className="cabinet-bench">
@@ -41,7 +66,7 @@ export default function CabinetBench(props: Omit<ObservationProps, "money">) {
               value={slot.machine}
               onChange={(e) => {
                 const firstShelf = assertValue(machines.get(e.target.value)?.values().next().value);
-                pick(firstValue(firstShelf));
+                setPicked(firstValue(firstShelf).id);
               }}
             >
               {[...machines.keys()].map((id) => (
@@ -64,7 +89,7 @@ export default function CabinetBench(props: Omit<ObservationProps, "money">) {
                   type="button"
                   aria-pressed={s === slot}
                   aria-label={s.code + " · " + s.product + " · " + s.quantity + " / " + s.capacity}
-                  onClick={() => pick(s)}
+                  onClick={() => setPicked(s.id)}
                 >
                   <b>{s.code}</b>
                   <span>
@@ -80,7 +105,13 @@ export default function CabinetBench(props: Omit<ObservationProps, "money">) {
           ))}
         </div>
       </section>
-      <SlotInstrument {...props} slot={slot} targeted={slot === commandSlot} />
+      <SlotInstrument
+        key={slot.id}
+        {...props}
+        slot={slot}
+        stockSource={readings.stockSources.get(slot.id) ?? report}
+        priceSource={readings.priceSources.get(slot.id) ?? report}
+      />
     </div>
   );
 }

@@ -1,8 +1,6 @@
-import type { CommandArgs } from "games-common/benchmark";
-
 import { useState } from "react";
 
-import { address, parse } from "@/game/commands";
+import { address } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
 import { stationMessages as msg } from "@/localization/station-messages";
 
@@ -58,28 +56,15 @@ export function Mailbox(props: Props) {
 }
 
 export function SalesReports(props: Props) {
-  const { state, lang, t, reports, runCommand, disabled, stageCommand, commandLine } = props;
+  const { state, lang, t, reports, runCommand, disabled } = props;
   const options = { locale: lang };
-  const [lastQuery, rememberQuery] = useState(
-    () => reports.findLast((r) => r.tool === "get_sales_report")?.line ?? "sales",
-  );
-  const line = /^sales(?:\s|$)/i.test(commandLine.trim()) ? commandLine.trim() : lastQuery;
-  let args: CommandArgs | undefined;
-  try {
-    [, args] = parse(line, state, { get_sales_report: [] });
-  } catch {
-    // An incomplete shell command remains editable without becoming a paid report request.
-  }
-  const site = args?.location ?? "",
-    days = args?.days?.toString() ?? "",
-    byProduct = Boolean(args?.by_product);
-  function stage(period: string, location: string, products: boolean) {
-    stageCommand(
-      ["sales", period, location && address(location), products && "--by-product"]
-        .filter(Boolean)
-        .join(" "),
-    );
-  }
+  const last = reports.findLast((r) => r.tool === "get_sales_report")?.args;
+  const [site, setSite] = useState(last?.location ?? "");
+  const [days, setDays] = useState(last?.days?.toString() ?? "");
+  const [byProduct, setByProduct] = useState(Boolean(last?.by_product));
+  const line = ["sales", days, site && address(site), byProduct && "--by-product"]
+    .filter(Boolean)
+    .join(" ");
   const report = reports.findLast(
     (r) =>
       r.tool === "get_sales_report" &&
@@ -93,21 +78,12 @@ export function SalesReports(props: Props) {
         className="report-actions"
         onSubmit={(e) => {
           e.preventDefault();
-          if (args && !disabled) {
-            rememberQuery(line);
-            runCommand(line, commandLine.trim() === line, true);
-          }
+          if (!disabled) runCommand(line, false, true);
         }}
       >
         <label>
           {msg.fields.location({}, options)}
-          <select
-            value={site}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              stage(days, value, byProduct);
-            }}
-          >
+          <select value={site} onChange={(e) => setSite(e.currentTarget.value)}>
             <option value="">{msg.operator.allSites({}, options)}</option>
             {state.sites.map((s) => (
               <option key={s.id} value={s.id}>
@@ -124,24 +100,18 @@ export function SalesReports(props: Props) {
             step="1"
             value={days}
             placeholder="—"
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              stage(value, site, byProduct);
-            }}
+            onChange={(e) => setDays(e.currentTarget.value)}
           />
         </label>
         <label className="report-breakdown">
           <input
             type="checkbox"
             checked={byProduct}
-            onChange={(e) => {
-              const value = e.currentTarget.checked;
-              stage(days, site, value);
-            }}
+            onChange={(e) => setByProduct(e.currentTarget.checked)}
           />
           {msg.operator.productBreakdown({}, options)}
         </label>
-        <button disabled={disabled || !args} data-clock-verb="sales">
+        <button disabled={disabled} data-clock-verb="sales">
           {t("execute")} · {timeLabel("sales", state, t)}
         </button>
       </form>

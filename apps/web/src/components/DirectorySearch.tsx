@@ -1,5 +1,7 @@
 import type { Snapshot } from "games-common/benchmark";
 
+import { useState } from "react";
+
 import type { Translate } from "@/localization/messages";
 
 import { timeLabel } from "@/game/time-label";
@@ -8,25 +10,16 @@ interface Props {
   state: Snapshot;
   t: Translate;
   disabled: boolean;
-  commandLine: string;
-  stageCommand: (line: string) => void;
-  runCommand: (line: string, fromPrompt?: boolean) => void;
+  runCommand: (line: string) => void;
 }
-export function DirectorySearch({
-  state,
-  t,
-  disabled,
-  commandLine,
-  stageCommand,
-  runCommand,
-}: Props) {
-  const query = /^find\s/i.test(commandLine) ? commandLine.replace(/^find\s+/i, "") : "";
+export function DirectorySearch({ state, t, disabled, runCommand }: Props) {
+  const [query, setQuery] = useState("");
   return (
     <form
       className="dispatch-search"
       onSubmit={(e) => {
         e.preventDefault();
-        if (query.trim()) runCommand("find " + query.trim(), true);
+        if (!disabled && query.trim()) runCommand("find " + query.trim());
       }}
     >
       <label>
@@ -34,7 +27,7 @@ export function DirectorySearch({
         <input
           value={query}
           placeholder={t("searchExample")}
-          onChange={(e) => stageCommand("find " + e.currentTarget.value)}
+          onChange={(e) => setQuery(e.currentTarget.value)}
         />
       </label>
       <button disabled={disabled || !query.trim()} data-clock-verb="find">

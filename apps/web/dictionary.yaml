@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  newOrder:
+    .id: POACT001
+    ^en: New order
+    es: Nuevo pedido
+    de: Neue Bestellung
   incomingMail:
     .id: MO000001
     ^en: Inbox

@@ -1,8 +1,10 @@
-import type { QuoteTerms, Snapshot } from "games-common/benchmark";
+import type { QuoteTerms } from "games-common/benchmark";
 
-import { assertValue, first } from "games-common/language";
+import { assertValue } from "games-common/language";
+import { useState } from "react";
 
-import { parse, syntax, timing } from "@/game/commands";
+import { quotedWord } from "@/game/command-words";
+import { timing } from "@/game/commands";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
@@ -12,29 +14,6 @@ import "./order-slip.css";
 interface Props extends ObservationProps {
   terms: QuoteTerms;
   openReport: (id: number) => void;
-}
-function orderItems(
-  line: string,
-  supplier: string,
-  state: Snapshot,
-): { items: Record<string, number>; complete: boolean } {
-  const empty = { items: {}, complete: false };
-  if (!/^order\s/i.test(line.trimStart())) return empty;
-  const tokens = line.match(/"[^"]*"|[^\s"]+/g) ?? [];
-  const prefixLength = tokens.length - (tokens.length % 2 || 2);
-  // A trailing unfinished line item must not erase the earlier completed rows.
-  for (const [candidate, complete] of [
-    [line, true],
-    [tokens.slice(0, prefixLength).join(" "), false],
-  ] as const) {
-    try {
-      const [, args] = parse(candidate, state, { order_goods: [] });
-      if (args.supplier_id === supplier && args.items) return { items: args.items, complete };
-    } catch {
-      continue;
-    }
-  }
-  return empty;
 }
 
 export function OrderSlip({
@@ -47,8 +26,6 @@ export function OrderSlip({
   money,
   runCommand,
   disabled,
-  commandLine,
-  stageCommand,
   openReport,
 }: Props) {
   const supplier = assertValue(report.args.supplier_id);
@@ -76,45 +53,42 @@ export function OrderSlip({
     price: Number(assertValue(row[1])),
     discount: String(assertValue(row[2])),
   }));
-  const { items, complete } = orderItems(commandLine, supplier, state);
-  const selection = Object.entries(items);
-  const words = commandLine.trim().split(/\s+/);
-  const editingQuote = words[0]?.toLowerCase() === "quote" && words[1] === supplier;
-  const requestedSizes = new Set(Object.values(items));
-  const suggestedSize = requestedSizes.size === 1 ? first(selection)[1] : terms.quantity;
-  const qty = editingQuote ? (words[2] ?? "") : String(suggestedSize);
-  const prices = new Map(rows.map((row) => [row.product, row.price]));
-  const priced = selection.every(([id, count]) => prices.has(id) && count === terms.quantity);
-  const total = priced
-    ? selection.reduce(
-        (cents, [id, count]) => cents + Math.round(assertValue(prices.get(id)) * 100) * count,
-        0,
-      ) / 100
-    : null;
+  const [selection, setSelection] = useState<string[]>([]);
+  const [qty, setQty] = useState(String(terms.quantity));
+  const [submittedId, setSubmittedId] = useState<number>();
+  const submitted =
+    submittedId === undefined
+      ? undefined
+      : reports.find(
+          (r) =>
+            r.id === submittedId && r.tool === "order_goods" && r.args.supplier_id === supplier,
+        );
+  const editingQuote = Number(qty) !== terms.quantity;
+  const total =
+    rows.reduce(
+      (cents, row) =>
+        selection.includes(row.product)
+          ? cents + Math.round(row.price * 100) * terms.quantity
+          : cents,
+      0,
+    ) / 100;
   const expired = state.day > terms.until;
   const validQty = Number.isSafeInteger(Number(qty)) && Number(qty) > 0;
-  const invalid =
-    editingQuote && Number(qty) !== terms.quantity
-      ? "useNewQuote"
-      : !priced
-        ? "needQuote"
-        : expired
-          ? "expiredQuote"
-          : total !== null && total < terms.minimum
-            ? "belowMinimum"
-            : total !== null && total > state.cash
-              ? "lowCash"
-              : null;
+  const invalid = editingQuote
+    ? "useNewQuote"
+    : expired
+      ? "expiredQuote"
+      : total < terms.minimum
+        ? "belowMinimum"
+        : total > state.cash
+          ? "lowCash"
+          : null;
 
   function toggle(id: string) {
-    const next = new Map(selection);
-    if (next.has(id)) next.delete(id);
-    else next.set(id, terms.quantity);
-    const lines = Array.from(next, ([product, count]) => [
-      /\s/.test(product) ? '"' + product + '"' : product,
-      count,
-    ]).flat();
-    stageCommand(lines.length ? ["order", supplier, ...lines].join(" ") : "");
+    setSubmittedId(undefined);
+    setSelection((picked) =>
+      picked.includes(id) ? picked.filter((product) => product !== id) : [...picked, id],
+    );
   }
   return (
     <div className="order-slip">
@@ -155,8 +129,8 @@ export function OrderSlip({
                     <td>
                       <input
                         type="checkbox"
-                        checked={Object.hasOwn(items, id)}
-                        disabled={disabled || (editingQuote && Number(qty) !== terms.quantity)}
+                        checked={selection.includes(id)}
+                        disabled={disabled || editingQuote}
                         aria-label={t("include") + " " + id}
                         onChange={() => toggle(id)}
                       />
@@ -172,12 +146,8 @@ export function OrderSlip({
                         </small>
                       )}
                     </td>
-                    <td>{items[id] ?? terms.quantity}</td>
-                    <td>
-                      {items[id] != null && items[id] !== terms.quantity
-                        ? "—"
-                        : money(price * terms.quantity)}
-                    </td>
+                    <td>{terms.quantity}</td>
+                    <td>{money(price * terms.quantity)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -194,53 +164,89 @@ export function OrderSlip({
                 type="number"
                 min="1"
                 value={qty}
-                onChange={(e) => stageCommand("quote " + supplier + " " + e.target.value)}
+                onChange={(e) => {
+                  setSubmittedId(undefined);
+                  setQty(e.target.value);
+                }}
               />
             </label>
             <button
               data-clock-verb="quote"
               disabled={disabled || !validQty}
-              onClick={() => runCommand("quote " + supplier + " " + qty, editingQuote)}
+              onClick={() => runCommand("quote " + supplier + " " + qty)}
             >
               {t("reprice")} · {assertValue(timing("quote", state)).minutes} min
             </button>
           </div>
           <div className="dispatch">
-            <div>
-              <b>
-                {t("quoted")} <output>{total == null ? "—" : money(total)}</output>
-              </b>
-              <small>
-                {t("afterOrder")}: {total == null ? "—" : money(state.cash - total)}
-              </small>
-              {invalid && (selection.length > 0 || expired || editingQuote) && (
+            {submitted?.terms?.order ? (
+              <div role="status">
+                <b>
+                  {submitted.terms.order} <output>{money(submitted.terms.paid)}</output>
+                </b>
                 <small>
-                  {t(invalid)}
-                  {total !== null && (invalid === "belowMinimum" || invalid === "lowCash") && (
-                    <>
-                      {" "}
-                      · {t("shortBy")}:{" "}
-                      {money(
-                        invalid === "belowMinimum" ? terms.minimum - total : total - state.cash,
-                      )}
-                    </>
-                  )}
+                  {t("expectedClose")} {submitted.terms.eta}
                 </small>
-              )}
-              {!complete && selection.length > 0 && <small>{syntax("order")}</small>}
-            </div>
-            {newer ? (
-              <button onClick={() => openReport(newer.id)}>
-                {t("newerQuote")} #{newer.id} · {t("noCharge")}
-              </button>
+                <button className="receipt-link" onClick={() => openReport(submitted.id)}>
+                  {t("openReceipt")} #{submitted.id}
+                </button>
+                <button
+                  onClick={() => {
+                    setSubmittedId(undefined);
+                    setSelection([]);
+                  }}
+                >
+                  {t("newOrder")}
+                </button>
+              </div>
             ) : (
-              <button
-                data-clock-verb="order"
-                disabled={disabled || !complete || !selection.length || Boolean(invalid)}
-                onClick={() => runCommand(commandLine.trim(), true)}
-              >
-                {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
-              </button>
+              <>
+                <div>
+                  <b>
+                    {t("quoted")} <output>{money(total)}</output>
+                  </b>
+                  <small>
+                    {t("afterOrder")}: {money(state.cash - total)}
+                  </small>
+                  {invalid && (selection.length > 0 || expired || editingQuote) && (
+                    <small>
+                      {t(invalid)}
+                      {(invalid === "belowMinimum" || invalid === "lowCash") && (
+                        <>
+                          {" "}
+                          · {t("shortBy")}:{" "}
+                          {money(
+                            invalid === "belowMinimum" ? terms.minimum - total : total - state.cash,
+                          )}
+                        </>
+                      )}
+                    </small>
+                  )}
+                </div>
+                {newer ? (
+                  <button onClick={() => openReport(newer.id)}>
+                    {t("newerQuote")} #{newer.id} · {t("noCharge")}
+                  </button>
+                ) : (
+                  <button
+                    data-clock-verb="order"
+                    disabled={disabled || !selection.length || Boolean(invalid)}
+                    onClick={() => {
+                      setSubmittedId((reports.at(-1)?.id ?? 0) + 1);
+                      runCommand(
+                        [
+                          "order",
+                          supplier,
+                          ...selection.flatMap((id) => [quotedWord(id), terms.quantity]),
+                        ].join(" "),
+                      );
+                    }}
+                  >
+                    {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
+                  </button>
+                )}
+                {submitted && <p role="status">{submitted.display}</p>}
+              </>
             )}
           </div>
           <small>{t("latestQuote")}</small>

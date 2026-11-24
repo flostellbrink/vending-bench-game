@@ -39,7 +39,13 @@
 }
 .slip-ledger {
   overflow: auto;
+  scroll-padding-block-start: 3rem;
   max-height: clamp(11rem, 32dvh, 22rem);
+}
+@media (max-height: 760px) {
+  .order-slip .slip-ledger thead th {
+    position: static;
+  }
 }
 .slip-ledger table {
   width: 100%;

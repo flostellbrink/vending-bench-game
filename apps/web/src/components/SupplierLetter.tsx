@@ -4,37 +4,31 @@ import { useId, useState } from "react";
 
 import type { Translate } from "@/localization/messages";
 
-import { commandWords, quotedWord } from "@/game/command-words";
+import { quotedWord } from "@/game/command-words";
 import { timeLabel } from "@/game/time-label";
 
 interface Props {
   to: string;
   subject?: string;
-  line: string;
   state: Snapshot;
   t: Translate;
   disabled: boolean;
-  stage: (line: string) => void;
-  send: (line: string, fromPrompt?: boolean) => void;
+  send: (line: string) => void;
 }
 
-export function SupplierLetter({ to, subject = "", line, state, t, disabled, stage, send }: Props) {
+export function SupplierLetter({ to, subject = "", state, t, disabled, send }: Props) {
   const [open, setOpen] = useState(false);
   const field = useId();
-  let words: string[] = [];
-  try {
-    words = commandWords(line);
-  } catch {
-    /* An unfinished quoted argument stays in the shell. */
+  const [title, setTitle] = useState(subject);
+  const [body, setBody] = useState("");
+  function close() {
+    setTitle(subject);
+    setBody("");
+    setOpen(false);
   }
-  const addressed = words[0]?.toLowerCase() === "mail" && words[1] === to;
-  const title = addressed ? (words[2] ?? "") : subject;
-  const body = addressed ? words.slice(3).join(" ") : "";
-  const draft = (s: string, b: string) => "mail " + to + " " + quotedWord(s) + " " + quotedWord(b);
-  const shown = open || addressed;
   return (
     <div className="letter-compose">
-      {!shown ? (
+      {!open ? (
         <button
           className="receipt-link"
           onClick={() => {
@@ -47,9 +41,9 @@ export function SupplierLetter({ to, subject = "", line, state, t, disabled, sta
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (disabled || !addressed || !body.trim()) return;
-            send(draft(title, body), true);
-            setOpen(false);
+            if (disabled || !body.trim()) return;
+            send("mail " + to + " " + quotedWord(title) + " " + quotedWord(body));
+            close();
           }}
         >
           <header>
@@ -60,27 +54,21 @@ export function SupplierLetter({ to, subject = "", line, state, t, disabled, sta
           <input
             id={field + "-subject"}
             value={title}
-            onChange={(e) => stage(draft(e.currentTarget.value, body))}
+            onChange={(e) => setTitle(e.currentTarget.value)}
           />
           <label htmlFor={field + "-body"}>{t("letter")}</label>
           <textarea
             id={field + "-body"}
             rows={3}
             value={body}
-            onChange={(e) => stage(draft(title, e.currentTarget.value))}
+            onChange={(e) => setBody(e.currentTarget.value)}
           />
           <small>{t("supplierMailTerms")}</small>
           <div>
-            <button data-clock-verb="mail" disabled={disabled || !addressed || !body.trim()}>
+            <button data-clock-verb="mail" disabled={disabled || !body.trim()}>
               {t("sendLetter")} · {timeLabel("mail", state, t)}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (addressed) stage("");
-                setOpen(false);
-              }}
-            >
+            <button type="button" onClick={close}>
               {t("cancelPlan")}
             </button>
           </div>

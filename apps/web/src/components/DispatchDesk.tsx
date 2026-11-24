@@ -4,23 +4,14 @@ import type { ObservationProps } from "./panel-props";
 
 import "./dispatch.css";
 
-interface Props extends Pick<ObservationProps, "t" | "lang" | "commandLine" | "disabled"> {
+interface Props extends Pick<ObservationProps, "t" | "lang" | "disabled"> {
   state: Snapshot | null;
   orders: KnownOrder[];
   onView: (id: number) => void;
-  onCloseDraft: () => void;
+  onClose: () => void;
 }
 
-export default function DispatchDesk({
-  state,
-  orders,
-  lang,
-  t,
-  onView,
-  commandLine,
-  disabled,
-  onCloseDraft,
-}: Props) {
+export default function DispatchDesk({ state, orders, lang, t, onView, disabled, onClose }: Props) {
   if (!state) return null;
 
   const expected = orders.filter((order) => !order.arrival).toSorted((a, b) => a.eta - b.eta);
@@ -64,10 +55,8 @@ export default function DispatchDesk({
         <span>
           {t("remaining")} <strong>{digits.format(remaining)} min</strong>
         </span>
-        <button disabled={disabled} onClick={onCloseDraft} data-clock-verb="close">
-          {commandLine.trim() === "close"
-            ? t("execute") + " · " + remaining + " min"
-            : t("closeShift")}
+        <button disabled={disabled} onClick={onClose} data-clock-verb="close">
+          {t("closeShift")} · {remaining} min
         </button>
       </div>
     </section>
