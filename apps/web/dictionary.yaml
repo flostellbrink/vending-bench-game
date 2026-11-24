@@ -1,5 +1,15 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  reminders:
+    .id: NAVREM01
+    ^en: Reminders
+    es: Recordatorios
+    de: Erinnerungen
+  status:
+    .id: NAVSTA01
+    ^en: Business status
+    es: Estado del negocio
+    de: Betriebsstatus
   openSupplier:
     .id: OPDSUP01
     ^en: Open supplier
@@ -1191,19 +1201,19 @@ commands:
     de: "Waren bestellen"
   get_status:
     .id: VB000017
-    ^en: "Business status"
-    es: "Estado del negocio"
-    de: "Betriebsstatus"
+    ^en: "Get business status"
+    es: "Consultar estado del negocio"
+    de: "Betriebsstatus abrufen"
   get_machine_inventory:
     .id: VB000018
-    ^en: "Inspect machines"
-    es: "Inspeccionar máquinas"
-    de: "Automaten prüfen"
+    ^en: "Check machine inventory"
+    es: "Consultar inventario de máquinas"
+    de: "Automatenbestand prüfen"
   get_storage_inventory:
     .id: VB000019
-    ^en: "Inspect depot"
-    es: "Inspeccionar almacén"
-    de: "Lager prüfen"
+    ^en: "Check depot inventory"
+    es: "Consultar inventario del almacén"
+    de: "Lagerbestand prüfen"
   restock_machine:
     .id: VB000020
     ^en: "Fill a machine"
@@ -1231,9 +1241,9 @@ commands:
     de: "Fach leeren"
   get_sales_report:
     .id: VB000025
-    ^en: "Sales report"
-    es: "Informe de ventas"
-    de: "Verkaufsbericht"
+    ^en: "Get sales report"
+    es: "Consultar informe de ventas"
+    de: "Verkaufsbericht abrufen"
   run_marketing:
     .id: VB000026
     ^en: "Advertise"
@@ -1241,14 +1251,14 @@ commands:
     de: "Werbung schalten"
   get_marketing_report:
     .id: VB000027
-    ^en: "Marketing report"
-    es: "Informe de marketing"
-    de: "Werbebericht"
+    ^en: "Get marketing report"
+    es: "Consultar informe de marketing"
+    de: "Werbebericht abrufen"
   list_emails:
     .id: VB000028
-    ^en: "Mailbox"
-    es: "Buzón"
-    de: "Postfach"
+    ^en: "List emails"
+    es: "Listar correos"
+    de: "E-Mails auflisten"
   read_email:
     .id: VB000029
     ^en: "Read email"
@@ -1281,9 +1291,9 @@ commands:
     de: "Erinnerung erstellen"
   list_reminders:
     .id: VB000035
-    ^en: "Reminders"
-    es: "Recordatorios"
-    de: "Erinnerungen"
+    ^en: "List reminders"
+    es: "Listar recordatorios"
+    de: "Erinnerungen auflisten"
 landing:
   lead:
     .id: HN000001

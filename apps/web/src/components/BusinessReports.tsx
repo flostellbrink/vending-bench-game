@@ -82,9 +82,7 @@ export function Mailbox(props: Props) {
               />
             </Field>
             <GuiToolInfo verb="list_emails">
-              <button type="submit" disabled={disabled || !valid} data-clock-verb="list_emails">
-                {msg.operator.checkFolder({}, options)}
-              </button>
+              <button type="submit" disabled={disabled || !valid} data-clock-verb="list_emails" />
             </GuiToolInfo>
           </ControlRow>
         </form>
@@ -116,9 +114,7 @@ export function Mailbox(props: Props) {
               </datalist>
             </Field>
             <GuiToolInfo verb="read_email">
-              <button type="submit" disabled={disabled || !emailId} data-clock-verb="read_email">
-                {t("read")}
-              </button>
+              <button type="submit" disabled={disabled || !emailId} data-clock-verb="read_email" />
             </GuiToolInfo>
           </ControlRow>
         </form>
@@ -134,7 +130,7 @@ export function Mailbox(props: Props) {
 }
 
 export function SalesReports(props: Props) {
-  const { state, lang, t, reports, runCommand, disabled } = props;
+  const { state, lang, reports, runCommand, disabled } = props;
   const options = { locale: lang };
   const defaults = props.release.toolDefaults.get_sales_report;
   const siteList = useId();
@@ -203,9 +199,7 @@ export function SalesReports(props: Props) {
             />
           </Field>
           <GuiToolInfo verb="get_sales_report">
-            <button disabled={disabled || !valid} data-clock-verb="get_sales_report">
-              {t("execute")}
-            </button>
+            <button disabled={disabled || !valid} data-clock-verb="get_sales_report" />
           </GuiToolInfo>
         </ControlRow>
       </form>

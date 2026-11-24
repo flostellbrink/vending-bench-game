@@ -100,9 +100,7 @@ export function WorkspaceReadout({
           disabled={disabled}
           data-clock-verb={verb}
           onClick={() => shell.runCommand(cmd, false, true)}
-        >
-          {t("inspectNow")}
-        </button>
+        />
       </GuiToolInfo>
     );
     const instrument = scoped ? (

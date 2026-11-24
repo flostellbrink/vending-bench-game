@@ -27,9 +27,7 @@ export function DirectorySearch({ t, disabled, runCommand }: Props) {
           <ControlInput value={query} onChange={(e) => setQuery(e.currentTarget.value)} />
         </Field>
         <GuiToolInfo verb="search_web">
-          <button type="submit" disabled={disabled} data-clock-verb="search_web">
-            {t("execute")}
-          </button>
+          <button type="submit" disabled={disabled} data-clock-verb="search_web" />
         </GuiToolInfo>
       </ControlRow>
     </form>

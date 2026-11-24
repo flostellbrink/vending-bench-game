@@ -61,7 +61,7 @@ export function OperationsDesk(props: Props) {
     );
   }
   function inspect(tool: ToolName) {
-    return button(tool, { label: t("inspectNow"), onClick: () => dispatch(tool) });
+    return button(tool, { onClick: () => dispatch(tool) });
   }
   const field = (key: string) => fieldLabel(key, lang);
   let forms: ReactNode;

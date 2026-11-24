@@ -4,8 +4,9 @@ import { createContext, useContext, type ComponentProps, type ReactElement } fro
 
 import type { Lang, Translate } from "@/localization/messages";
 
-import { timing } from "@/game/commands";
+import { timing, toolFor } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
+import { commandLabel } from "@/localization/messages";
 
 import { ActionButton } from "./FormControls";
 import { ToolInfo } from "./ToolInfo";
@@ -32,7 +33,7 @@ export function GuiToolInfo({
   return (
     <span className="tool-action-pair">
       <ActionButton {...children.props}>
-        {children.props.children}
+        {children.props.children ?? commandLabel(toolFor(verb), lang) ?? verb}
         {span && verb !== "wait_for_next_day" && (
           <small className="action-duration"> · {span.minutes} min</small>
         )}
