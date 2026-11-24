@@ -72,6 +72,16 @@ export default function ObservationView({
   return (
     <section className="report">
       <ReceiptHeading report={report} action={action} />
+      {report.endDay !== report.day && (
+        <DayStatement {...{ report, reports, state, money, openReport }} />
+      )}
+      {report.notices?.length > 0 && (
+        <div className="overnight-notices">
+          {report.notices.map((notice, i) => (
+            <p key={i}>{notice}</p>
+          ))}
+        </div>
+      )}
       {report.mail ? (
         <article className="mail-paper">
           <h3>{report.mail.subject}</h3>
@@ -231,16 +241,6 @@ export default function ObservationView({
             </details>
           )}
         </>
-      )}
-      {report.endDay !== report.day && (
-        <DayStatement {...{ report, reports, state, money, openReport }} />
-      )}
-      {report.notices?.length > 0 && (
-        <div className="overnight-notices">
-          {report.notices.map((notice, i) => (
-            <p key={i}>{notice}</p>
-          ))}
-        </div>
       )}
     </section>
   );

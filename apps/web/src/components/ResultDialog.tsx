@@ -13,6 +13,8 @@ import { ActionButton } from "./FormControls";
 import "./result-dialog.css";
 
 export function resultTitle(view: View, report?: Report, owner = "") {
+  if (typeof view === "number" && report && report.endDay !== report.day)
+    return msg.operator.statement() + " · " + msg.operator.day() + " " + report.day;
   if (typeof view === "number" && report)
     return (
       report.mail?.subject ??

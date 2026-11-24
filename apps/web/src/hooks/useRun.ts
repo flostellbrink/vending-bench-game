@@ -15,8 +15,7 @@ import {
 import { errorToString } from "games-common/language";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ResponseDestination } from "@/game/receipt-routing";
-
+import { shouldOpenReceipt, type ResponseDestination } from "@/game/receipt-routing";
 import { observation } from "@/game/reports";
 import { loadRival } from "@/game/rival-balances";
 import {
@@ -238,7 +237,8 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         boot: !entry ? (first ? [...(old.boot ?? []), "ready"] : null) : old.boot,
       }));
       if (data.state.over) onView("scores");
-      else if (request?.destination === "dialog" && reports[0]) onView(reports[0].id);
+      else if (request && reports[0] && shouldOpenReceipt(reports[0], request.destination))
+        onView(reports[0].id);
     }
 
     current.addEventListener("error", (e) => fail(e.message), { signal: abort.signal });

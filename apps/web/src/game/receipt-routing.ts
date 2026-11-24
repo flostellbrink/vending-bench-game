@@ -2,6 +2,13 @@ import type { Report } from "games-common/benchmark";
 export type GuiResponse = "dialog" | "inline";
 export type ResponseDestination = GuiResponse | "console";
 
+export function shouldOpenReceipt(
+  report: Pick<Report, "day" | "endDay">,
+  destination: ResponseDestination,
+) {
+  return report.endDay !== report.day || destination === "dialog";
+}
+
 const reads = new Set([
   "search_web",
   "check_offers",

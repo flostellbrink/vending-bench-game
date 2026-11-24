@@ -18,11 +18,19 @@ import { observedProducts } from "../src/game/observed-products.ts";
 import { orderEntry } from "../src/game/order-entry.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { enterReadout } from "../src/game/readout-path.ts";
+import { shouldOpenReceipt } from "../src/game/receipt-routing.ts";
 import { displayCell, knownOrders, observation, weatherObservations } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { salesRange } from "../src/game/sales-range.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
+
+await test("a day change opens a statement regardless of the action's normal destination", () => {
+  for (const destination of ["console", "inline", "dialog"] as const) {
+    assert.equal(shouldOpenReceipt({ day: 3, endDay: 4 }, destination), true);
+    assert.equal(shouldOpenReceipt({ day: 3, endDay: 3 }, destination), destination === "dialog");
+  }
+});
 
 await test("receipt drill-down keeps its originating section and history list", () => {
   const section = ["mail"];
