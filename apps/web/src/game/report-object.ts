@@ -8,6 +8,12 @@ export function recordObject(report: Report): string {
   if (tool === "search_web") return "suppliers";
   if (["list_emails", "read_email", "send_email"].includes(tool)) return "mail";
   if (tool === "get_sales_report") return "sales";
+  if (tool === "get_status") return "status";
+  if (tool === "send_payment") return "payments";
+  if (tool === "get_machine_inventory") return "machines";
+  if (tool === "run_marketing" || tool === "get_marketing_report") return "marketing";
+  if (tool === "write_note" || tool === "read_notes") return "notes";
+  if (tool === "set_reminder" || tool === "list_reminders") return "reminders";
   return "world";
 }
 

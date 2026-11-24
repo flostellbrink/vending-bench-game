@@ -49,12 +49,22 @@ function navigate(event: KeyboardEvent<HTMLElement>) {
 
 export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
   const items: Destination[] = [
-    { id: "world", label: t("bank") },
+    {
+      id: "world",
+      label: t("bank"),
+      children: [
+        { id: "status", label: t("status") },
+        { id: "payments", label: t("payments") },
+      ],
+    },
     { id: "scores", label: t("standings") },
     {
       id: "site:depot",
       label: t("depot"),
-      children: state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? [],
+      children: [
+        { id: "machines", label: t("allMachines") },
+        ...(state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? []),
+      ],
     },
     {
       id: "suppliers",
@@ -63,6 +73,9 @@ export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
     },
     { id: "mail", label: t("mailbox") },
     { id: "sales", label: t("revenue") },
+    { id: "marketing", label: t("marketing") },
+    { id: "notes", label: t("notes") },
+    { id: "reminders", label: t("reminders") },
     { id: "brief", label: t("rules") },
     { id: "help", label: t("help") },
   ];

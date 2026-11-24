@@ -16,18 +16,15 @@ interface Props {
   state: Snapshot | null;
   lang: Lang;
   t: Translate;
-  openBrief: () => void;
 }
 
-export function CommandIndex({ actions, release, state, lang, t, openBrief }: Props) {
-  const [choice, choose] = useState("find");
+export function CommandIndex({ actions, release, state, lang, t }: Props) {
+  const [choice, choose] = useState("search_web");
   const groups = entries(commandGroups).map(([key, names]) => ({
     label: t(key),
-    names: names.filter(
-      (name) => (toolFor(name) ?? "") in release.tools || (toolFor(name) ?? "") in actions,
-    ),
+    names: names.filter((name) => name in release.tools || name in actions),
   }));
-  const mapped = new Set<string | undefined>(groups.flatMap((group) => group.names.map(toolFor)));
+  const mapped = new Set<string>(groups.flatMap((group) => group.names));
   const other = Object.keys(release.tools).filter((tool) => !mapped.has(tool));
   const sections = [
     ...groups,
@@ -37,20 +34,9 @@ export function CommandIndex({ actions, release, state, lang, t, openBrief }: Pr
   const selected = sections.some((s) => s.names.some((name) => name === choice))
     ? choice
     : (sections[0]?.names[0] ?? "help");
-  const aliasTool = toolFor(selected);
-  const tool = aliasTool ?? (other.includes(selected) ? selected : undefined);
+  const tool = selected === "help" ? undefined : selected;
   const description = tool ? release.tools[tool] : undefined;
   const defaults = toolDefaults(release, tool);
-  const localLabels: Record<string, string> = {
-    help: t("help"),
-    brief: t("rules"),
-    orders: t("supply"),
-    balance: t("bank"),
-    world: t("supply"),
-    tabs: t("journal"),
-    view: t("openReceipt"),
-    scores: t("standings"),
-  };
   return (
     <section className="command-manual">
       <nav className="manual-index" aria-label={t("help")}>
@@ -75,24 +61,14 @@ export function CommandIndex({ actions, release, state, lang, t, openBrief }: Pr
       <article className="manual-page" aria-live="polite">
         <header>
           <h3>{selected}</h3>
-          <span>{aliasTool ? commandLabel(aliasTool, lang) : localLabels[selected]}</span>
+          <span>{tool ? commandLabel(toolFor(tool), lang) : t("help")}</span>
         </header>
-        {!other.includes(selected) && <pre>{syntax(selected)}</pre>}
+        <pre>{syntax(selected, actions)}</pre>
         <dl>
-          {tool && (
-            <div>
-              <dt>MCP</dt>
-              <dd>
-                <code>{tool}</code>
-              </dd>
-            </div>
-          )}
-          {!other.includes(selected) && (
-            <div>
-              <dt>{t("timeCost")}</dt>
-              <dd>{timeLabel(selected, state, t)}</dd>
-            </div>
-          )}
+          <div>
+            <dt>{t("timeCost")}</dt>
+            <dd>{timeLabel(selected, state, t)}</dd>
+          </div>
         </dl>
         {defaults && (
           <small>
@@ -100,11 +76,6 @@ export function CommandIndex({ actions, release, state, lang, t, openBrief }: Pr
           </small>
         )}
         {description && <p lang="en">{description}</p>}
-        {selected === "brief" && (
-          <button className="receipt-link" onClick={openBrief}>
-            {t("rules")}
-          </button>
-        )}
         {!other.includes(selected) && <small>{t("notation")}</small>}
       </article>
     </section>

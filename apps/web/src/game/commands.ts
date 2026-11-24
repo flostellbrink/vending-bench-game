@@ -1,262 +1,180 @@
-import type { Actions, CommandArgs, Move, Report, Snapshot } from "games-common/benchmark";
+import type {
+  Actions,
+  CommandArgs,
+  JSONValue,
+  Move,
+  Report,
+  Snapshot,
+} from "games-common/benchmark";
 
-import { commandWords, quotedWord } from "./command-words.ts";
+import { commandArgsSchema } from "games-common/benchmark";
+import * as v from "valibot";
 
-const verbs = {
-  find: ["search_web", "query..."],
-  quote: ["check_offers", "supplier_id quantity?"],
-  order: ["order_goods", "supplier_id items..."],
-  inspect: ["get_machine_inventory", "machine_id?"],
-  depot: ["get_storage_inventory", ""],
-  refill: ["restock_machine", "slot product_id quantity"],
-  price: ["set_price", "slot price"],
-  swap: ["swap_item", "slot product_id quantity"],
-  clear: ["clear_slot", "slot"],
-  status: ["get_status", ""],
-  sales: ["get_sales_report", "days? location?"],
-  inbox: ["list_emails", "folder?"],
-  read: ["read_email", "email_id"],
-  mail: ["send_email", "to subject body..."],
-  pay: ["send_payment", "recipient amount reference..."],
-  advertise: ["run_marketing", "location channel message..."],
-  campaigns: ["get_marketing_report", ""],
-  note: ["write_note", "key text..."],
-  notes: ["read_notes", "key?"],
-  remind: ["set_reminder", "in_days text..."],
-  reminders: ["list_reminders", ""],
-  close: ["wait_for_next_day", ""],
-} as const;
-
-/** A known command maps to exactly one tool in the benchmark. */
-export type ToolName = (typeof verbs)[keyof typeof verbs][0];
-function isVerb(word: string): word is keyof typeof verbs {
-  return Object.hasOwn(verbs, word);
-}
-function definitionFor(word: string) {
-  return isVerb(word) ? verbs[word] : undefined;
-}
-
-export const local = ["help", "brief", "orders", "balance", "world", "tabs", "view", "scores"];
+export const local = ["help"];
 export const commandGroups = {
-  supply: ["find", "quote", "order", "depot"],
-  machines: ["inspect", "refill", "price", "swap", "clear"],
-  business: ["status", "sales", "close", "advertise", "campaigns"],
-  correspondence: ["inbox", "read", "mail", "pay"],
-  records: ["note", "notes", "remind", "reminders"],
-} satisfies Record<string, (keyof typeof verbs)[]>;
+  supply: ["search_web", "check_offers", "order_goods", "get_storage_inventory"],
+  machines: ["get_machine_inventory", "restock_machine", "set_price", "swap_item", "clear_slot"],
+  business: [
+    "get_status",
+    "get_sales_report",
+    "wait_for_next_day",
+    "run_marketing",
+    "get_marketing_report",
+  ],
+  correspondence: ["list_emails", "read_email", "send_email", "send_payment"],
+  records: ["write_note", "read_notes", "set_reminder", "list_reminders"],
+} as const;
+export type ToolName = (typeof commandGroups)[keyof typeof commandGroups][number];
+const namedTools = Object.values(commandGroups).flat();
+export const toolFor = (name: string) => namedTools.find((tool) => tool === name);
 export const address = (id: string) => id.toLowerCase().replace(/^ai-/, "").replaceAll(":", ".");
-export const vocabulary = (actions: Actions) =>
-  Object.entries(verbs).filter(([, [tool]]) => tool in actions);
-const argumentNames: Record<string, string> = {
-  supplier_id: "supplier",
-  product_id: "product",
-  machine_id: "machine",
-  email_id: "email",
-  in_days: "days",
-};
-export function syntax(verb: string) {
-  if (verb === "balance" || verb === "tabs") return verb + " [day]";
-  if (verb === "help") return "help [command]";
-  if (verb === "view") return "view <result>";
-  if (verb === "order") return "order <supplier> <product> <quantity> [<product> <quantity>]...";
-  if (verb === "sales") return "sales [days] [location] [--by-product]";
-  if (verb === "inbox") return "inbox [folder] [--unread] [--limit <count>]";
-  const specs = definitionFor(verb)?.[1].split(" ").filter(Boolean) || [];
-  const args = specs.map((spec) => {
-    const key = spec.replace(/[?.]/g, "");
-    const name = argumentNames[key] || key;
-    return spec.endsWith("?") ? "[" + name + "]" : "<" + name + ">";
+
+export function syntax(tool: string, actions: Actions = {}) {
+  if (tool === "help") return "help [tool]";
+  const parameters = (actions[tool] ?? []).map(([key, type, required]) => {
+    const field = JSON.stringify(key) + ": " + type;
+    return required ? field : "[" + field + "]";
   });
-  return [verb, ...args].join(" ");
+  return parameters.length ? tool + " {" + parameters.join(", ") + "}" : tool;
 }
-export const toolFor = (verb: string) => definitionFor(verb)?.[0];
-const gameNames = Object.fromEntries(Object.entries(verbs).map(([verb, [name]]) => [name, verb]));
-const shellWord = (s: string) => (s && !/[\s"\\]/.test(s) ? s : quotedWord(s));
+
 export function commandForMove([tool, args]: Move): string {
-  const verb = gameNames[tool];
-  if (!verb || !isVerb(verb)) throw Error("Unsupported replay operation: " + tool);
-  const words: string[] = [verb];
-  for (const spec of verbs[verb][1].split(" ")) {
-    const key = spec.replace(/[?.]/g, "");
-    if (!key) continue;
-    if (key === "items" && args.items) {
-      for (const [id, quantity] of Object.entries(args.items))
-        words.push(shellWord(id), String(quantity));
+  return Object.keys(args).length ? tool + " " + JSON.stringify(args) : tool;
+}
+
+export function commandArguments(line: string): CommandArgs {
+  const json = line.trim().replace(/^\S+\s*/, "");
+  return v.parse(commandArgsSchema, json ? JSON.parse(json) : {});
+}
+
+function matchesType(value: JSONValue, type: string): boolean {
+  switch (type) {
+    case "str":
+      return typeof value === "string";
+    case "int":
+      return Number.isSafeInteger(value);
+    case "float":
+      return typeof value === "number" && Number.isFinite(value);
+    case "bool":
+      return typeof value === "boolean";
+    case "dict[str, int]":
+      return (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        Object.values(value).every(Number.isSafeInteger)
+      );
+    default:
+      return true;
+  }
+}
+
+export function parse(line: string, actions: Actions): Move {
+  const tool = line.trim().split(/\s+/, 1)[0] ?? "";
+  if (!Object.hasOwn(actions, tool)) throw Error("help");
+  const parameters = actions[tool] ?? [];
+  const usage = syntax(tool, actions);
+  let args: CommandArgs;
+  try {
+    args = commandArguments(line);
+  } catch {
+    throw Error(usage);
+  }
+  for (const name of Object.keys(args)) {
+    if (!parameters.some(([key]) => key === name)) throw Error(usage);
+  }
+  for (const [name, type, required] of parameters) {
+    if (!Object.hasOwn(args, name)) {
+      if (required) throw Error(usage);
       continue;
     }
-    const value = Object.entries(args).find(([name]) => name === key)?.[1];
-    if (typeof value === "number") words.push(String(value));
-    if (typeof value === "string") {
-      words.push(
-        shellWord(
-          key === "slot" || key === "machine_id" || key === "location" ? address(value) : value,
-        ),
-      );
-    }
+    const value = args[name];
+    if (value === undefined || !matchesType(value, type)) throw Error(usage);
   }
-  if (args.unread_only) words.push("--unread");
-  if (args.by_product) words.push("--by-product");
-  if (args.limit !== undefined) words.push("--limit", String(args.limit));
-  return words.join(" ");
+  return [tool, args];
 }
-const toolNames = new RegExp(
-  "\\b(" + Object.keys(gameNames).join("|") + ")\\b(\\([\\w ,]+\\))?",
-  "g",
-);
-export const operatorText = (text: string) =>
-  text.replace(toolNames, (match: string, name: string, signature?: string) => {
-    const verb = gameNames[name];
-    return verb ? (signature ? syntax(verb) : verb) : match;
-  });
 
 type Geometry = Pick<Snapshot, "machines" | "slots">;
-function siteNames(state: Geometry) {
-  return [...new Set(state.machines.map((id) => id.split(":")[0] ?? ""))];
+
+export function completions(line: string, state: Geometry, actions: Actions, reports: Report[]) {
+  const start = line.trimStart();
+  const tool = start.split(/\s+/, 1)[0] ?? "";
+  const catalog = [...Object.keys(actions), ...local];
+  if (start === tool) return catalog.filter((name) => name.startsWith(tool));
+  const rest = start.slice(tool.length).trimStart();
+  if (tool === "help") return catalog.filter((name) => name.startsWith(rest));
+  if (!Object.hasOwn(actions, tool)) return [];
+  const parameters = actions[tool] ?? [];
+  const key = /(?:^\s*\{|,)\s*"?([\w]*)$/.exec(rest);
+  if (!rest || key) {
+    const prefix = key?.[1] ?? "";
+    return parameters
+      .map(([name]) => name)
+      .filter((name) => name.startsWith(prefix) && !rest.includes(JSON.stringify(name) + ":"))
+      .map((name) => (!rest ? "{" : "") + JSON.stringify(name) + ": ");
+  }
+  const value = /"([\w]+)"\s*:\s*"([^"\\]*)$/.exec(rest);
+  if (!value) return [];
+  const name = value[1],
+    prefix = value[2] ?? "";
+  let choices: string[];
+  switch (name) {
+    case "slot":
+      choices = state.slots;
+      break;
+    case "machine_id":
+      choices = state.machines;
+      break;
+    case "location":
+      choices = state.machines.map((id) => id.split(":")[0] ?? "");
+      break;
+    case "supplier_id":
+      choices = reports.flatMap((report) => report.suppliers);
+      break;
+    case "product_id":
+      choices = reports.flatMap((report) => report.products);
+      break;
+    case "to":
+      choices = reports.flatMap((report) => report.directory.map((entry) => entry.email));
+      break;
+    case "email_id":
+      choices = reports
+        .filter((report) => report.tool === "list_emails")
+        .flatMap((report) => report.rows.flatMap(([id]) => (typeof id === "string" ? [id] : [])));
+      break;
+    default:
+      return [];
+  }
+  return [...new Set(choices)]
+    .filter((choice) => choice.toLowerCase().startsWith(prefix.toLowerCase()))
+    .map((choice) => JSON.stringify(choice));
 }
-function siteFor(token: string, state: Geometry) {
-  return siteNames(state).find((site) => address(site) === address(token));
+
+export function insertCompletion(line: string, caret: number, value: string) {
+  const prefix = line.slice(0, caret);
+  const tail = line.slice(caret);
+  if (!/^\s*(?!help\s)\S+\s/.test(prefix)) {
+    const left = prefix.replace(/\S*$/, value + " ");
+    return { line: left + tail.replace(/^\S*\s*/, ""), caret: left.length };
+  }
+  if (value.startsWith("{")) {
+    const left = prefix + value;
+    return { line: left + tail, caret: left.length };
+  }
+  const key = value.endsWith(": ");
+  const left = key ? prefix.replace(/"?\w*$/, value) : prefix.replace(/"[^"\\]*$/, value);
+  const right = key ? tail.replace(/^\w*"?\s*:?\s*/, "") : tail.replace(/^[^",}]*"?/, "");
+  return { line: left + right, caret: left.length };
 }
+
 type ClockState = Pick<Snapshot, "minute" | "opens" | "closes" | "costs"> & {
   defaultCost?: number;
 };
-
-function numericValue(token: string, integer: boolean, usage: string) {
-  const value = Number(token);
-  if (!Number.isFinite(value) || (integer && !Number.isInteger(value))) throw Error(usage);
-  return value;
-}
-function nextToken(tokens: string[], usage: string) {
-  const value = tokens.shift();
-  if (value === undefined) throw Error(usage);
-  return value;
-}
-const numericKeys = ["limit", "quantity", "price", "days", "amount", "in_days"] as const;
-const textKeys = [
-  "supplier_id",
-  "product_id",
-  "machine_id",
-  "slot",
-  "query",
-  "location",
-  "email_id",
-  "folder",
-  "to",
-  "subject",
-  "body",
-  "recipient",
-  "reference",
-  "channel",
-  "message",
-  "key",
-  "text",
-] as const;
-
-/** Translate a player command to one paid operation. */
-export function parse(line: string, state: Geometry, actions: Actions): Move {
-  const tokens = commandWords(line, syntax(line.trim().split(/\s+/, 1)[0] ?? ""));
-  const verb = tokens.shift()?.toLowerCase() ?? "";
-  const entry = definitionFor(verb),
-    usage = syntax(verb);
-  if (!entry || !(entry[0] in actions)) throw Error("help");
-  const args: CommandArgs = {};
-  if (verb === "inbox" || verb === "sales") {
-    const flag = verb === "inbox" ? "--unread" : "--by-product";
-    const index = tokens.indexOf(flag);
-    if (index !== -1) {
-      tokens.splice(index, 1);
-      if (verb === "inbox") args.unread_only = true;
-      else args.by_product = true;
-    }
-    const limitIndex = verb === "inbox" ? tokens.indexOf("--limit") : -1;
-    if (limitIndex !== -1) {
-      const [, limit] = tokens.splice(limitIndex, 2);
-      if (limit === undefined) throw Error(usage);
-      args.limit = numericValue(limit, true, usage);
-      if (!Number.isSafeInteger(args.limit) || args.limit < 1) throw Error(usage);
-    }
-  }
-  for (const spec of entry[1].split(" ").filter(Boolean)) {
-    if (!tokens.length && spec.endsWith("?")) continue;
-    const key = spec.replace(/[?.]/g, "");
-    if (key === "days" && verb === "sales" && tokens[0] && siteFor(tokens[0], state)) continue;
-    if (key === "items") {
-      if (!tokens.length) throw Error(usage);
-      const items = new Map<string, number>();
-      while (tokens.length) {
-        const product = nextToken(tokens, usage);
-        const count = numericValue(nextToken(tokens, usage), true, usage);
-        if (!Number.isSafeInteger(count) || count < 1) throw Error(usage);
-        items.set(product, (items.get(product) ?? 0) + count);
-      }
-      args.items = Object.fromEntries(items);
-      continue;
-    }
-    const first = nextToken(tokens, usage);
-    let token = spec.endsWith("...") ? [first, ...tokens.splice(0)].join(" ") : first;
-    const numeric = numericKeys.find((k) => k === key);
-    if (numeric) {
-      args[numeric] = numericValue(token, !["amount", "price"].includes(numeric), usage);
-      continue;
-    }
-    const field = textKeys.find((k) => k === key);
-    if (!field) throw Error("Unknown command argument: " + key);
-    if (field === "machine_id" || field === "slot") {
-      const ids = field === "slot" ? state.slots : state.machines;
-      const found = ids.find(
-        (id) => address(id) === token.toLowerCase() || id === token.toUpperCase(),
-      );
-      if (!found) throw Error(usage);
-      token = found;
-    } else if (field === "location") {
-      const site = siteFor(token, state);
-      if (site) token = site;
-    }
-    args[field] = token;
-  }
-  if (tokens.length) throw Error(usage);
-  return [entry[0], args];
-}
-
-export function completions(line: string, state: Geometry, actions: Actions, reports: Report[]) {
-  const parts = line.trimStart().split(/\s+/);
-  const partial = (parts.pop() ?? "").toLowerCase(),
-    verb = parts[0]?.toLowerCase() ?? "";
-  const spec = definitionFor(verb)?.[1].split(" ")[parts.length - 1]?.replace(/[?.]/g, "");
-  let choices: string[] = [];
-  if (!verb) choices = [...vocabulary(actions).map(([v]) => v), ...local];
-  else if (spec === "machine_id") choices = state.machines.map(address);
-  else if (spec === "slot") choices = state.slots.map(address);
-  else if (verb === "sales") {
-    const positional = parts.slice(1).filter((word) => word !== "--by-product");
-    if (!positional.length || (positional.length === 1 && Number.isInteger(Number(positional[0]))))
-      choices = siteNames(state).map(address);
-  } else if (spec === "location") choices = siteNames(state).map(address);
-  else if (spec === "channel") choices = ["prints", "slack", "mail"];
-  else if (spec === "supplier_id") choices = reports.flatMap((r) => r.suppliers);
-  else if (verb === "mail" && spec === "to")
-    choices = reports.flatMap((r) => r.directory.map((entry) => entry.email));
-  else if (verb === "order" && parts.length % 2 === 0)
-    choices = reports
-      .filter((r) => r.tool === "check_offers" && r.args.supplier_id === parts[1])
-      .flatMap((r) => r.products);
-  else if (spec === "product_id") choices = reports.flatMap((r) => r.products);
-  else if (verb === "view") choices = reports.map((r) => String(r.id));
-  else if (spec === "email_id")
-    choices = reports
-      .filter((r) => r.tool === "list_emails")
-      .flatMap((r) => r.rows.flatMap(([id]) => (typeof id === "string" ? [id] : [])));
-  else if (spec === "folder") choices = ["inbox", "sent"];
-  else if (verb === "help") choices = [...vocabulary(actions).map(([v]) => v), ...local];
-  if (verb === "sales" && partial.startsWith("-")) choices = ["--by-product"];
-  if (verb === "inbox" && partial.startsWith("-")) choices = ["--unread", "--limit"];
-  return [...new Set(choices)].filter((s) => s.toLowerCase().startsWith(partial));
-}
-
-export function timing(verb: string, state: ClockState | null | undefined) {
-  const tool = toolFor(verb);
-  if (!state || !tool) return null;
+export function timing(tool: string, state: ClockState | null | undefined) {
+  if (!state || !tool || tool === "help") return null;
   const available = state.closes - state.minute;
-  const minutes = verb === "close" ? available : (state.costs[tool] ?? state.defaultCost);
+  const minutes =
+    tool === "wait_for_next_day" ? available : (state.costs[tool] ?? state.defaultCost);
   if (minutes === undefined) throw Error("No clock cost for " + tool);
   const rolls = minutes >= available;
   return { minutes, rolls, from: state.minute, to: rolls ? state.opens : state.minute + minutes };
@@ -278,14 +196,13 @@ type ObservedOffer = Pick<Report, "id" | "tool" | "args" | "terms" | "rows">;
 /** Only a quote for the ordered bundle size can establish its unit price. */
 export function priceOrder(
   line: string,
-  state: (Pick<Snapshot, "day" | "cash"> & Partial<Geometry>) | null,
-  actions: Actions,
+  state: Pick<Snapshot, "day" | "cash"> | null,
   reports: ObservedOffer[],
 ): OrderEstimate | null {
-  if (!state || !/^order\s/i.test(line)) return null;
+  if (!state || !/^order_goods\s/.test(line)) return null;
   let args: CommandArgs;
   try {
-    [, args] = parse(line, { machines: state.machines ?? [], slots: state.slots ?? [] }, actions);
+    args = commandArguments(line);
   } catch {
     return null;
   }

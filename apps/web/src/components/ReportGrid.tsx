@@ -1,5 +1,6 @@
 import { Fragment, useState, useMemo } from "react";
 
+import { commandForMove } from "@/game/commands";
 import { displayCell } from "@/game/reports";
 import { fieldLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
@@ -23,7 +24,7 @@ export function ReportGrid({
   openReport,
 }: Props) {
   const [sort, setSort] = useState<{ index: number; dir: number } | null>(null);
-  const command = report.tool === "list_emails" ? "read" : null;
+  const command = report.tool === "list_emails" ? "read_email" : null;
   const dailySales = report.tool === "get_sales_report" && report.columns[0] === "day";
   const [evidenceDay, setEvidenceDay] = useState<number | null>(null);
   const service =
@@ -113,7 +114,9 @@ export function ReportGrid({
                         <button
                           data-clock-verb={command}
                           disabled={disabled}
-                          onClick={() => runCommand(command + " " + r[0])}
+                          onClick={() =>
+                            runCommand(commandForMove([command, { email_id: String(r[0]) }]))
+                          }
                         >
                           {t("read")}
                         </button>

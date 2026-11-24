@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { CommandLine, Run } from "@/hooks/useCommandLine";
 
 import { msg } from "@/dictionary";
-import { syntax, toolFor, address } from "@/game/commands";
+import { syntax, toolFor } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
 import {
   commandLabel,
@@ -52,7 +52,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
     const bySlot: Record<string, SlotObservation & { day: number; minute: number }> = {};
     for (const r of reports) {
       for (const [key, v] of Object.entries(r.slots)) {
-        const id = address(key);
+        const id = JSON.stringify(key);
         bySlot[id] = {
           ...v,
           capacity: v.capacity ?? bySlot[id]?.capacity ?? null,
@@ -152,7 +152,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
         {tool && (
           <div className="plan-edit">
             <small>
-              {syntax(verb)} · {estimate}
+              {syntax(verb, run.actions)} · {estimate}
             </small>
             {!state?.over && (
               <button onClick={shell.stage} disabled={busy} title={"Ctrl+Enter · " + t("noCharge")}>

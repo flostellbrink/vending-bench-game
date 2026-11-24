@@ -14,8 +14,6 @@ import {
 } from "games-common/benchmark";
 import * as v from "valibot";
 
-import { operatorText } from "./commands.ts";
-
 const quoteSchema = v.object({
   minimum_order: v.number(),
   quantity_per_product: v.number(),
@@ -130,7 +128,7 @@ export function observation(
         to: capture(headers, 2),
         day: capture(headers, 3),
         subject: capture(headers, 4),
-        body: operatorText(body.slice(capture(headers, 0).length)),
+        body: body.slice(capture(headers, 0).length),
       };
     }
   } else if (move[0] === "check_offers") {
@@ -209,17 +207,14 @@ export function observation(
   if (move[0] === "clear_slot" && move[1].slot && /was already empty\.|to storage\./.test(body)) {
     slots[move[1].slot] = { item: null, qty: 0, capacity: null };
   }
-  let display = operatorText(
-    lines
-      .filter((l) => !rendered.has(l))
-      .join("\n")
-      .replace(/\n{3,}/g, "\n\n")
-      .trim(),
-  );
+  let display = lines
+    .filter((l) => !rendered.has(l))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   if (output.startsWith("{")) {
     const refusal = v.safeParse(refusalSchema, JSON.parse(lines[0] ?? "null"));
-    if (refusal.success)
-      display = operatorText([refusal.output.error, ...lines.slice(1)].join("\n").trim());
+    if (refusal.success) display = [refusal.output.error, ...lines.slice(1)].join("\n").trim();
   }
   return {
     ...receipt,

@@ -1,13 +1,13 @@
-import type { Entry, Move } from "games-common/benchmark";
+import type { Actions, Entry, Move } from "games-common/benchmark";
 
 import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { commandWords, quotedWord } from "../src/game/command-words.ts";
 import {
   commandForMove,
   completions,
+  insertCompletion,
   moveDestination,
   parse,
   priceOrder,
@@ -21,15 +21,50 @@ import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
 
+const actions: Actions = {
+  get_sales_report: [
+    ["days", "int", false],
+    ["location", "str", false],
+    ["by_product", "bool", false],
+  ],
+  list_emails: [
+    ["folder", "str", false],
+    ["unread_only", "bool", false],
+    ["limit", "int", false],
+  ],
+  order_goods: [
+    ["supplier_id", "str", true],
+    ["items", "dict[str, int]", true],
+  ],
+  restock_machine: [
+    ["slot", "str", true],
+    ["product_id", "str", true],
+    ["quantity", "int", true],
+  ],
+  send_email: [
+    ["to", "str", true],
+    ["subject", "str", true],
+    ["body", "str", true],
+  ],
+  get_machine_inventory: [["machine_id", "str", false]],
+  write_note: [
+    ["key", "str", true],
+    ["text", "str", true],
+  ],
+  wait_for_next_day: [],
+};
+
 await test("a site sales report can use the benchmark's default time window", () => {
   const state = { machines: ["AI-HOUSE:SNACK", "MAIN-LOUNGE:DRINKS"], slots: [] };
-  const actions = { get_sales_report: [] };
-  assert.deepEqual(completions("sales --by-product ho", state, actions, []), ["house"]);
-  assert.deepEqual(parse("sales --by-product house", state, actions), [
+  const prefix = 'get_sales_report {"location":"AI-H';
+  assert.deepEqual(completions(prefix, state, actions, []), ['"AI-HOUSE"']);
+  const completed = insertCompletion(prefix + '"}', prefix.length, '"AI-HOUSE"');
+  assert.equal(completed.line, 'get_sales_report {"location":"AI-HOUSE"}');
+  assert.deepEqual(parse('get_sales_report {"by_product":true,"location":"AI-HOUSE"}', actions), [
     "get_sales_report",
     { by_product: true, location: "AI-HOUSE" },
   ]);
-  assert.deepEqual(parse("sales 3 main-lounge", state, actions), [
+  assert.deepEqual(parse('get_sales_report {"days":3,"location":"MAIN-LOUNGE"}', actions), [
     "get_sales_report",
     { days: 3, location: "MAIN-LOUNGE" },
   ]);
@@ -48,7 +83,7 @@ await test("inherited commands can be recalled and submitted with the same argum
     ["wait_for_next_day", {}],
   ];
   for (const move of moves) {
-    assert.deepEqual(parse(commandForMove(move), geometry, { [move[0]]: [] }), move);
+    assert.deepEqual(parse(commandForMove(move), actions), move);
   }
 });
 
@@ -77,15 +112,22 @@ await test("a cabinet draws only its declared cells on uneven shelves", () => {
   assert.deepEqual(cabinetLayout(slots, "main-lounge.drinks"), { columns: 0, rows: [] });
 });
 
-await test("a letter draft preserves quoted subjects, newlines and literal backslashes", () => {
-  const subject = 'Re: the "small" pack',
-    body = "Can you quote the 2-pack?\nReference: A\\B.";
-  assert.deepEqual(
-    commandWords("mail supplier@example.test " + quotedWord(subject) + " " + quotedWord(body)),
-    ["mail", "supplier@example.test", subject, body],
+await test("console calls accept only published tool names and parameter names", () => {
+  assert.throws(() => parse("inbox", actions));
+  assert.throws(() => parse("tabs", actions));
+  assert.throws(() => parse('list_emails {"unread":true}', actions));
+  assert.throws(() => parse('list_emails {"limit":2.5}', actions));
+  assert.throws(() => parse('send_email {"to":"mail@example.test"}', actions));
+  assert.deepEqual(parse("get_machine_inventory {}", actions), ["get_machine_inventory", {}]);
+  const updated: Actions = { count_visits: [["visits", "int", true]] };
+  assert.deepEqual(parse('count_visits {"visits":3}', updated), ["count_visits", { visits: 3 }]);
+  assert.throws(() => parse('count_visits {"visits":"3"}', updated));
+  assert.throws(() => parse('count_visits {"visits":3,"other":true}', updated));
+  assert.equal(
+    timing("count_visits", { opens: 540, closes: 1020, minute: 600, defaultCost: 5, costs: {} })
+      ?.minutes,
+    5,
   );
-  assert.deepEqual(commandWords('note stock ""'), ["note", "stock", ""]);
-  assert.throws(() => commandWords('mail supplier@example.test "unfinished'), /help/);
 });
 
 await test("pace review uses daily change, not widest absolute gap or unrecorded rival days", () => {
@@ -100,21 +142,21 @@ await test("pace review uses daily change, not widest absolute gap or unrecorded
 });
 
 await test("a Main Lounge slot does not select the similarly named AI Lounge cabinet", () => {
-  const network = {
-    machines: ["AI-LOUNGE:SNACK", "MAIN-LOUNGE:SNACK"],
-    slots: ["MAIN-LOUNGE:SNACK:A1"],
-  };
-  const actions = { restock_machine: [], get_machine_inventory: [], write_note: [] };
   assert.equal(
-    moveDestination(parse("refill main-lounge.snack.a1 stroopwafel-2pk 18", network, actions)),
+    moveDestination(
+      parse(
+        'restock_machine {"slot":"MAIN-LOUNGE:SNACK:A1","product_id":"stroopwafel-2pk","quantity":18}',
+        actions,
+      ),
+    ),
     "machine:MAIN-LOUNGE:SNACK",
   );
   assert.equal(
-    moveDestination(parse("inspect AI-LOUNGE:SNACK", network, actions)),
+    moveDestination(parse('get_machine_inventory {"machine_id":"AI-LOUNGE:SNACK"}', actions)),
     "machine:AI-LOUNGE:SNACK",
   );
   assert.equal(
-    moveDestination(parse("note reminder main-lounge.snack", network, actions)),
+    moveDestination(parse('write_note {"key":"reminder","text":"MAIN-LOUNGE:SNACK"}', actions)),
     undefined,
   );
 });
@@ -150,19 +192,19 @@ await test("a 16:00 inspection pushes pricing into tomorrow without executing th
   const inspect: PlannedCommand = {
     id: 1,
     line: "inspect",
-    verb: "inspect",
+    verb: "get_machine_inventory",
     move: ["get_machine_inventory", {}],
   };
   const refill: PlannedCommand = {
     id: 2,
     line: "refill lounge.snack.a1 wafer 18",
-    verb: "refill",
+    verb: "restock_machine",
     move: ["restock_machine", { slot: "AI-LOUNGE:SNACK:A1", product_id: "wafer", quantity: 18 }],
   };
   const price: PlannedCommand = {
     id: 3,
     line: "price lounge.snack.a1 1.50",
-    verb: "price",
+    verb: "set_price",
     move: ["set_price", { slot: "AI-LOUNGE:SNACK:A1", price: 1.5 }],
   };
   const direct = projectPlan([refill, price], state);
@@ -179,30 +221,28 @@ await test("a 16:00 inspection pushes pricing into tomorrow without executing th
 });
 
 await test("an order estimate uses only a matching, unexpired observed quantity", () => {
+  const supplier = "supplier";
   const reports = [
     {
       id: 1,
       tool: "check_offers",
-      args: { supplier_id: "supplier" },
+      args: { supplier_id: supplier },
       terms: { until: 7, minimum: 25, quantity: 10 },
       rows: [["item", 1.5, "0%"]],
     },
   ];
-  const actions = { order_goods: [] },
-    state = { day: 2, cash: 35 };
-  assert.deepEqual(priceOrder("order supplier item 10", state, actions, reports), {
+  const state = { day: 2, cash: 35 };
+  const order = (quantity: number) =>
+    commandForMove(["order_goods", { supplier_id: supplier, items: { item: quantity } }]);
+  assert.deepEqual(priceOrder(order(10), state, reports), {
     cost: 15,
     minimum: 25,
     remaining: 20,
     status: "belowMinimum",
   });
+  assert.equal(assertValue(priceOrder(order(11), state, reports)).status, "needQuote");
   assert.equal(
-    assertValue(priceOrder("order supplier item 11", state, actions, reports)).status,
-    "needQuote",
-  );
-  assert.equal(
-    assertValue(priceOrder("order supplier item 10", { ...state, day: 8 }, actions, reports))
-      .status,
+    assertValue(priceOrder(order(10), { ...state, day: 8 }, reports)).status,
     "expiredQuote",
   );
 });
@@ -214,7 +254,7 @@ await test("the order editor submits independent item quantities without requiri
     { key: "three", product: "", quantity: "", manual: true },
   ];
   const command = assertValue(orderEntry("supplier", lines).command);
-  assert.deepEqual(parse(command, { slots: [], machines: [] }, { order_goods: [] }), [
+  assert.deepEqual(parse(command, actions), [
     "order_goods",
     { supplier_id: "supplier", items: { "catalog item": 37, "new-id": 12 } },
   ]);
@@ -325,7 +365,12 @@ await test("an observation carries overnight notices separately from a paid repl
   );
   assert.deepEqual(rejected.slots, {});
   assert.deepEqual(
-    timing("refill", { minute: 990, closes: 1020, opens: 540, costs: { restock_machine: 45 } }),
+    timing("restock_machine", {
+      minute: 990,
+      closes: 1020,
+      opens: 540,
+      costs: { restock_machine: 45 },
+    }),
     { minutes: 45, rolls: true, from: 990, to: 540 },
   );
 });
@@ -473,5 +518,13 @@ await test("weather and search suggestions do not reveal unobserved benchmark in
       [2, { minute: 540, weather: "clear" }],
     ],
   );
-  assert.deepEqual(completions("find ", { machines: [], slots: [] }, { search_web: [] }, []), []);
+  assert.deepEqual(
+    completions(
+      'search_web {"query":"',
+      { machines: [], slots: [] },
+      { search_web: [["query", "str", true]] },
+      [],
+    ),
+    [],
+  );
 });

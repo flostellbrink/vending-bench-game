@@ -35,7 +35,7 @@ export function Station({ release, slot, parentBalance, lang, changeLang, newRun
     });
     return (value: number) => formatter.format(value);
   }, [lang, release.currency]);
-  const shell = useCommandLine(run, nav, release, lang, t, screen);
+  const shell = useCommandLine(run, nav, release, t, screen);
   const { state, rivals, busy, history } = run;
   const opponent = rivals.find((r) => r.kind === "model") ?? rivals[0],
     day = history.length - 1,

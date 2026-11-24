@@ -34,9 +34,9 @@ Use a flat display. The enclosure, controls, type and illustration supply the wo
 
 The shift strip is optional. Ctrl+Enter or Cmd+Enter places the current command on the strip without spending time. Move, edit or remove a step to see what fits before closing. The timing comes from the selected benchmark. The strip does not predict future inventory, reserve prices or run commands automatically. Execute the first step to spend its time. Keep dated evidence beside the proposed action.
 
-Tab completes the current word; Enter executes. History recall edits a copy, not the earlier command. Use short verbs such as `find`, `quote`, `order`, `inspect`, `refill` and `price`. A syntax error costs nothing. A valid command that the simulator refuses can cost time. Show the distinction.
+Use the GUI for every benchmark tool. The console logs the same call and accepts the published MCP tool name and a JSON object with its named arguments. Only `help` is local. Use the directory, not console commands, for navigation. A syntax error costs nothing. A valid command that the simulator refuses can cost time.
 
-Use the same synopsis in help, completion guidance and syntax errors: `<slot>` is required, `[quantity]` is optional, and `[<product> <quantity>]...` is a repeatable group. Type the values without brackets. For example, `order zuidas-groothandel stroopwafel-2pk 120` orders one product; append another product and quantity to include it in the same order.
+Use the published parameter names, types and defaults in forms, help and completion. Omit optional keys to use the benchmark defaults. For example, `order_goods {"supplier_id":"zuidas-groothandel","items":{"stroopwafel-2pk":120}}` buys one product. Add another entry to `items` to buy both in one order.
 
 Each paid observation records its start time, end time and work cost. Reading it again costs nothing. Present mail as correspondence, a wholesale offer as an editable order slip, and closing as a bank statement. Keep the offer’s quantity, minimum, expiry and non-reserved price together. Overnight notices appear alongside the transaction that advanced the day. Show warnings where the player makes the decision, not behind a raw-output switch. Keyboard and graphical actions call the same simulator command. The prompt stays usable over any result.
 

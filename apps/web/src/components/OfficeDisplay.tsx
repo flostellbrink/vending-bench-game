@@ -49,7 +49,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
     new Intl.DateTimeFormat(lang, { day: "numeric", month: "short", timeZone: "UTC" }).format(
       Date.parse(state.startDate + "T00:00Z") + day * 86400000,
     );
-  const estimate = timing(armed ? "close" : previewVerb, state);
+  const estimate = timing(armed ? "wait_for_next_day" : previewVerb, state);
   const shift = state ? state.closes - state.opens : 1;
   const spent = state ? Math.max(0, Math.min(1, ((time % 1440) - state.opens) / shift)) : 0;
   const preview = estimate ? Math.min(1 - spent, estimate.minutes / shift) : 0;
@@ -81,11 +81,11 @@ export const OfficeDisplay = memo(function OfficeDisplay({
           </div>
         )}
         <strong>{state ? clock(time) : "—"}</strong>
-        <GuiToolInfo verb="close">
+        <GuiToolInfo verb="wait_for_next_day">
           <button
             className="clock-close"
             type="button"
-            data-clock-verb="close"
+            data-clock-verb="wait_for_next_day"
             data-armed={armed}
             disabled={disabled || !state || state.over}
             title={

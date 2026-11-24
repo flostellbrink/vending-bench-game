@@ -1,14 +1,14 @@
 import type { Release } from "games-common/benchmark";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
-import { address } from "@/game/commands";
+import { commandForMove } from "@/game/commands";
 import { stationMessages as msg } from "@/localization/station-messages";
 
 import type { ObservationProps } from "./panel-props";
 
 import { EmailComposer } from "./EmailComposer";
-import { ControlInput, ControlRow, ControlSelect, Field, QuantityInput } from "./FormControls";
+import { ControlInput, ControlRow, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import "./business-reports.css";
@@ -21,10 +21,13 @@ type Props = Omit<ObservationProps, "report"> & {
 export function Mailbox(props: Props) {
   const { reports, t, lang, runCommand, disabled } = props;
   const defaults = props.release.toolDefaults.list_emails;
-  const [folder, setFolder] = useState(defaults.folder);
+  const [folder, setFolder] = useState<string>(defaults.folder);
+  const folders = useId();
+  const emailIds = useId();
+  const [emailId, setEmailId] = useState("");
   const [limit, setLimit] = useState(String(defaults.limit));
   const [unread, setUnread] = useState(defaults.unread_only);
-  const valid = Number.isSafeInteger(Number(limit)) && Number(limit) > 0;
+  const valid = limit !== "" && Number.isSafeInteger(Number(limit));
   const options = { locale: lang };
   const report = reports.findLast(
     (r) =>
@@ -41,7 +44,10 @@ export function Mailbox(props: Props) {
             event.preventDefault();
             if (valid && !disabled)
               runCommand(
-                ["inbox", folder, ...(unread ? ["--unread"] : []), "--limit", limit].join(" "),
+                commandForMove([
+                  "list_emails",
+                  { folder, unread_only: unread, limit: Number(limit) },
+                ]),
                 false,
                 true,
               );
@@ -49,19 +55,20 @@ export function Mailbox(props: Props) {
         >
           <ControlRow>
             <Field label={msg.fields.folder({}, options)}>
-              <ControlSelect
+              <ControlInput
                 value={folder}
-                onChange={(e) => {
-                  const value = e.currentTarget.value;
-                  if (value === "inbox" || value === "sent") setFolder(value);
-                }}
-              >
+                list={folders}
+                onChange={(e) => setFolder(e.currentTarget.value)}
+              />
+              <datalist id={folders}>
                 <option value="inbox">{msg.operator.incomingMail({}, options)}</option>
                 <option value="sent">{msg.operator.sentMail({}, options)}</option>
-              </ControlSelect>
+              </datalist>
             </Field>
             <Field label={msg.fields.limit({}, options)}>
-              <QuantityInput
+              <ControlInput
+                type="number"
+                step="1"
                 required
                 value={limit}
                 onChange={(e) => setLimit(e.currentTarget.value)}
@@ -74,9 +81,43 @@ export function Mailbox(props: Props) {
                 onChange={(e) => setUnread(e.currentTarget.checked)}
               />
             </Field>
-            <GuiToolInfo verb="inbox">
-              <button type="submit" disabled={disabled || !valid} data-clock-verb="inbox">
+            <GuiToolInfo verb="list_emails">
+              <button type="submit" disabled={disabled || !valid} data-clock-verb="list_emails">
                 {msg.operator.checkFolder({}, options)}
+              </button>
+            </GuiToolInfo>
+          </ControlRow>
+        </form>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!disabled && emailId)
+              runCommand(commandForMove(["read_email", { email_id: emailId }]));
+          }}
+        >
+          <ControlRow>
+            <Field label={msg.fields.email_id({}, options)}>
+              <ControlInput
+                required
+                list={emailIds}
+                value={emailId}
+                onChange={(event) => setEmailId(event.currentTarget.value)}
+              />
+              <datalist id={emailIds}>
+                {[
+                  ...new Set(
+                    reports
+                      .filter((r) => r.tool === "list_emails")
+                      .flatMap((r) => r.rows.map((row) => String(row[0]))),
+                  ),
+                ].map((id) => (
+                  <option key={id} value={id} />
+                ))}
+              </datalist>
+            </Field>
+            <GuiToolInfo verb="read_email">
+              <button type="submit" disabled={disabled || !emailId} data-clock-verb="read_email">
+                {t("read")}
               </button>
             </GuiToolInfo>
           </ControlRow>
@@ -96,13 +137,11 @@ export function SalesReports(props: Props) {
   const { state, lang, t, reports, runCommand, disabled } = props;
   const options = { locale: lang };
   const defaults = props.release.toolDefaults.get_sales_report;
+  const siteList = useId();
   const [site, setSite] = useState(defaults.location);
   const [days, setDays] = useState(String(defaults.days));
   const [byProduct, setByProduct] = useState(defaults.by_product);
-  const valid = Number.isSafeInteger(Number(days)) && Number(days) > 0;
-  const line = ["sales", days, site && address(site), byProduct && "--by-product"]
-    .filter(Boolean)
-    .join(" ");
+  const valid = days !== "" && Number.isSafeInteger(Number(days));
   const report = reports.findLast(
     (r) =>
       r.tool === "get_sales_report" &&
@@ -116,22 +155,41 @@ export function SalesReports(props: Props) {
         className="report-actions"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!disabled && valid) runCommand(line, false, true);
+          if (!disabled && valid)
+            runCommand(
+              commandForMove([
+                "get_sales_report",
+                { days: Number(days), location: site, by_product: byProduct },
+              ]),
+              false,
+              true,
+            );
         }}
       >
         <ControlRow>
           <Field label={msg.fields.location({}, options)}>
-            <ControlSelect value={site} onChange={(e) => setSite(e.currentTarget.value)}>
-              <option value="">{msg.operator.allSites({}, options)}</option>
+            <ControlInput
+              list={siteList}
+              value={site}
+              placeholder={msg.operator.allSites({}, options)}
+              onChange={(e) => setSite(e.currentTarget.value)}
+            />
+            <datalist id={siteList}>
               {state.sites.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
               ))}
-            </ControlSelect>
+            </datalist>
           </Field>
           <Field label={msg.fields.days({}, options)}>
-            <QuantityInput required value={days} onChange={(e) => setDays(e.currentTarget.value)} />
+            <ControlInput
+              type="number"
+              step="1"
+              required
+              value={days}
+              onChange={(e) => setDays(e.currentTarget.value)}
+            />
           </Field>
           <Field
             inline
@@ -144,8 +202,8 @@ export function SalesReports(props: Props) {
               onChange={(e) => setByProduct(e.currentTarget.checked)}
             />
           </Field>
-          <GuiToolInfo verb="sales">
-            <button disabled={disabled || !valid} data-clock-verb="sales">
+          <GuiToolInfo verb="get_sales_report">
+            <button disabled={disabled || !valid} data-clock-verb="get_sales_report">
               {t("execute")}
             </button>
           </GuiToolInfo>

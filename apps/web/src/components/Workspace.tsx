@@ -33,8 +33,8 @@ export interface WorkspaceProps {
 export function Workspace(props: WorkspaceProps) {
   const { run, nav, shell, release, lang, t } = props;
   const toolReference = useMemo(
-    () => ({ release, lang, state: run.state, t }),
-    [release, lang, run.state, t],
+    () => ({ release, lang, state: run.state, actions: run.actions, t }),
+    [release, lang, run.state, run.actions, t],
   );
   const [preview, setPreview] = useState("");
   const context = useMemo(() => readoutContext(nav.tab, run.reports), [nav.tab, run.reports]);
@@ -78,9 +78,11 @@ export function Workspace(props: WorkspaceProps) {
   const key = String(nav.tab);
   const parent = key.startsWith("supplier:")
     ? { id: "suppliers", label: t("supply") }
-    : key.startsWith("machine:")
+    : key === "machines" || key.startsWith("machine:")
       ? { id: "site:depot", label: t("depot") }
-      : null;
+      : key === "status" || key === "payments"
+        ? { id: "world", label: t("bank") }
+        : null;
   const supplier = context.object.startsWith("supplier:")
     ? suppliers.find((entry) => entry.id === context.object.slice(9))
     : undefined;
@@ -108,7 +110,7 @@ export function Workspace(props: WorkspaceProps) {
           reports={run.reports}
           t={t}
           disabled={run.busy || Boolean(run.runtimeError)}
-          closeDay={() => shell.runCommand("close")}
+          closeDay={() => shell.runCommand("wait_for_next_day")}
           previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
           sceneObject={
             context.object.startsWith("machine:") || context.object === "site:depot"

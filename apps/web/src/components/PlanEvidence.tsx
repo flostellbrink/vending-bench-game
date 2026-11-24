@@ -2,7 +2,7 @@ import type { Report, Snapshot } from "games-common/benchmark";
 
 import type { Translate } from "@/localization/messages";
 
-import { address } from "@/game/commands";
+import { commandArguments } from "@/game/commands";
 import { clock } from "@/scene/clock";
 
 interface Props {
@@ -15,13 +15,16 @@ interface Props {
 
 /** Link a proposed service call to the observations that can support it. */
 export function PlanEvidence({ line, reports, state, openReport, t }: Props) {
-  const [verb, target, product] = line.trim().toLowerCase().split(/\s+/);
-  if (!state || !target || !["inspect", "refill", "price", "swap", "clear"].includes(verb ?? ""))
+  if (!state) return null;
+  let args;
+  try {
+    args = commandArguments(line);
+  } catch {
     return null;
-  const slot = state.slots.find((id) => address(id) === target || id.toLowerCase() === target);
-  const machine = state.machines.find(
-    (id) => address(id) === target || id.toLowerCase() === target,
-  );
+  }
+  const { slot, machine_id: machine, product_id: product } = args;
+  const target = slot ?? machine;
+  if (!target) return null;
   const observation = reports.findLast((r) =>
     slot
       ? Object.hasOwn(r.slots, slot)

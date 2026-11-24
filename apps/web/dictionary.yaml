@@ -1,5 +1,40 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  openSupplier:
+    .id: OPDSUP01
+    ^en: Open supplier
+    es: Abrir proveedor
+    de: Lieferanten öffnen
+  payments:
+    .id: OPDPAY01
+    ^en: Payments
+    es: Pagos
+    de: Zahlungen
+  marketing:
+    .id: OPDMKT01
+    ^en: Marketing
+    es: Marketing
+    de: Marketing
+  notes:
+    .id: OPDNOT01
+    ^en: Notes
+    es: Notas
+    de: Notizen
+  allMachines:
+    .id: OPDALL01
+    ^en: All machines
+    es: Todas las máquinas
+    de: Alle Automaten
+  deleteNote:
+    .id: OPDDEL01
+    ^en: Delete note
+    es: Eliminar nota
+    de: Notiz löschen
+  allNotes:
+    .id: OPDALL02
+    ^en: All notes
+    es: Todas las notas
+    de: Alle Notizen
   sections:
     .id: MOB00001
     ^en: Sections
@@ -779,9 +814,9 @@ operator:
     de: Notizen und Erinnerungen
   notation:
     .id: VHGRP006
-    ^en: "<value> required · [value] optional · ... repeatable"
-    es: "<valor> obligatorio · [valor] opcional · ... repetible"
-    de: "<Wert> erforderlich · [Wert] optional · ... wiederholbar"
+    ^en: "Enter arguments as JSON. Fields shown in brackets are optional."
+    es: "Escribe los argumentos en JSON. Los campos entre corchetes son opcionales."
+    de: "Argumente als JSON eingeben. Felder in eckigen Klammern sind optional."
   runtime:
     .id: VBBOOT01
     ^en: Starting local runtime…

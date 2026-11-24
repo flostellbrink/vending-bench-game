@@ -211,7 +211,7 @@
   .cabinet-shelf button :is(b, span) {
     font-size: 0.82rem;
   }
-  .slot-instrument {
+  .cabinet-bench .slot-instrument {
     display: contents;
   }
   .slot-instrument > :is(header, dl, .slot-evidence, .slot-amendment) {

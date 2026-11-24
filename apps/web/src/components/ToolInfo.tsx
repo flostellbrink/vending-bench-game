@@ -1,11 +1,11 @@
-import type { Release } from "games-common/benchmark";
+import type { Actions, Release } from "games-common/benchmark";
 
 import { useId, useRef } from "react";
 
 import type { Lang } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
-import { syntax, toolFor } from "@/game/commands";
+import { syntax } from "@/game/commands";
 import { toolDefaults } from "@/game/tool-defaults";
 
 import "./tool-info.css";
@@ -15,19 +15,18 @@ interface Props {
   release: Release;
   lang: Lang;
   verb: string;
+  actions: Actions;
   prediction?: string;
 }
 
-export function ToolInfo({ release, lang, verb, prediction }: Props) {
+export function ToolInfo({ release, lang, verb: tool, actions, prediction }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const alias = verb.toLowerCase();
-  const tool = toolFor(alias);
-  if (!tool || release.tools[tool] === undefined) return null;
+  if (release.tools[tool] === undefined) return null;
   const options = { locale: lang };
   const heading = msg.operator.toolInformation({}, options);
-  const label = heading + ": " + alias;
+  const label = heading + ": " + tool;
   const defaults = toolDefaults(release, tool);
 
   function position() {
@@ -86,8 +85,7 @@ export function ToolInfo({ release, lang, verb, prediction }: Props) {
             ×
           </button>
         </div>
-        <code>{tool}</code>
-        <samp>{syntax(alias)}</samp>
+        <samp>{syntax(tool, actions)}</samp>
         {prediction && <small className="tool-prediction">{prediction}</small>}
         {defaults && (
           <small>

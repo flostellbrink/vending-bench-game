@@ -1,26 +1,19 @@
 import type { Release } from "games-common/benchmark";
 
-import { entries } from "games-common/language";
 import { useRef, useState, type KeyboardEvent } from "react";
 
 import {
-  commandGroups,
+  commandForMove,
   completions,
-  local,
+  insertCompletion,
   parse,
   priceOrder,
   syntax,
-  toolFor,
 } from "@/game/commands";
 import { remainingPlan, type PlannedCommand } from "@/game/shift-plan";
 import { timeLabel } from "@/game/time-label";
 import { toolDefaults } from "@/game/tool-defaults";
-import {
-  commandLabel,
-  type Lang,
-  type ScreenTranslate,
-  type Translate,
-} from "@/localization/messages";
+import { type ScreenTranslate, type Translate } from "@/localization/messages";
 
 import type { Navigation } from "./useNavigation";
 import type { useRun } from "./useRun";
@@ -29,7 +22,6 @@ export function useCommandLine(
   run: Run,
   nav: Navigation,
   release: Release,
-  lang: Lang,
   t: Translate,
   screen: ScreenTranslate,
 ) {
@@ -46,11 +38,12 @@ export function useCommandLine(
   const [editing, setEditing] = useState<number | null>(null);
   const steps = remainingPlan(plan, run.journal);
   const { state, actions, reports } = run;
-  const verb = line.trim().split(/\s+/)[0] ?? "",
-    tool = toolFor(verb),
+  const inputName = line.trim().split(/\s+/)[0] ?? "",
+    tool = Object.hasOwn(actions, inputName) ? inputName : undefined,
+    verb = tool ?? "",
     prefix = line.slice(0, caret);
   const choices = state ? completions(prefix, state, actions, reports) : [];
-  const orderEstimate = state ? priceOrder(line, state, actions, reports) : null;
+  const orderEstimate = state ? priceOrder(line, state, reports) : null;
   function edit(value: string, pos = value.length) {
     leavePrompt.current = false;
     setLine(value);
@@ -62,17 +55,17 @@ export function useCommandLine(
   }
   function complete(value?: string) {
     if (!value) return;
-    const left = prefix.replace(/\S*$/, value + " ");
-    edit(left + line.slice(caret).replace(/^\S*\s*/, ""), left.length);
+    const next = insertCompletion(line, caret, value);
+    edit(next.line, next.caret);
     prompt.current?.focus();
-    requestAnimationFrame(() => prompt.current?.setSelectionRange(left.length, left.length));
+    requestAnimationFrame(() => prompt.current?.setSelectionRange(next.caret, next.caret));
   }
   function stage() {
     if (!state || state.over || run.busy) return;
     const raw = line.trim();
     try {
-      const move = parse(raw, state, actions);
-      const command = { line: raw, move, verb: raw.split(/\s+/, 1)[0]?.toLowerCase() ?? "" };
+      const move = parse(raw, actions);
+      const command = { line: commandForMove(move), move, verb: move[0] };
       if (editing === null) {
         sequence.current++;
         setPlan([...steps, { ...command, id: sequence.current }]);
@@ -126,51 +119,24 @@ export function useCommandLine(
     if (!raw || !state || run.busy) return;
     const commandName = name.toLowerCase();
     run.clearSaveIssue();
-    if (local.some((x) => x === commandName)) {
-      if (commandName === "help") {
-        if (topic && !toolFor(topic) && !local.some((x) => x === topic)) {
-          run.setError(syntax("help"));
-          return;
-        }
-        const topicTool = topic ? toolFor(topic) : undefined;
-        const description = topicTool ? release.tools[topicTool] : undefined;
-        const defaults = toolDefaults(release, topicTool);
-        const label = topicTool ? commandLabel(topicTool, lang) : undefined;
-        const text = topic
-          ? syntax(topic) +
-            (label ? " — " + label : "") +
-            " · " +
-            timeLabel(topic, state, t) +
-            (description ? "\n" + topicTool + "\n" + description : "") +
-            (defaults ? "\n" + t("defaults") + ": " + defaults : "")
-          : entries(commandGroups)
-              .map(
-                ([group, names]) =>
-                  t(group) + ": " + names.filter((v) => (toolFor(v) ?? "") in actions).join("  "),
-              )
-              .concat(t("local") + ": " + local.join("  "), syntax("help"), t("planHelp"))
-              .join("\n");
-        run.appendLocal(raw, text);
-      } else if (commandName === "balance" || commandName === "tabs") {
-        const day = topic === undefined ? null : Number(topic);
-        if (
-          extra.length ||
-          (day !== null && (!Number.isInteger(day) || day < 0 || day > release.days))
-        ) {
-          run.setError(syntax(commandName));
-          return;
-        }
-        nav.setBalanceDay(day);
-        nav.setTab(commandName === "balance" ? "world" : day === null ? "tabs" : "day:" + day);
-      } else if (commandName === "view") {
-        const id = Number(topic);
-        if (!reports.some((r) => r.id === id)) {
-          run.setError(syntax(commandName));
-          return;
-        }
-        nav.setTab(id);
-      } else nav.setTab(commandName === "world" ? "suppliers" : commandName);
-      edit("");
+    if (commandName === "help") {
+      if (extra.length || (topic && topic !== "help" && !Object.hasOwn(actions, topic))) {
+        run.setError(syntax("help"));
+        return;
+      }
+      const defaults = toolDefaults(release, topic);
+      const text = topic
+        ? [
+            syntax(topic, actions),
+            release.tools[topic],
+            timeLabel(topic, state, t),
+            defaults && t("defaults") + ": " + defaults,
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : [...Object.keys(actions), syntax("help")].join("  ");
+      run.appendLocal(raw, text);
+      if (fromPrompt) edit("");
       return;
     }
     if (state.over) {
@@ -178,8 +144,8 @@ export function useCommandLine(
       return;
     }
     try {
-      const move = parse(raw, state, actions);
-      if (run.submit({ move, line: raw }, keepInstrument)) {
+      const move = parse(raw, actions);
+      if (run.submit({ move, line: commandForMove(move) }, keepInstrument)) {
         nav.followMove(move);
         if (fromPrompt) edit("");
       }

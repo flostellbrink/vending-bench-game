@@ -3,7 +3,7 @@ import type { Report } from "games-common/benchmark";
 import type { View } from "@/hooks/useNavigation";
 import type { OperatorLabel } from "@/localization/messages";
 
-import { address } from "./commands.ts";
+import { address, commandForMove } from "./commands.ts";
 import { belongsTo, recordObject } from "./report-object";
 import { purchaseSupplier } from "./suppliers";
 
@@ -14,7 +14,12 @@ const tools: Record<string, string> = {
 };
 const labels: Partial<Record<string, OperatorLabel>> = {
   world: "bank",
-  tabs: "journal",
+  status: "status",
+  payments: "payments",
+  machines: "allMachines",
+  marketing: "marketing",
+  notes: "notes",
+  reminders: "reminders",
   help: "help",
   scores: "standings",
   brief: "rules",
@@ -31,6 +36,7 @@ export function readoutContext(tab: View, reports: Report[]) {
     typeof tab === "number"
       ? reports.find((r) => r.id === tab)
       : reports.findLast((r) => {
+          if (key === "machines") return r.tool === "get_machine_inventory" && !r.args.machine_id;
           if (key.startsWith("machine:"))
             return r.tool === "get_machine_inventory" && belongsTo(r, key);
           if (key.startsWith("supplier:")) return r.tool === "check_offers" && belongsTo(r, key);
@@ -56,10 +62,12 @@ export function readoutContext(tab: View, reports: Report[]) {
 export type ReadoutContext = ReturnType<typeof readoutContext>;
 
 export function inspectionCommand(tab: View) {
-  if (tab === "mail") return "inbox";
-  if (tab === "sales") return "sales";
-  if (tab === "site:depot") return "depot";
+  if (tab === "mail") return "list_emails";
+  if (tab === "sales") return "get_sales_report";
+  if (tab === "site:depot") return "get_storage_inventory";
+  if (tab === "machines") return "get_machine_inventory";
   if (typeof tab !== "string") return undefined;
-  if (tab.startsWith("machine:")) return "inspect " + address(tab.slice(8));
+  if (tab.startsWith("machine:"))
+    return commandForMove(["get_machine_inventory", { machine_id: tab.slice(8) }]);
   return undefined;
 }

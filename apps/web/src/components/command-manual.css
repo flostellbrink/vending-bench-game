@@ -26,10 +26,11 @@
 }
 .manual-index section div {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(10ch, 100%), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(24ch, 100%), 1fr));
   gap: 0.08rem 0.15rem;
 }
 .manual-index button {
+  overflow-wrap: anywhere;
   text-align: start;
   font: inherit;
   padding: 0.12em 0.38em;
@@ -56,6 +57,7 @@
   padding-bottom: 0.4rem;
 }
 .manual-page h3 {
+  overflow-wrap: anywhere;
   font-size: 1.45rem;
   margin: 0;
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { operatorText, priceOrder } from "@/game/commands";
+import { priceOrder } from "@/game/commands";
 import { purchaseSupplier as supplierForPurchase } from "@/game/suppliers";
 import { clock, receiptEnd } from "@/scene/clock";
 
@@ -51,7 +51,6 @@ export default function ObservationView({
     ? priceOrder(
         report.line,
         { day: report.day, cash: report.openingCash },
-        { order_goods: [] },
         reports.filter((r) => r.id < report.id),
       )
     : null;
@@ -227,7 +226,7 @@ export default function ObservationView({
       {report.notices?.length > 0 && (
         <div className="overnight-notices">
           {report.notices.map((notice, i) => (
-            <p key={i}>{operatorText(notice)}</p>
+            <p key={i}>{notice}</p>
           ))}
         </div>
       )}

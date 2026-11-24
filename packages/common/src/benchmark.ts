@@ -55,7 +55,7 @@ export const releaseSchema = v.object({
       ),
       list_emails: v.objectWithRest(
         {
-          folder: v.picklist(["inbox", "sent"]),
+          folder: v.string(),
           limit: v.pipe(v.number(), v.integer(), v.minValue(1)),
           unread_only: v.boolean(),
         },
@@ -119,34 +119,37 @@ export const snapshotSchema = v.object({
 export type CommandArgs = v.InferOutput<typeof commandArgsSchema>;
 const optionalText = v.optional(v.string());
 const optionalNumber = v.optional(v.number());
-export const commandArgsSchema = v.object({
-  supplier_id: optionalText,
-  product_id: optionalText,
-  machine_id: optionalText,
-  slot: optionalText,
-  items: v.optional(v.record(v.string(), v.number())),
-  query: optionalText,
-  quantity: optionalNumber,
-  price: optionalNumber,
-  days: optionalNumber,
-  location: optionalText,
-  email_id: optionalText,
-  folder: optionalText,
-  to: optionalText,
-  subject: optionalText,
-  body: optionalText,
-  recipient: optionalText,
-  amount: optionalNumber,
-  reference: optionalText,
-  channel: optionalText,
-  message: optionalText,
-  key: optionalText,
-  text: optionalText,
-  in_days: optionalNumber,
-  unread_only: v.optional(v.boolean()),
-  by_product: v.optional(v.boolean()),
-  limit: optionalNumber,
-});
+export const commandArgsSchema = v.objectWithRest(
+  {
+    supplier_id: optionalText,
+    product_id: optionalText,
+    machine_id: optionalText,
+    slot: optionalText,
+    items: v.optional(v.record(v.string(), v.number())),
+    query: optionalText,
+    quantity: optionalNumber,
+    price: optionalNumber,
+    days: optionalNumber,
+    location: optionalText,
+    email_id: optionalText,
+    folder: optionalText,
+    to: optionalText,
+    subject: optionalText,
+    body: optionalText,
+    recipient: optionalText,
+    amount: optionalNumber,
+    reference: optionalText,
+    channel: optionalText,
+    message: optionalText,
+    key: optionalText,
+    text: optionalText,
+    in_days: optionalNumber,
+    unread_only: v.optional(v.boolean()),
+    by_product: v.optional(v.boolean()),
+    limit: optionalNumber,
+  },
+  v.optional(jsonValueSchema),
+);
 export type Move = v.InferOutput<typeof moveSchema>;
 export const moveSchema = v.tuple([v.string(), commandArgsSchema]);
 export type ScriptedReplay = v.InferOutput<typeof scriptedReplaySchema>;

@@ -2,7 +2,7 @@ import type { Report } from "games-common/benchmark";
 
 import { useContext } from "react";
 
-import { priceOrder } from "@/game/commands";
+import { commandForMove, priceOrder } from "@/game/commands";
 import { orderEntry, type OrderLine } from "@/game/order-entry";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
@@ -33,7 +33,12 @@ export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView =
       className="quote-request"
       onSubmit={(e) => {
         e.preventDefault();
-        if (valid) runCommand("quote " + supplier + " " + qty, false, supplierView);
+        if (valid)
+          runCommand(
+            commandForMove(["check_offers", { supplier_id: supplier, quantity: Number(qty) }]),
+            false,
+            supplierView,
+          );
       }}
     >
       <h3>{t("supplierQuote")}</h3>
@@ -41,8 +46,8 @@ export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView =
         <Field inline label={t("bundle")}>
           <QuantityInput required value={qty} onChange={(e) => change(e.currentTarget.value)} />
         </Field>
-        <GuiToolInfo verb="quote">
-          <button type="submit" disabled={!valid} data-clock-verb="quote">
+        <GuiToolInfo verb="check_offers">
+          <button type="submit" disabled={!valid} data-clock-verb="check_offers">
             {t("reprice")}
           </button>
         </GuiToolInfo>
@@ -93,7 +98,7 @@ export function OrderSlip({
   const offered = new Set(rows.map((row) => String(row[0])));
   const entry = orderEntry(supplier, draft.lines);
   const command = entry.command;
-  const estimate = command ? priceOrder(command, state, { order_goods: [] }, reports) : null;
+  const estimate = command ? priceOrder(command, state, reports) : null;
   const evidence = estimate?.cost !== undefined ? estimate : null;
   const langOptions = { locale: lang };
   const manualLines = draft.lines.filter((line) => line.manual || !offered.has(line.product));
@@ -297,8 +302,8 @@ export function OrderSlip({
                 </button>
               )}
               <ControlRow>
-                <GuiToolInfo verb="order">
-                  <button type="submit" data-clock-verb="order" disabled={locked || !command}>
+                <GuiToolInfo verb="order_goods">
+                  <button type="submit" data-clock-verb="order_goods" disabled={locked || !command}>
                     {t("sendOrder")}
                   </button>
                 </GuiToolInfo>

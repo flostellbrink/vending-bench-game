@@ -3,6 +3,7 @@ import type { Report } from "games-common/benchmark";
 import { address } from "@/game/commands";
 export interface CabinetSlot {
   id: string;
+  rawId: string;
   machine: string;
   code: string;
   size: string;
@@ -31,6 +32,7 @@ export function cabinetLayout(rows: Report["rows"]) {
     const shelf = code.replace(/\d+$/, "");
     const slot = {
       id,
+      rawId: raw,
       machine,
       code,
       size: String(size),

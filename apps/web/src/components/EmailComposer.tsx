@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 
 import type { Translate } from "@/localization/messages";
 
-import { quotedWord } from "@/game/command-words";
+import { commandForMove } from "@/game/commands";
 
 import { ActionButton, ControlInput, ControlRow, Field, ControlTextarea } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
@@ -72,9 +72,9 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (disabled || !recipient.trim() || !body.trim()) return;
+            if (disabled || !recipient.trim()) return;
             dialog.current?.close();
-            send(["mail", recipient.trim(), quotedWord(title), quotedWord(body)].join(" "));
+            send(commandForMove(["send_email", { to: recipient, subject: title, body }]));
           }}
         >
           <header>
@@ -88,7 +88,7 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
             <Field label={t("mailTo")}>
               <ControlInput
                 ref={recipientField}
-                type="email"
+                inputMode="email"
                 required
                 value={recipient}
                 onChange={(event) => setRecipient(event.currentTarget.value)}
@@ -106,7 +106,6 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
             <ControlTextarea
               ref={messageField}
               rows={7}
-              required
               value={body}
               onChange={(event) => setBody(event.currentTarget.value)}
             />
@@ -116,11 +115,11 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
             <ActionButton type="button" onClick={() => dialog.current?.close()}>
               {t("cancelMail")}
             </ActionButton>
-            <GuiToolInfo verb="mail">
+            <GuiToolInfo verb="send_email">
               <button
                 type="submit"
-                data-clock-verb="mail"
-                disabled={disabled || !recipient.trim() || !body.trim()}
+                data-clock-verb="send_email"
+                disabled={disabled || !recipient.trim()}
               >
                 {t("sendLetter")}
               </button>

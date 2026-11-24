@@ -11,11 +11,13 @@ import { DepotStock } from "./DepotStock";
 import { EmailComposer } from "./EmailComposer";
 import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
+import { OperationsDesk } from "./OperationsDesk";
 import { OperatorBrief } from "./OperatorBrief";
 import { OrderRegister } from "./OrderRegister";
 import { OrderSlip, QuoteRequest } from "./OrderSlip";
 import { ReportList } from "./ReportList";
 import { Scorecard } from "./Scorecard";
+import { UninspectedMachine } from "./SlotInstrument";
 import { SupplierDirectory } from "./SupplierDirectory";
 
 interface Props extends WorkspaceProps {
@@ -39,6 +41,15 @@ export function WorkspaceReadout({
   const { tab, setTab } = nav;
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
   const controls = { t, lang, money, reports, disabled, runCommand: shell.runCommand };
+  if (
+    state &&
+    (tab === "status" ||
+      tab === "payments" ||
+      tab === "marketing" ||
+      tab === "notes" ||
+      tab === "reminders")
+  )
+    return <OperationsDesk {...controls} desk={tab} {...{ release, state }} openReport={setTab} />;
   if (tab === "world")
     return (
       <BalanceScope
@@ -70,7 +81,7 @@ export function WorkspaceReadout({
   if (
     state &&
     typeof tab === "string" &&
-    (tab.startsWith("machine:") || tab === "site:depot") &&
+    (tab.startsWith("machine:") || tab === "machines" || tab === "site:depot") &&
     cmd
   ) {
     const report = context.selected;
@@ -102,6 +113,12 @@ export function WorkspaceReadout({
         openReport={setTab}
         action={action}
       />
+    ) : tab.startsWith("machine:") ? (
+      <UninspectedMachine
+        machine={tab.slice(8)}
+        {...{ state, t, lang, reports, disabled, action }}
+        runCommand={shell.runCommand}
+      />
     ) : (
       <section className="sheet asset-actions">{action}</section>
     );
@@ -131,25 +148,21 @@ export function WorkspaceReadout({
             {compose}
           </div>
         )}
-        {contact?.quotable !== false && (
-          <QuoteRequest
-            report={report?.terms?.minimum !== undefined ? report : undefined}
-            supplier={supplier}
-            state={state}
-            {...controls}
-            supplierView
-          />
-        )}
-        {contact?.quotable !== false && (
-          <OrderSlip
-            {...controls}
-            report={report?.terms?.minimum !== undefined ? report : undefined}
-            supplier={supplier}
-            state={state}
-            openReport={setTab}
-            supplierView
-          />
-        )}
+        <QuoteRequest
+          report={report?.terms?.minimum !== undefined ? report : undefined}
+          supplier={supplier}
+          state={state}
+          {...controls}
+          supplierView
+        />
+        <OrderSlip
+          {...controls}
+          report={report?.terms?.minimum !== undefined ? report : undefined}
+          supplier={supplier}
+          state={state}
+          openReport={setTab}
+          supplierView
+        />
         {purchases.length > 0 && (
           <section className="supplier-orders">
             <h3>
@@ -192,14 +205,7 @@ export function WorkspaceReadout({
       </section>
     );
   if (tab === "help")
-    return (
-      <CommandIndex
-        actions={run.actions}
-        release={release}
-        {...{ state, lang, t }}
-        openBrief={() => setTab("brief")}
-      />
-    );
+    return <CommandIndex actions={run.actions} release={release} {...{ state, lang, t }} />;
   if (tab === "brief") return <OperatorBrief embedded {...{ release, state, t, money }} />;
   if (tab === "scores")
     return (

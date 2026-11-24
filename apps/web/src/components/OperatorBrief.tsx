@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 import type { Money } from "@/localization/messages";
 
-import { operatorText } from "@/game/commands";
 import { clock } from "@/scene/clock";
 
 interface Props {
@@ -22,7 +21,7 @@ function inline(text: string) {
 }
 function briefBody(source: string) {
   const sections: ReactNode[] = [];
-  for (const block of operatorText(source).split(/\n\s*\n/)) {
+  for (const block of source.split(/\n\s*\n/)) {
     const lines = block.trim().split("\n");
     const heading = /^\*\*([^*]+)\*\*$/.exec(lines[0] ?? "");
     if (heading) {

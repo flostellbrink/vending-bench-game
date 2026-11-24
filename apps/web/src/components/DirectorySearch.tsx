@@ -2,6 +2,8 @@ import { useState } from "react";
 
 import type { Translate } from "@/localization/messages";
 
+import { commandForMove } from "@/game/commands";
+
 import { ControlInput, ControlRow, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 
@@ -17,15 +19,15 @@ export function DirectorySearch({ t, disabled, runCommand }: Props) {
       className="supplier-search control-field"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!disabled && query.trim()) runCommand("find " + query.trim());
+        if (!disabled) runCommand(commandForMove(["search_web", { query }]));
       }}
     >
       <ControlRow>
         <Field label={t("searchSuppliers")}>
           <ControlInput value={query} onChange={(e) => setQuery(e.currentTarget.value)} />
         </Field>
-        <GuiToolInfo verb="find">
-          <button type="submit" disabled={disabled || !query.trim()} data-clock-verb="find">
+        <GuiToolInfo verb="search_web">
+          <button type="submit" disabled={disabled} data-clock-verb="search_web">
             {t("execute")}
           </button>
         </GuiToolInfo>

@@ -1,0 +1,31 @@
+.operations-controls,
+.operations-controls form {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+  min-width: 0;
+}
+.operations-controls {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #91a290;
+}
+.operations-controls form {
+  width: 100%;
+}
+.operations-controls > .tool-action-pair + form {
+  border-top: 1px solid #a8b6a6;
+  padding-top: 0.45rem;
+}
+.operations-controls .control-field {
+  max-width: 100%;
+}
+.operations-controls .control-field:has(textarea) {
+  width: min(100%, 42rem);
+}
+.operations-controls textarea {
+  width: 100%;
+  resize: vertical;
+}
+.operations-controls input[type="number"] {
+  width: 11ch;
+}
