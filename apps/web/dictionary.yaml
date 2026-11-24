@@ -1339,9 +1339,9 @@ landing:
     de: "{$model} hat einen Verkaufsautomaten betrieben. Jetzt bist du dran."
   fallback:
     .id: HN000002
-    ^en: "Can you beat the scripted vending operator?"
-    es: "¿Puedes superar al operador programado de máquinas expendedoras?"
-    de: "Schlägst du den Skriptbetreiber der Verkaufsautomaten?"
+    ^en: "No AI has a published score here yet. Your shift."
+    es: "Aún ninguna IA tiene una puntuación publicada aquí. Te toca."
+    de: "Hier hat noch keine KI eine veröffentlichte Wertung. Jetzt bist du dran."
   context:
     .id: HN000016
     ^en: "This independent game lets you play Prosus Vending Bench, an open benchmark for AI agents. Your job is the same as theirs: find suppliers, buy stock, set prices and keep enough cash for tomorrow."
@@ -1589,11 +1589,6 @@ session:
     ^en: "Scores to beat"
     es: "Puntuaciones que superar"
     de: "Vergleichswerte"
-  reference:
-    .id: SX000007
-    ^en: "Scripted operator"
-    es: "Operador programado"
-    de: "Skriptbetreiber"
   noAI:
     .id: SX000008
     ^en: "No published AI score matches these conditions yet."

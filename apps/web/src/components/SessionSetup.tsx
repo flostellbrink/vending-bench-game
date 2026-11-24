@@ -95,10 +95,10 @@ export default function SessionSetup({
       </dl>
       <h3>{msg.session.target()}</h3>
       <dl className="session-scores">
-        {[...models, ...current.rivals.filter((r) => r.kind === "script")].map((r) => (
+        {models.map((r) => (
           <div key={r.source}>
             <dt>
-              <a href={r.source}>{r.kind === "script" ? msg.session.reference() : r.name}</a>
+              <a href={r.source}>{r.name}</a>
             </dt>
             <dd>{money.format(r.score)}</dd>
           </div>

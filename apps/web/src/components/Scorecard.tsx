@@ -79,10 +79,7 @@ export function Scorecard({
           </tr>
           {[
             ...(best ? [{ name: msg.operator.previousBest(), score: best.score }] : []),
-            ...[...models, ...rivals.filter((r) => r.kind === "script")].map((r) => ({
-              name: r.kind === "script" ? msg.fields.bot() : r.name,
-              score: r.score,
-            })),
+            ...models.map((r) => ({ name: r.name, score: r.score })),
           ].map((row) => (
             <tr key={row.name}>
               <th scope="row">{row.name}</th>
