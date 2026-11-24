@@ -4,7 +4,7 @@ The static export is ready for desktop playtesting. Desktop Chrome has gameplay 
 
 ## Competition and fidelity
 
-The current submodule supplies v3.0.0. The selector, briefing, tool descriptions, engine, costs and rival data come from its Git snapshot. A reference result must match the engine, configuration, horizon and seed. The five published v2 model scores therefore remain historical results, not v3 targets. There are no matching published AI scores for the current challenge. The scripted operator is labeled separately.
+The game uses v3.0.0. The briefing, tool descriptions, engine, costs and rival data come from the submodule’s Git snapshot. Only the scripted reference ships. No v2 scores are included. A future model result must match the engine, configuration, horizon and seed.
 
 The generator reproduced the 30-day, seed-1 scripted result of €3,302.96 from the upstream bot. A synthetic publication test exercises both recorded daily balances and an endpoint-only model result. Synthetic trials are not shipped. See the [upstream results](https://github.com/ProsusAI/vending-bench/tree/60794b49932294a0fcb3fcf9a5ca3aaaa0c8a282/results).
 
