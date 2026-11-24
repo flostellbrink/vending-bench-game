@@ -159,8 +159,8 @@ function SlotService({
   const needsProduct = verb === "restock_machine" || verb === "swap_item";
   const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   const labels = {
-    restock_machine: t("refill"),
-    set_price: t("setPrice"),
+    restock_machine: msg.commands.restock_machine({}, { locale: lang }),
+    set_price: msg.commands.set_price({}, { locale: lang }),
     clear_slot: msg.commands.clear_slot({}, { locale: lang }),
     swap_item: msg.commands.swap_item({}, { locale: lang }),
   };

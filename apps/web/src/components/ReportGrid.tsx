@@ -117,9 +117,7 @@ export function ReportGrid({
                           onClick={() =>
                             runCommand(commandForMove([command, { email_id: String(r[0]) }]))
                           }
-                        >
-                          {t("read")}
-                        </button>
+                        />
                       </GuiToolInfo>
                     )}
                   </td>

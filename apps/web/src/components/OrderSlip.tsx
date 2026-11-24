@@ -47,9 +47,7 @@ export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView =
           <QuantityInput required value={qty} onChange={(e) => change(e.currentTarget.value)} />
         </Field>
         <GuiToolInfo verb="check_offers">
-          <button type="submit" disabled={!valid} data-clock-verb="check_offers">
-            {t("reprice")}
-          </button>
+          <button type="submit" disabled={!valid} data-clock-verb="check_offers" />
         </GuiToolInfo>
       </ControlRow>
     </form>
@@ -303,9 +301,11 @@ export function OrderSlip({
               )}
               <ControlRow>
                 <GuiToolInfo verb="order_goods">
-                  <button type="submit" data-clock-verb="order_goods" disabled={locked || !command}>
-                    {t("sendOrder")}
-                  </button>
+                  <button
+                    type="submit"
+                    data-clock-verb="order_goods"
+                    disabled={locked || !command}
+                  />
                 </GuiToolInfo>
               </ControlRow>
             </>

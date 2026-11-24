@@ -120,9 +120,7 @@ export function EmailComposer({ to, subject, reports, t, disabled, send }: Props
                 type="submit"
                 data-clock-verb="send_email"
                 disabled={disabled || !recipient.trim()}
-              >
-                {t("sendLetter")}
-              </button>
+              />
             </GuiToolInfo>
           </ControlRow>
         </form>

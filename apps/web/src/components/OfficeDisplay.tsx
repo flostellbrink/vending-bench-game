@@ -5,6 +5,7 @@ import { memo, useState } from "react";
 import type { Lang, Translate } from "@/localization/messages";
 
 import { timing } from "@/game/commands";
+import { commandLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 import { useClock } from "@/scene/useClock";
 import { World } from "@/scene/World";
@@ -90,7 +91,9 @@ export const OfficeDisplay = memo(function OfficeDisplay({
             disabled={disabled || !state || state.over}
             title={
               state
-                ? (state.day === state.days ? t("endRun") : t("closeShift")) +
+                ? (state.day === state.days
+                    ? t("endRun")
+                    : commandLabel("wait_for_next_day", lang)) +
                   " · " +
                   (state.closes - state.minute) +
                   " min"
@@ -115,7 +118,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
             }}
           >
             <span className="clock-label">
-              <span aria-hidden={armed}>{t("closeShift")}</span>
+              <span aria-hidden={armed}>{commandLabel("wait_for_next_day", lang)}</span>
               <span aria-hidden={!armed}>{t("confirmClose")}</span>
             </span>
           </button>

@@ -1186,7 +1186,7 @@ screen:
 commands:
   search_web:
     .id: VB000014
-    ^en: "Search the web"
+    ^en: "Search web"
     es: "Buscar en la web"
     de: "Web durchsuchen"
   check_offers:
@@ -1196,47 +1196,47 @@ commands:
     de: "Angebote prüfen"
   order_goods:
     .id: VB000016
-    ^en: "Order stock"
-    es: "Comprar productos"
+    ^en: "Order goods"
+    es: "Pedir mercancía"
     de: "Waren bestellen"
   get_status:
     .id: VB000017
-    ^en: "Get business status"
-    es: "Consultar estado del negocio"
-    de: "Betriebsstatus abrufen"
+    ^en: "Get status"
+    es: "Consultar estado"
+    de: "Status abrufen"
   get_machine_inventory:
     .id: VB000018
-    ^en: "Check machine inventory"
+    ^en: "Get machine inventory"
     es: "Consultar inventario de máquinas"
-    de: "Automatenbestand prüfen"
+    de: "Automatenbestand abrufen"
   get_storage_inventory:
     .id: VB000019
-    ^en: "Check depot inventory"
+    ^en: "Get storage inventory"
     es: "Consultar inventario del almacén"
-    de: "Lagerbestand prüfen"
+    de: "Lagerbestand abrufen"
   restock_machine:
     .id: VB000020
-    ^en: "Fill a machine"
-    es: "Reponer productos"
-    de: "Automat befüllen"
+    ^en: "Restock machine"
+    es: "Reabastecer máquina"
+    de: "Automaten auffüllen"
   set_price:
     .id: VB000021
     ^en: "Set price"
     es: "Fijar precio"
-    de: "Preis ändern"
+    de: "Preis festlegen"
   wait_for_next_day:
     .id: VB000022
-    ^en: "Close the day"
-    es: "Cerrar el día"
-    de: "Tag beenden"
+    ^en: "Wait for next day"
+    es: "Esperar al día siguiente"
+    de: "Auf den nächsten Tag warten"
   swap_item:
     .id: VB000023
-    ^en: "Replace product"
+    ^en: "Swap item"
     es: "Cambiar producto"
-    de: "Produkt wechseln"
+    de: "Artikel austauschen"
   clear_slot:
     .id: VB000024
-    ^en: "Empty slot"
+    ^en: "Clear slot"
     es: "Vaciar ranura"
     de: "Fach leeren"
   get_sales_report:
@@ -1246,9 +1246,9 @@ commands:
     de: "Verkaufsbericht abrufen"
   run_marketing:
     .id: VB000026
-    ^en: "Advertise"
-    es: "Publicar anuncio"
-    de: "Werbung schalten"
+    ^en: "Run marketing"
+    es: "Realizar campaña de marketing"
+    de: "Marketing durchführen"
   get_marketing_report:
     .id: VB000027
     ^en: "Get marketing report"
@@ -1263,12 +1263,12 @@ commands:
     .id: VB000029
     ^en: "Read email"
     es: "Leer correo"
-    de: "Nachricht lesen"
+    de: "E-Mail lesen"
   send_email:
     .id: VB000030
     ^en: "Send email"
     es: "Enviar correo"
-    de: "Nachricht senden"
+    de: "E-Mail senden"
   send_payment:
     .id: VB000031
     ^en: "Send payment"
