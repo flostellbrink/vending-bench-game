@@ -3,7 +3,7 @@ import type { Report, Snapshot } from "games-common/benchmark";
 import { msPerDay, type Optional } from "games-common/language";
 import { useMemo, type CSSProperties } from "react";
 
-import { address, draftMachine } from "@/game/commands";
+import { address, moveDestination } from "@/game/commands";
 
 import type { CabinetStock } from "./Cabinet";
 
@@ -15,11 +15,10 @@ import { minutesPerDay } from "./useClock";
 interface WorldProps {
   value: number;
   state: Optional<Snapshot>;
-  line: string;
   t: (key: "depot") => string;
   reports: readonly Report[];
-  selectedSite: Optional<string>;
-  onSiteSelect: (id: string) => void;
+  sceneObject: Optional<string>;
+  onOpen: (id: string) => void;
 }
 
 function cabinetObservations(reports: readonly Report[], closes: number) {
@@ -60,7 +59,7 @@ function daylight(value: number, startDate: string): number {
 }
 
 /** Show the addressed site and its last observed inventory without spending simulated time. */
-export function World({ value, state, line, t, reports, selectedSite, onSiteSelect }: WorldProps) {
+export function World({ value, state, t, reports, sceneObject, onOpen }: WorldProps) {
   const depot = { id: "depot", name: t("depot") };
   const sites = [...(state?.sites ?? []).map((s) => ({ id: address(s.id), name: s.name })), depot];
   const closes = state?.closes ?? 0;
@@ -68,38 +67,32 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
   const inventories = useMemo(() => depotObservations(reports), [reports]);
   const depotCases = inventories.findLast((inventory) => inventory.time <= value)?.cases ?? null;
   const last = reports.at(-1);
-  const addressed = reports.findLast(
-    (report) =>
-      Boolean(report.args.slot || report.args.machine_id) ||
-      report.tool === "get_storage_inventory" ||
-      report.tool === "order_goods",
-  );
-  const lastMachine =
-    addressed?.args.machine_id ?? addressed?.args.slot?.split(":").slice(0, 2).join(":");
-  const slot = last?.args.slot;
-  const machine = last?.args.machine_id;
-  const destination =
-    typeof slot === "string"
-      ? slot.split(":").slice(0, 2).join(":")
-      : typeof machine === "string"
-        ? machine
-        : undefined;
-  const focus = draftMachine(line, state?.machines ?? []) ?? lastMachine;
-  const showDepot =
-    /^(depot|order)\b/i.test(line) ||
-    (!focus && (addressed?.tool === "get_storage_inventory" || addressed?.tool === "order_goods"));
-  const commandSite = showDepot
-    ? depot
-    : (sites.find((site) => focus && address(focus).startsWith(site.id + ".")) ??
-      sites[0] ??
-      depot);
-  const active = sites.find((site) => site.id === selectedSite) ?? commandSite;
+  const lastObject = useMemo(() => {
+    const report = reports.findLast((r) => moveDestination([r.tool, r.args]) !== undefined);
+    return report && moveDestination([report.tool, report.args]);
+  }, [reports]);
+  const lastTarget = last && moveDestination([last.tool, last.args]);
+  const destination = lastTarget?.startsWith("machine:") ? lastTarget.slice(8) : undefined;
+  const activeObject = sceneObject ?? lastObject;
+  const focus = activeObject?.startsWith("machine:") ? activeObject.slice(8) : undefined;
+  const active =
+    activeObject === "site:depot"
+      ? depot
+      : (sites.find((site) => focus && address(focus).startsWith(site.id + ".")) ??
+        sites[0] ??
+        depot);
+  const machines = state?.machines.filter((id) => address(id).startsWith(active.id + ".")) ?? [];
+  function openSite(site: string) {
+    if (site === "depot") return onOpen("site:depot");
+    const targets = state?.machines.filter((id) => address(id).startsWith(site + ".")) ?? [];
+    const preferred = targets.find((id) => address(id) === site + ".snack") ?? targets[0];
+    if (preferred) onOpen("machine:" + preferred);
+  }
   const stock: Record<string, CabinetStock> = {};
   for (const [cabinet, readings] of Object.entries(cabinets[active.id] ?? {})) {
     const reading = readings.findLast((entry) => entry.time <= value);
     if (reading) stock[cabinet] = reading.stock;
   }
-  const visibleFocus = active === commandSite && !showDepot ? focus : undefined;
   const start = last ? (last.day - 1) * minutesPerDay + last.minute : 0;
   const end = last
     ? (last.day - 1) * minutesPerDay +
@@ -142,13 +135,15 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
           light={light}
           weather={state?.weather}
           service={service}
-          focus={visibleFocus?.split(":")[1]}
+          focus={focus?.split(":")[1]}
+          machines={machines}
+          onMachineSelect={(id) => onOpen("machine:" + id)}
           visit={cabinetVisit ? { drink: destination.endsWith("DRINKS"), progress } : null}
           stock={stock}
         />
         <figcaption>
           {active.name}
-          {visibleFocus && " / " + address(visibleFocus)}
+          {focus && " / " + address(focus)}
         </figcaption>
       </figure>
       <div className="remote-rooms">
@@ -158,7 +153,7 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
               type="button"
               className="room-selector"
               aria-pressed={site.id === active.id}
-              onClick={() => onSiteSelect(site.id)}
+              onClick={() => openSite(site.id)}
             >
               <RoomPreview site={site.id} depotCases={depotCases} />
               <span>{site.name}</span>

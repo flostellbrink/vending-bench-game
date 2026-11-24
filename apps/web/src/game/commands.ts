@@ -314,13 +314,9 @@ export function priceOrder(
     status: cost < minimum ? "belowMinimum" : cost > state.cash ? "lowCash" : "quoted",
   };
 }
-/** Resolve an actual machine or slot argument, not text embedded in a different site's name. */
-export function draftMachine(line: string, machines: readonly string[]) {
-  const [verb, target] = line.trim().toLowerCase().split(/\s+/);
-  if (!target || !verb || !["inspect", "refill", "swap", "clear", "price"].includes(verb))
-    return undefined;
-  const normalized = address(target);
-  return machines.find(
-    (id) => normalized === address(id) || normalized.startsWith(address(id) + "."),
-  );
+export function moveDestination([tool, args]: Move) {
+  const machine = args.machine_id ?? args.slot?.split(":").slice(0, 2).join(":");
+  if (machine) return "machine:" + machine;
+  if (tool === "get_storage_inventory" || tool === "order_goods") return "site:depot";
+  return undefined;
 }

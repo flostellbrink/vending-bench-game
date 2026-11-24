@@ -1,6 +1,6 @@
 import type { Release } from "games-common/benchmark";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ParentBalance } from "@/game/runs";
 import type { CommandLine, Run } from "@/hooks/useCommandLine";
@@ -29,6 +29,8 @@ export function Workspace(props: WorkspaceProps) {
   const { run, nav, shell, release, lang, t } = props;
   const [preview, setPreview] = useState("");
   const context = useMemo(() => readoutContext(nav.tab, run.reports), [nav.tab, run.reports]);
+  const { rememberObject } = nav;
+  useEffect(() => rememberObject(context.object), [context.object, rememberObject]);
   const title = context.name ?? t(context.label);
   function previewFor(target: EventTarget | null) {
     const button = target instanceof Element ? target.closest("[data-clock-verb]") : null;
@@ -46,12 +48,15 @@ export function Workspace(props: WorkspaceProps) {
         state={run.state}
         release={release}
         lang={lang}
-        line={shell.line || shell.steps[0]?.line || ""}
         reports={run.reports}
         t={t}
         previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
-        selectedSite={nav.site}
-        onSiteSelect={nav.setSite}
+        sceneObject={
+          context.object.startsWith("machine:") || context.object === "site:depot"
+            ? context.object
+            : nav.sceneObject
+        }
+        onOpen={nav.openObject}
       />
       <nav className="desk-trail" aria-label={t("dispatchDesk")}>
         {nav.tab !== "desk" && (

@@ -12,22 +12,20 @@ interface Props {
   state: Snapshot | null;
   release: Release;
   lang: Lang;
-  line: string;
   reports: Report[];
   t: Translate;
-  selectedSite: string | null;
-  onSiteSelect: (id: string) => void;
+  sceneObject: string | null;
+  onOpen: (id: string) => void;
   previewVerb: string;
 }
 export const OfficeDisplay = memo(function OfficeDisplay({
   state,
   release,
   lang,
-  line,
   reports,
   t,
-  selectedSite,
-  onSiteSelect,
+  sceneObject,
+  onOpen,
   previewVerb,
 }: Props) {
   const last = reports.at(-1);
@@ -52,11 +50,10 @@ export const OfficeDisplay = memo(function OfficeDisplay({
         <World
           value={time}
           state={state}
-          line={line}
           t={t}
           reports={reports}
-          selectedSite={selectedSite}
-          onSiteSelect={onSiteSelect}
+          sceneObject={sceneObject}
+          onOpen={onOpen}
         />
       </div>
       <div className="transport">

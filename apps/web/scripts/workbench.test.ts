@@ -8,7 +8,7 @@ import { commandWords, quotedWord } from "../src/game/command-words.ts";
 import {
   commandForMove,
   completions,
-  draftMachine,
+  moveDestination,
   parse,
   priceOrder,
   timing,
@@ -98,10 +98,23 @@ await test("pace review uses daily change, not widest absolute gap or unrecorded
 });
 
 await test("a Main Lounge slot does not select the similarly named AI Lounge cabinet", () => {
-  const network = ["AI-LOUNGE:SNACK", "MAIN-LOUNGE:SNACK"];
-  assert.equal(draftMachine("refill main-lounge.snack.a1 stroopwafel-2pk 18", network), network[1]);
-  assert.equal(draftMachine("inspect AI-LOUNGE:SNACK", network), network[0]);
-  assert.equal(draftMachine("note reminder main-lounge.snack", network), undefined);
+  const network = {
+    machines: ["AI-LOUNGE:SNACK", "MAIN-LOUNGE:SNACK"],
+    slots: ["MAIN-LOUNGE:SNACK:A1"],
+  };
+  const actions = { restock_machine: [], get_machine_inventory: [], write_note: [] };
+  assert.equal(
+    moveDestination(parse("refill main-lounge.snack.a1 stroopwafel-2pk 18", network, actions)),
+    "machine:MAIN-LOUNGE:SNACK",
+  );
+  assert.equal(
+    moveDestination(parse("inspect AI-LOUNGE:SNACK", network, actions)),
+    "machine:AI-LOUNGE:SNACK",
+  );
+  assert.equal(
+    moveDestination(parse("note reminder main-lounge.snack", network, actions)),
+    undefined,
+  );
 });
 
 await test("a replay retains its pre-run opponent even after setting a better record", () => {

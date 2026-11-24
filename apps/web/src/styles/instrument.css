@@ -670,6 +670,20 @@ footer button[aria-pressed="true"] {
   width: 100%;
   filter: brightness(var(--light));
 }
+.cabinet-target {
+  cursor: pointer;
+  outline: none;
+}
+.cabinet-target:is(:hover, [aria-pressed="true"]) .cabinet-contour {
+  stroke: #e5eaa9;
+  stroke-width: 1.5px;
+  paint-order: stroke;
+}
+.cabinet-target:focus-visible .cabinet-contour {
+  stroke: #fffbd2;
+  stroke-width: 2.5px;
+  stroke-dasharray: 4 2;
+}
 .office-survey figcaption {
   position: absolute;
   bottom: 3%;
