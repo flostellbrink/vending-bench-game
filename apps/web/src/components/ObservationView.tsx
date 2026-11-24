@@ -144,7 +144,9 @@ export default function ObservationView({
                     }}
                   />
                 ) : (
-                  <ReportGrid {...{ report, t, lang, state, runCommand, disabled }} />
+                  <ReportGrid
+                    {...{ report, reports, t, lang, state, runCommand, disabled, openReport }}
+                  />
                 ))}
             </>
           )}

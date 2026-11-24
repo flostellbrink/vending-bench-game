@@ -5,10 +5,32 @@ import { timing } from "@/game/commands";
 import { fieldLabel } from "@/localization/messages";
 
 import type { ObservationProps } from "./panel-props";
-type Props = Pick<ObservationProps, "report" | "t" | "lang" | "state" | "runCommand" | "disabled">;
-export function ReportGrid({ report, t, lang, state, runCommand, disabled }: Props) {
+type Props = Pick<
+  ObservationProps,
+  "report" | "reports" | "t" | "lang" | "state" | "runCommand" | "disabled"
+> & { openReport: (id: number) => void };
+export function ReportGrid({
+  report,
+  reports,
+  t,
+  lang,
+  state,
+  runCommand,
+  disabled,
+  openReport,
+}: Props) {
   const [sort, setSort] = useState<{ index: number; dir: number } | null>(null);
   const command = report.tool === "list_emails" ? "read" : null;
+  const readLetters = useMemo(() => {
+    const letters = new Map<string, number>();
+    if (command) {
+      for (const prior of reports) {
+        if (prior.mail && prior.args.email_id)
+          letters.set(prior.args.email_id.toLowerCase(), prior.id);
+      }
+    }
+    return letters;
+  }, [command, reports]);
   const rows = useMemo(() => {
     if (!sort) return report.rows;
     return report.rows.toSorted(
@@ -31,28 +53,37 @@ export function ReportGrid({ report, t, lang, state, runCommand, disabled }: Pro
               </button>
             </th>
           ))}
-          {command && <th>{t("charged")}</th>}
+          {command && <th>{t("read")}</th>}
         </tr>
       </thead>
       <tbody>
-        {rows.map((r, i) => (
-          <tr key={i}>
-            {r.map((c, j) => (
-              <td key={j}>{c}</td>
-            ))}
-            {command && (
-              <td>
-                <button
-                  data-clock-verb={command}
-                  disabled={disabled}
-                  onClick={() => runCommand(command + " " + r[0])}
-                >
-                  {t("read")} · {assertValue(timing(command, state)).minutes} min
-                </button>
-              </td>
-            )}
-          </tr>
-        ))}
+        {rows.map((r, i) => {
+          const cached = readLetters.get(String(r[0]).toLowerCase());
+          return (
+            <tr key={i}>
+              {r.map((c, j) => (
+                <td key={j}>{c}</td>
+              ))}
+              {command && (
+                <td>
+                  {cached !== undefined ? (
+                    <button className="receipt-link" onClick={() => openReport(cached)}>
+                      #{cached} · {t("noCharge")}
+                    </button>
+                  ) : (
+                    <button
+                      data-clock-verb={command}
+                      disabled={disabled}
+                      onClick={() => runCommand(command + " " + r[0])}
+                    >
+                      {t("read")} · {assertValue(timing(command, state)).minutes} min
+                    </button>
+                  )}
+                </td>
+              )}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
