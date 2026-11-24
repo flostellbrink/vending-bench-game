@@ -113,7 +113,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   const setError = useCallback((error: string) => setView((old) => ({ ...old, error })), []);
   const clearSaveIssue = useCallback(() => setSaveIssue(""), []);
 
-  useEffect(() => {
+  const startWorker = useCallback(() => {
     const abort = new AbortController();
     let current: Worker;
     try {
@@ -283,6 +283,26 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
       current.terminate();
     };
   }, [release, saveKey, bestKey, onView]);
+
+  useEffect(() => {
+    let stop = startWorker();
+    function hidePage() {
+      stop();
+    }
+    function restorePage(event: PageTransitionEvent) {
+      if (!event.persisted) return;
+      setRuntimeError("");
+      setView((old) => ({ ...old, busy: true }));
+      stop = startWorker();
+    }
+    window.addEventListener("pagehide", hidePage);
+    window.addEventListener("pageshow", restorePage);
+    return () => {
+      window.removeEventListener("pagehide", hidePage);
+      window.removeEventListener("pageshow", restorePage);
+      stop();
+    };
+  }, [startWorker]);
 
   useEffect(() => {
     const abort = new AbortController();

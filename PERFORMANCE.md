@@ -58,3 +58,11 @@ At 1440 × 900 and 2× density on the same M4, 48 synthetic edits on day 25 reac
 ## Reference checkpoint with a long transcript
 
 The day-30 reference checkpoint opened with 499 receipts. In headless Chrome 158 at 1440 × 900 and 1× density, 60 synthetic prompt edits reached the second animation frame in 33.3 ms at the median and 34.2 ms at p95. The next inspection produced receipt 500 in 29.5 ms. During that inspection, 108 frame intervals over 1.8 seconds measured 16.7 ms at p95 and 16.8 ms maximum. These are browser timings, not hardware input or display latency.
+
+## Startup and save-tree navigation
+
+On the loopback export, Start to a ready simulator prompt took 819 ms. Enter to the first depot receipt took another 31 ms. Before removing the second document load, the same probes measured 835 ms and 36 ms. Each build had one cold browser sample; the difference does not establish a speedup.
+
+Before the worker lifecycle change, three visits to the same day-30 checkpoint left 2, 3, then 4 worker targets in Chrome, including a worker from an earlier game. The browser could have frozen them in its history cache. After the change, each of three visits showed one worker in the game and none on the save tree. Worker counts do not measure total browser memory.
+
+Browser Back restored receipt 500 and the 09:25 clock. An inspection produced receipt 501 at 09:50. Main-thread JS heap measured 35.2 MiB before leaving, 38.1 MiB after Back and 28.5 MiB after the inspection. This excludes memory allocated by the worker and its Python runtime.
