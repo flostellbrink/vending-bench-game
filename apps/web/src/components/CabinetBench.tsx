@@ -1,4 +1,5 @@
 import type { Report } from "games-common/benchmark";
+
 import { assertValue, first as firstValue } from "games-common/language";
 import { useMemo, useState } from "react";
 

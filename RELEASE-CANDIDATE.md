@@ -18,6 +18,8 @@ The generator reproduced the 30-day, seed-1 scripted result of €3,302.96 from 
 
 These are independent agent playtests of the live game, not human usability studies.
 
+Two reviewers started at New in the day-selection tree. One put 18 chocolate bars on sale in 2 minutes 43 seconds, choosing the 20% discount. The other stocked ten sparkling waters in 3 minutes 2 seconds and chose Main Lounge for its higher footfall. Both saw the refill receipt but mistook the earlier empty-slot inspection for the present reading. In the revised cabinet editor, a refill from 0/10 to 3/10 now shows 3/10 beside the slot, with a link to the refill receipt. Reopening the original inspection still shows 0/10.
+
 With the receipt and caption hidden, a reviewer identified the cabinet the attendant approached. The spiral shelves distinguished the snack machine from the bottle machine. The walking motion alone did not distinguish inspection from refill. In reduced-motion mode, the clock went straight to the receipt time and the selected cabinet stayed lit.
 
 For an inspection at 16:55, the attendant was visible until 16:59 and gone at the 17:00 close. The scene then passed through night and reached 09:00 in 3.07 seconds from dispatch. With reduced motion on, a second inspection at 16:55 reached morning within 194 ms without a visible overnight sequence.
