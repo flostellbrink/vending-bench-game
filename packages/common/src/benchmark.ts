@@ -27,14 +27,6 @@ export const rivalSchema = v.object({
   balances: v.optional(v.string()),
   values: v.optional(v.array(v.number())),
 });
-export type Archive = v.InferOutput<typeof archiveSchema>;
-export const archiveSchema = v.object({
-  version: v.string(),
-  days: v.number(),
-  seed: v.number(),
-  source: v.string(),
-  scores: v.array(v.tuple([v.string(), v.number()])),
-});
 export type Release = v.InferOutput<typeof releaseSchema>;
 export const releaseSchema = v.object({
   id: v.string(),
@@ -57,7 +49,6 @@ export const releaseSchema = v.object({
   engineArchive: v.string(),
   adapter: v.string(),
   rivals: v.array(rivalSchema),
-  archives: v.array(archiveSchema),
 });
 export function parseReleases(input: unknown): Release[] {
   return v.parse(v.pipe(v.array(releaseSchema), v.minLength(1)), input);

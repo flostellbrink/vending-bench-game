@@ -84,25 +84,6 @@ def reference_trace(version):
             "sourcePath": source.relative_to(ROOT).as_posix()}
 
 
-def archived_scores(path):
-    text = re.sub(r"^>\s?", "", path.read_text(), flags=re.MULTILINE)
-    version = re.search(r"under the v([\d.]+)\s+rules", text)
-    conditions = re.search(r"(\d+) simulated days, simulation seed (\d+)", text)
-    count = re.search(r"\*\*(\d+) models\b", text)
-    if not (version and conditions and count):
-        raise ValueError(f"Unrecognised model publication: {path.relative_to(ROOT)}")
-    rows = []
-    for line in text.splitlines():
-        fields = [field.strip() for field in line.strip("|").split("|")]
-        if len(fields) < 5 or fields[2] not in ("True", "False"):
-            continue
-        rows.append([fields[1], float(fields[4].removeprefix("€").replace(",", ""))])
-    if len(rows) != int(count[1]):
-        raise ValueError("Model summary count does not match its published rows")
-    return {"version": version[1], "days": int(conditions[1]), "seed": int(conditions[2]),
-            "scores": rows, "sourcePath": path.relative_to(ROOT).as_posix()}
-
-
 def check_batch_source(batch, manifest):
     # Upstream hashes the member name and uncompressed contents, not the ZIP container.
     digest = hashlib.sha256()
@@ -154,12 +135,10 @@ def recorded_balances(path, result):
 
 
 def model_results(version):
-    models, archives = [], []
-    for batch in sorted(BASELINES.glob("models-*")):
-        if not (batch / "aggregate.json").exists():
-            archives.append(archived_scores(batch / "README.md"))
-            continue
-        summary = read_json(batch / "aggregate.json")
+    models = []
+    for aggregate in sorted(BASELINES.glob("models-*/aggregate.json")):
+        batch = aggregate.parent
+        summary = read_json(aggregate)
         manifest = read_json(batch / "manifest.json")
         same_engine = check_batch_source(batch, manifest)
         for row in summary["leaderboard"]:
@@ -184,26 +163,17 @@ def model_results(version):
                                "finalBalance": result["final_balance"],
                                "sourcePath": source,
                                "values": recorded_balances(result_path.parent / "conversation.jsonl", result)})
-            else:
-                archive = next((a for a in archives if (a["version"], a["days"], a["seed"])
-                                == (result["version"], days, seed)), None)
-                if archive is None:
-                    archive = {"version": result["version"], "days": days, "seed": seed,
-                               "scores": [], "sourcePath": (batch / "aggregate.json").relative_to(ROOT).as_posix()}
-                    archives.append(archive)
-                archive["scores"].append([name, result["reward"]])
-    return models, archives
+    return models
 
 
 def metadata():
     task = tomllib.loads((TASK / "task.toml").read_text())
     version = task["task"]["version"]
     brief = render()
-    models, archives = model_results(version)
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
                        "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
                                    "fee":config.DAILY_SPOT_FEE, "opens":config.DAY_START_MINUTE,
                                    "closes":config.DAY_END_MINUTE, "refill":config.TOOL_MINUTES.get("restock_machine",config.DEFAULT_TOOL_MINUTES)},
-                       "brief": brief.strip(), "tools": tool_descriptions(), "archives": archives,
-                       "rivals": [reference_trace(version), *models]}, allow_nan=False)
+                       "brief": brief.strip(), "tools": tool_descriptions(),
+                       "rivals": [reference_trace(version), *model_results(version)]}, allow_nan=False)

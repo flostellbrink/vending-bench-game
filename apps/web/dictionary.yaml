@@ -680,11 +680,6 @@ operator:
     ^en: "Observed"
     es: "Observado"
     de: "Beobachtet"
-  archive:
-    .id: OPS00015
-    ^en: "Historical scores"
-    es: "Resultados históricos"
-    de: "Historische Ergebnisse"
   help:
     .id: OPS00016
     ^en: "Commands"
@@ -931,16 +926,6 @@ screen:
     ^en: "Daily closing balance · seed 1"
     es: "Saldo al cierre · semilla 1"
     de: "Kontostand bei Tagesende · Startwert 1"
-  archive:
-    .id: VB000006
-    ^en: "AI archive · v2 final scores"
-    es: "Archivo de IA · resultados finales v2"
-    de: "KI-Archiv · Endstände v2"
-  note:
-    .id: VB000007
-    ^en: "Different rules. These scores are not v3 targets. Simulator messages are in English."
-    es: "Reglas distintas. Estos resultados no son metas de v3. Los mensajes del simulador están en inglés."
-    de: "Andere Regeln. Diese Werte sind keine Ziele für v3. Simulatormeldungen sind auf Englisch."
   reset:
     .id: VB000008
     ^en: "New run"
@@ -1092,9 +1077,9 @@ landing:
     de: "{$model} hat einen Verkaufsautomaten betrieben. Jetzt bist du dran."
   fallback:
     .id: HN000002
-    ^en: "Your shift at the vending machines."
-    es: "Tu turno al frente de las máquinas."
-    de: "Deine Schicht an den Automaten."
+    ^en: "Claude Opus 5 ran a vending machine. Your shift."
+    es: "Claude Opus 5 gestionó una máquina expendedora. Te toca."
+    de: "Claude Opus 5 hat einen Verkaufsautomaten betrieben. Jetzt bist du dran."
   context:
     .id: HN000016
     ^en: "This independent game lets you play Prosus Vending Bench, an open benchmark for AI agents. Your job is the same as theirs: find suppliers, buy stock, set prices and keep enough cash for tomorrow."
@@ -1123,13 +1108,6 @@ landing:
     ^en: "v{$version} · {$days} days · seed {$seed}"
     es: "v{$version} · {$days} días · semilla {$seed}"
     de: "v{$version} · {$days} Tage · Seed {$seed}"
-  archived:
-    .id: HN000007
-    .inputs:
-      - $playable :string
-    ^en: "Different rules from the selected v{$playable} run. These scores are historical, not targets for your run."
-    es: "Las reglas difieren de la partida v{$playable} seleccionada. Son resultados históricos, no objetivos para tu partida."
-    de: "Andere Regeln als im gewählten Lauf v{$playable}. Diese historischen Ergebnisse sind keine Zielwerte für deinen Lauf."
   method:
     .id: HN000008
     ^en: "How the benchmark works"

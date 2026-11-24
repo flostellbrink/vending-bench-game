@@ -1,4 +1,4 @@
-import { archiveSchema, releaseSchema, rivalSchema } from "games-common/benchmark";
+import { releaseSchema, rivalSchema } from "games-common/benchmark";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -13,10 +13,6 @@ export const sourceRivalSchema = v.object({
   sourcePath: v.string(),
   values: v.nullish(v.array(v.number())),
 });
-export const sourceArchiveSchema = v.object({
-  ...v.omit(archiveSchema, ["source"]).entries,
-  sourcePath: v.string(),
-});
 const metadataSchema = v.object({
   ...v.pick(releaseSchema, [
     "version",
@@ -29,7 +25,6 @@ const metadataSchema = v.object({
     "tools",
   ]).entries,
   rivals: v.array(sourceRivalSchema),
-  archives: v.array(sourceArchiveSchema),
 });
 type Metadata = v.InferOutput<typeof metadataSchema>;
 export interface SnapshotRelease extends Metadata {
@@ -72,7 +67,6 @@ function sourceFiles(revision: string) {
       ].includes(path) ||
       (path.startsWith("results/baselines/models-") &&
         [
-          "README.md",
           "aggregate.json",
           "manifest.json",
           "result.json",

@@ -45,7 +45,6 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
         <section className="bench-paper">
           <Scorecard
             {...{ state, rivals, best, lang, t, screen, reports, money, history }}
-            archives={release.archives}
             reviewDay={(d) => {
               setDay(d);
               setReceipt(null);

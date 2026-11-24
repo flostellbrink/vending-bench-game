@@ -129,7 +129,6 @@ export function WorkspaceReadout({
         {...{ state, lang, t, screen, reports, money }}
         rivals={run.rivals}
         best={run.best}
-        archives={release.archives}
         openReport={setTab}
       />
     );

@@ -135,7 +135,6 @@ export const stationMessages = {
     discount: msg.operator.discount,
     minimum: msg.operator.minimum,
     seen: msg.operator.seen,
-    archive: msg.operator.archive,
     help: msg.operator.help,
     local: msg.operator.local,
     empty: msg.operator.empty,
@@ -148,8 +147,6 @@ export const stationMessages = {
     history: msg.operator.history,
   },
   screen: {
-    archive: msg.screen.archive,
-    note: msg.screen.note,
     reset: msg.screen.reset,
     discard: msg.screen.discard,
     loading: msg.screen.loading,

@@ -14,25 +14,22 @@ interface Cohort {
   version: string;
   seed: number;
   days: number;
-  matching: boolean;
   source: string;
   scores: ReadonlyArray<readonly [string, number]>;
 }
 function cohorts(r: Release): Cohort[] {
   const models = r.rivals.filter((x) => x.kind === "model");
-  const active = models[0]
+  return models[0]
     ? [
         {
           version: r.version,
           days: r.days,
           seed: r.seed,
-          matching: true,
           source: models[0].source,
           scores: models.map((m) => [m.name ?? "AI", m.score] as const),
         },
       ]
     : [];
-  return [...active, ...r.archives.map((a) => ({ ...a, matching: false }))];
 }
 function Dossier({
   release: r,
@@ -85,11 +82,6 @@ function Dossier({
                     </b>
                     <a href={batch.source}>{msg.landing.publication({}, opts)}</a>
                   </header>
-                  {!batch.matching && (
-                    <p className="cohort-note">
-                      {msg.landing.archived({ playable: r.version }, opts)}
-                    </p>
-                  )}
                   <ol className="score-ladder" aria-label={msg.landing.score({}, opts)}>
                     {batch.scores
                       .toSorted((a, b) => b[1] - a[1])

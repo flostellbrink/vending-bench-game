@@ -1,4 +1,4 @@
-import type { Snapshot, Rival, PersonalBest, Archive, Report } from "games-common/benchmark";
+import type { Snapshot, Rival, PersonalBest, Report } from "games-common/benchmark";
 
 import {
   translate,
@@ -15,7 +15,6 @@ interface Props {
   state: Snapshot | null;
   rivals: Rival[];
   best: PersonalBest | null;
-  archives: Archive[];
   lang: Lang;
   t: Translate;
   screen: ScreenTranslate;
@@ -29,7 +28,6 @@ export function Scorecard({
   state,
   rivals,
   best,
-  archives,
   lang,
   t,
   screen,
@@ -127,20 +125,6 @@ export function Scorecard({
           </table>
         </details>
       )}
-      {archives.map((archive) => (
-        <details key={archive.source + archive.days + archive.seed}>
-          <summary>
-            {t("archive")} · v{archive.version} · {archive.days}d / {archive.seed}
-          </summary>
-          {archive.scores.map(([name, value]) => (
-            <div className="manual" key={name}>
-              {name}
-              <b>{money(value)}</b>
-            </div>
-          ))}
-          <a href={archive.source}>Prosus Vending Bench v{archive.version}</a>
-        </details>
-      ))}
     </section>
   );
 }

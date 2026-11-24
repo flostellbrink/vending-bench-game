@@ -49,10 +49,6 @@ function assets(release: SnapshotRelease): Release {
     writeJSON(join(publicDir, balances), values);
     return { ...published, balances };
   });
-  const archives = release.archives.map(({ sourcePath, ...cohort }) => ({
-    ...cohort,
-    source: source(sourcePath),
-  }));
   const mtime = git("show", "-s", "--format=%cI", revision).toString().trim();
   const engineArchive = folder + "/engine.zip";
   const zip = join(publicDir, engineArchive);
@@ -73,7 +69,7 @@ function assets(release: SnapshotRelease): Release {
   const hash = createHash("sha256").update(adapterSource).digest("hex");
   const adapterAsset = folder + "/adapter-" + hash.slice(0, 16) + ".py";
   writeFileSync(join(publicDir, adapterAsset), adapterSource);
-  return { ...release, engineArchive, adapter: adapterAsset, archives, rivals };
+  return { ...release, engineArchive, adapter: adapterAsset, rivals };
 }
 
 if (import.meta.main) {

@@ -38,7 +38,7 @@ The full [Vending Bench repository](https://github.com/ProsusAI/vending-bench) i
 
 The build reads each selected Git snapshot, not local edits to the submodule. It generates the engine archive, challenge conditions, briefing and tool descriptions. It runs the upstream scripted operator to obtain daily balances and checks the result against the published calibration when one exists. A new major version needs a compatible browser adapter. No native Python installation is required.
 
-Published model trials must match the engine, configuration, seed and horizon to count as rivals. Recorded daily balances form a trace; a final score alone gives only an endpoint. The [archived model scores](https://github.com/ProsusAI/vending-bench/tree/main/results/baselines/models-30d) do not become targets under different rules.
+The playable challenge uses v3 and its scripted reference run. Model trials must match the engine, configuration, seed and horizon to count as rivals. Recorded daily balances form a trace; a final score alone gives only an endpoint.
 
 ## Languages
 

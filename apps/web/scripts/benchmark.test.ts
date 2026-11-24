@@ -12,7 +12,6 @@ import {
   pythonJSON,
   readReleases,
   readSnapshot,
-  sourceArchiveSchema,
   sourceRivalSchema,
 } from "./benchmark-source.ts";
 
@@ -173,11 +172,11 @@ digest.hexdigest()
   write(trial + "/config.json", config);
   const models = () =>
     v.parse(
-      v.tuple([v.array(sourceRivalSchema), v.array(sourceArchiveSchema)]),
+      v.array(sourceRivalSchema),
       pythonJSON(python, "json.dumps(model_results(" + JSON.stringify(release.version) + "))"),
     );
   assert.deepEqual(
-    models()[0].map((r) => [r.name, r.score, r.values]),
+    models().map((r) => [r.name, r.score, r.values]),
     [["Example model", 2476, null]],
   );
   const receipt = "[Day 2/" + release.days + " — Tue 06 Jan 2026 09:00 — balance €1,481.25]";
@@ -185,13 +184,10 @@ digest.hexdigest()
     { role: "assistant", content: receipt.replace("1,481.25", "9,999.99") },
     { role: "tool", content: receipt },
   ]);
-  assert.deepEqual(assertValue(models()[0][0]).values, [release.startingBalance, 1481.25]);
+  assert.deepEqual(assertValue(models()[0]).values, [release.startingBalance, 1481.25]);
   config.capital.daily_spot_fee++;
   write(trial + "/config.json", config);
-  const [matching, archives] = models();
-  assert.equal(matching.length, 0);
-  assert.equal(archives.length, 1);
-  assert.deepEqual(assertValue(archives[0]).scores, [["Example model", 2476]]);
+  assert.deepEqual(models(), []);
 });
 
 await test("a changed upstream site fee regenerates the brief and recalibrates the reference", async () => {
