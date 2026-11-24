@@ -37,12 +37,7 @@
       "rules": { "unicorn/require-post-message-target-origin": "off" }
     },
     {
-      "files": [
-        "apps/**/*.ts",
-        "apps/**/*.tsx",
-        "design/**/*.ts",
-        "packages/common/src/benchmark.ts"
-      ],
+      "files": ["apps/**/*.ts", "apps/**/*.tsx", "packages/common/src/benchmark.ts"],
       "rules": { "typescript/consistent-type-assertions": ["error", { "assertionStyle": "never" }] }
     }
   ]
