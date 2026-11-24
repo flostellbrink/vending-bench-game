@@ -7,6 +7,7 @@ import { timeLabel } from "@/game/time-label";
 import type { WorkspaceProps } from "./Workspace";
 
 import { BalanceScope } from "./BalanceScope";
+import { Mailbox, SalesReports } from "./BusinessReports";
 import { CommandIndex } from "./CommandIndex";
 import DispatchDesk from "./DispatchDesk";
 import ObservationView from "./ObservationView";
@@ -14,7 +15,7 @@ import { OperatorBrief } from "./OperatorBrief";
 import { OrderRegister } from "./OrderRegister";
 import { ReportList } from "./ReportList";
 import { Scorecard } from "./Scorecard";
-import SiteDesk from "./SiteDesk";
+import { SupplierDirectory } from "./SupplierDirectory";
 
 interface Props extends WorkspaceProps {
   context: ReadoutContext;
@@ -51,7 +52,6 @@ export function WorkspaceReadout({
         {...controls}
         state={state}
         orders={orders}
-        onSite={nav.openSite}
         onView={setTab}
         onCloseDraft={() => {
           if (shell.line.trim() === "close") shell.runCommand("close", true);
@@ -76,6 +76,49 @@ export function WorkspaceReadout({
         }}
       />
     );
+  if (state && tab === "suppliers")
+    return <SupplierDirectory {...controls} state={state} openObject={nav.openObject} />;
+  const cmd = inspectionCommand(tab);
+  if (
+    state &&
+    typeof tab === "string" &&
+    (tab.startsWith("machine:") || tab.startsWith("supplier:") || tab === "site:depot") &&
+    cmd
+  ) {
+    const report = context.selected;
+    const scoped =
+      report && tab.startsWith("machine:") && !report.args.machine_id
+        ? {
+            ...report,
+            rows: report.rows.filter((row) => String(row[0]).startsWith(tab.slice(8) + ":")),
+          }
+        : report;
+    const verb = cmd.split(" ")[0] ?? "";
+    const action = (
+      <button
+        className="asset-check"
+        disabled={disabled}
+        data-clock-verb={verb}
+        onClick={() => shell.runCommand(cmd, false, true)}
+      >
+        {verb === "quote" ? t("reprice") : t("inspectNow")} · {timeLabel(verb, state, t)}
+      </button>
+    );
+    return scoped ? (
+      <ObservationView
+        {...controls}
+        report={scoped}
+        state={state}
+        openReport={setTab}
+        action={action}
+      />
+    ) : (
+      <section className="sheet asset-actions">{action}</section>
+    );
+  }
+  if (state && tab === "mail") return <Mailbox {...controls} state={state} openReport={setTab} />;
+  if (state && tab === "sales")
+    return <SalesReports {...controls} state={state} openReport={setTab} />;
   if (context.selected && state)
     return (
       <ObservationView {...controls} report={context.selected} state={state} openReport={setTab} />
@@ -89,7 +132,6 @@ export function WorkspaceReadout({
         open={setTab}
       />
     );
-  const cmd = inspectionCommand(tab);
   if (cmd && state)
     return (
       <section className="sheet">
@@ -98,15 +140,6 @@ export function WorkspaceReadout({
           {cmd} · {timeLabel(cmd.split(" ")[0] ?? "", state, t)}
         </button>
       </section>
-    );
-  if (state && (tab === "suppliers" || (typeof tab === "string" && tab.startsWith("site:"))))
-    return (
-      <SiteDesk
-        {...controls}
-        site={tab === "suppliers" ? "depot" : tab.slice(5)}
-        state={state}
-        openReport={setTab}
-      />
     );
   if (tab === "orders") return <OrderRegister {...{ orders, t, money }} open={setTab} />;
   if (tab === "help")

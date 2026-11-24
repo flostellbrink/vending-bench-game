@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { operatorText } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
 import { clock, receiptEnd } from "@/scene/clock";
@@ -10,10 +12,14 @@ import { Metrics } from "./Metrics";
 import { OrderSlip } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
 import { SupplierLetter } from "./SupplierLetter";
-function ReceiptHeading({ report, t }: Pick<ObservationProps, "report" | "t">) {
+function ReceiptHeading({
+  report,
+  t,
+  action,
+}: Pick<ObservationProps, "report" | "t"> & { action?: ReactNode }) {
   return (
     <header className="receipt-heading">
-      <h2>{report.line}</h2>
+      {action ?? <h2>{report.line}</h2>}
       <small>
         #{report.id} · {t("day")} {report.day} · {clock(report.minute)} →{" "}
         {receiptEnd(report, t("day"))} · {report.minutes} min
@@ -34,7 +40,8 @@ export default function ObservationView({
   commandLine,
   stageCommand,
   openReport,
-}: ObservationProps & { openReport: (id: number) => void }) {
+  action,
+}: ObservationProps & { openReport: (id: number) => void; action?: ReactNode }) {
   const text = report.display;
   const letterProps = {
     line: commandLine,
@@ -59,7 +66,7 @@ export default function ObservationView({
     );
   return (
     <section className="report">
-      <ReceiptHeading report={report} t={t} />
+      <ReceiptHeading report={report} t={t} action={action} />
       {report.mail ? (
         <article className="mail-paper">
           <h3>{report.mail.subject}</h3>

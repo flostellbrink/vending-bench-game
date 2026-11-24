@@ -1,5 +1,40 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  incomingMail:
+    .id: MO000001
+    ^en: Inbox
+    es: Recibidos
+    de: Posteingang
+  sentMail:
+    .id: MO000002
+    ^en: Sent
+    es: Enviados
+    de: Gesendet
+  checkFolder:
+    .id: MO000003
+    ^en: Check folder
+    es: Consultar carpeta
+    de: Ordner abrufen
+  folderNotChecked:
+    .id: MO000004
+    ^en: No saved listing for this folder.
+    es: No hay una lista guardada de esta carpeta.
+    de: Für diesen Ordner ist keine Nachrichtenliste gespeichert.
+  allSites:
+    .id: MO000005
+    ^en: All locations
+    es: Todas las ubicaciones
+    de: Alle Standorte
+  productBreakdown:
+    .id: MO000006
+    ^en: By product
+    es: Por producto
+    de: Nach Produkt
+  noSalesObservation:
+    .id: MO000007
+    ^en: No saved sales report for this selection.
+    es: No hay un informe de ventas guardado para esta selección.
+    de: Für diese Auswahl ist kein Verkaufsbericht gespeichert.
   shortBy:
     .id: ORSH0001
     ^en: Short by
@@ -572,9 +607,9 @@ operator:
     de: Umsatz
   supply:
     .id: VHGRP001
-    ^en: Suppliers and depot
-    es: Proveedores y almacén
-    de: Lieferanten und Lager
+    ^en: Suppliers
+    es: Proveedores
+    de: Lieferanten
   machines:
     .id: VHGRP002
     ^en: Machines

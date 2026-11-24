@@ -3,12 +3,13 @@ import type { Report } from "games-common/benchmark";
 import type { View } from "@/hooks/useNavigation";
 import type { OperatorLabel } from "@/localization/messages";
 
+import { address } from "./commands.ts";
 import { belongsTo, recordObject } from "./report-object";
 
 const tools: Record<string, string> = {
-  suppliers: "search_web",
   mail: "list_emails",
   sales: "get_sales_report",
+  "site:depot": "get_storage_inventory",
 };
 const labels: Partial<Record<string, OperatorLabel>> = {
   desk: "dispatchDesk",
@@ -20,6 +21,7 @@ const labels: Partial<Record<string, OperatorLabel>> = {
   brief: "rules",
   mail: "mailbox",
   suppliers: "searchSuppliers",
+  "site:depot": "depot",
   sales: "revenue",
 };
 
@@ -37,9 +39,13 @@ export function readoutContext(tab: View, reports: Report[]) {
         });
   const object = typeof tab === "number" && selected ? recordObject(selected) : objectKey;
   const history = reports.filter((r) => belongsTo(r, object));
-  const name =
-    selected?.line ??
-    (/^(?:site|machine|supplier):/.test(key) ? key.slice(key.indexOf(":") + 1) : undefined);
+  const name = key.startsWith("machine:")
+    ? address(key.slice(8))
+    : key.startsWith("supplier:")
+      ? key.slice(9)
+      : typeof tab === "number"
+        ? selected?.line
+        : undefined;
   return { selected, object, history, name, label: labels[key] ?? "history" };
 }
 export type ReadoutContext = ReturnType<typeof readoutContext>;
@@ -47,8 +53,9 @@ export type ReadoutContext = ReturnType<typeof readoutContext>;
 export function inspectionCommand(tab: View) {
   if (tab === "mail") return "inbox";
   if (tab === "sales") return "sales";
+  if (tab === "site:depot") return "depot";
   if (typeof tab !== "string") return undefined;
-  if (tab.startsWith("machine:")) return "inspect " + tab.slice(8);
+  if (tab.startsWith("machine:")) return "inspect " + address(tab.slice(8));
   if (tab.startsWith("supplier:")) return "quote " + tab.slice(9);
   return undefined;
 }

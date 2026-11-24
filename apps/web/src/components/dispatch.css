@@ -11,6 +11,30 @@
   font: inherit;
   color: inherit;
 }
+.desk-archive {
+  list-style: none;
+  padding: 0;
+}
+.sheet.asset-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem 0.8rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #9caa9c;
+}
+.asset-actions h2 {
+  margin: 0;
+}
+.desk-archive button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.22em 0;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
 .dispatch-nameplate,
 .dispatch-shift {
   display: flex;
@@ -39,17 +63,11 @@
   padding: 0.15rem 0;
   text-align: left;
 }
-.dispatch-paper {
-  display: grid;
-  flex: 1;
-  grid-template-columns: 3fr 2fr;
-}
-.dispatch-route,
 .dispatch-register {
   padding: 0.5rem 0.8rem;
   min-width: 0;
 }
-.dispatch-paper h3,
+.dispatch-register h3,
 .dispatch-search label {
   display: block;
   font:
@@ -58,51 +76,6 @@
   letter-spacing: 0.075em;
   text-transform: uppercase;
   margin: 0 0 0.3rem;
-}
-.dispatch-stations {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 0.5rem;
-}
-.dispatch-stations .route-stop {
-  border: 0;
-  background: transparent;
-  display: inline-grid;
-  grid-template-rows: 0.8rem auto;
-  position: relative;
-  justify-items: start;
-  padding: 0 0.6rem 0 0;
-  font-size: 0.83rem;
-  font-weight: bold;
-}
-.route-stop::before {
-  content: "";
-  position: absolute;
-  top: 0.35rem;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #688276;
-}
-.route-stop:last-child::before {
-  content: none;
-}
-.route-stop i {
-  align-self: center;
-  z-index: 1;
-  width: 0.6rem;
-  height: 0.6rem;
-  border: 2px solid #526d5e;
-  background: #eeeee2;
-  border-radius: 50%;
-}
-.route-depot i {
-  border-radius: 0;
-  background: #526d5e;
-}
-.route-stop:hover span,
-.route-stop:focus-visible span {
-  text-decoration: underline;
 }
 .dispatch-search > div {
   display: flex;
@@ -123,7 +96,6 @@
   background: #dce2d5;
 }
 .dispatch-register {
-  border-left: 1px dashed var(--dispatch-rule);
   background: repeating-linear-gradient(
     to bottom,
     transparent 0 calc(1.65rem - 1px),
@@ -174,13 +146,4 @@
 }
 .dispatch-shift strong {
   color: var(--dispatch-ink);
-}
-@media (max-width: 660px) {
-  .dispatch-paper {
-    grid-template-columns: 1fr;
-  }
-  .dispatch-register {
-    border-left: 0;
-    border-top: 1px dashed var(--dispatch-rule);
-  }
 }

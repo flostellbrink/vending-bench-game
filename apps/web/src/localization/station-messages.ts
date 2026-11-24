@@ -2,6 +2,13 @@ import { msg } from "@/dictionary";
 
 export const stationMessages = {
   operator: {
+    incomingMail: msg.operator.incomingMail,
+    sentMail: msg.operator.sentMail,
+    checkFolder: msg.operator.checkFolder,
+    folderNotChecked: msg.operator.folderNotChecked,
+    allSites: msg.operator.allSites,
+    productBreakdown: msg.operator.productBreakdown,
+    noSalesObservation: msg.operator.noSalesObservation,
     shortBy: msg.operator.shortBy,
     averageCost: msg.operator.averageCost,
     resumeSavedRun: msg.operator.resumeSavedRun,
@@ -154,6 +161,9 @@ export const stationMessages = {
     complete: msg.screen.complete,
   },
   fields: {
+    days: msg.fields.days,
+    folder: msg.fields.folder,
+    location: msg.fields.location,
     email_id: msg.fields.email_id,
     subject: msg.fields.subject,
     supplier_id: msg.fields.supplier_id,

@@ -18,19 +18,12 @@ export function useNavigation(initialView: View) {
     current.current = id;
     setView(id);
   }
-  const openSite = useCallback(
-    (id: string) => {
-      setSite(id);
-      setTab("site:" + id);
-    },
-    [setTab],
-  );
   function openObject(id: string) {
     if (id.startsWith("machine:"))
       setSite(id.slice(8).toLowerCase().replace(/^ai-/, "").split(":")[0] ?? null);
     else if (id.startsWith("site:")) setSite(id.slice(5));
     setTab(id);
   }
-  return { tab, setTab, back, site, setSite, openSite, openObject, balanceDay, setBalanceDay };
+  return { tab, setTab, back, site, setSite, openObject, balanceDay, setBalanceDay };
 }
 export type Navigation = ReturnType<typeof useNavigation>;

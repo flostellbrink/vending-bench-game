@@ -1,8 +1,6 @@
 import type { Report, Snapshot } from "games-common/benchmark";
 import type { KeyboardEvent, ReactNode } from "react";
 
-import { last } from "games-common/language";
-
 import type { Translate } from "@/localization/messages";
 
 import { address } from "@/game/commands";
@@ -59,13 +57,7 @@ export function ObjectNavigator({ state, reports, t, value, onOpen }: Props) {
     {
       label: t("network"),
       children: [
-        ...(state?.sites.map((site) => ({
-          id: "site:" + address(site.id),
-          label: site.name,
-          children: state.machines
-            .filter((id) => id.startsWith(site.id + ":"))
-            .map((id) => ({ id: "machine:" + id, label: last(address(id).split(".")) })),
-        })) ?? []),
+        ...(state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? []),
         { id: "site:depot", label: t("depot") },
       ],
     },
@@ -74,7 +66,7 @@ export function ObjectNavigator({ state, reports, t, value, onOpen }: Props) {
       children: [
         { id: "suppliers", label: t("searchSuppliers") },
         ...suppliers.map((s) => ({ id: "supplier:" + s.id, label: s.name })),
-        { id: "orders", label: t("deliveries") },
+        { id: "orders", label: t("orders") },
       ],
     },
     { id: "mail", label: t("mailbox") },
