@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { operatorText } from "@/game/commands";
+import { operatorText, priceOrder } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
 import { clock, receiptEnd } from "@/scene/clock";
 
@@ -46,6 +46,15 @@ export default function ObservationView({
   openSupplier?: (id: string) => void;
 }) {
   const text = report.display;
+  const refusedOrder = report.tool === "order_goods" && text.startsWith("Order refused:");
+  const estimate = refusedOrder
+    ? priceOrder(
+        report.line,
+        { day: report.day, cash: report.openingCash },
+        { order_goods: [] },
+        reports.filter((r) => r.id < report.id),
+      )
+    : null;
   const purchaseSupplier = report.terms?.order
     ? (report.args.supplier_id ??
       reports
@@ -179,6 +188,36 @@ export default function ObservationView({
             </>
           )}
           {text && <pre>{text}</pre>}
+          {estimate && (
+            <div className="terms">
+              {estimate.cost !== undefined && (
+                <p>
+                  {t("quoted")}: {money(estimate.cost)} · {t("minimum")}: {money(estimate.minimum)}
+                </p>
+              )}
+              {(estimate.status === "belowMinimum" || estimate.status === "lowCash") && (
+                <p>
+                  {t(estimate.status)} · {t("shortBy")}:{" "}
+                  {money(
+                    estimate.status === "belowMinimum"
+                      ? estimate.minimum - estimate.cost
+                      : -estimate.remaining,
+                  )}
+                </p>
+              )}
+              {(estimate.status === "needQuote" || estimate.status === "expiredQuote") && (
+                <p>{t(estimate.status)}</p>
+              )}
+              {openSupplier && report.args.supplier_id && (
+                <button
+                  className="receipt-link"
+                  onClick={() => openSupplier(report.args.supplier_id ?? "")}
+                >
+                  {report.args.supplier_id}
+                </button>
+              )}
+            </div>
+          )}
           {report.demand && (
             <details>
               <summary>{t("demand")}</summary>
