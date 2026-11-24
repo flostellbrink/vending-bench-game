@@ -3,6 +3,13 @@ import { msg } from "@/dictionary";
 export const stationMessages = {
   lineTotalFor: msg.operator.lineTotalFor,
   operator: {
+    duplicateOrderProduct: msg.operator.duplicateOrderProduct,
+    incompleteOrderLine: msg.operator.incompleteOrderLine,
+    quotedAtQuantity: msg.operator.quotedAtQuantity,
+    expiredOrderReference: msg.operator.expiredOrderReference,
+    quotedUnitPrice: msg.operator.quotedUnitPrice,
+    addOrderProduct: msg.operator.addOrderProduct,
+    orderPriceUnknown: msg.operator.orderPriceUnknown,
     supplierQuote: msg.operator.supplierQuote,
     allQuotedItems: msg.operator.allQuotedItems,
     selectOrderItems: msg.operator.selectOrderItems,
@@ -175,6 +182,8 @@ export const stationMessages = {
     complete: msg.screen.complete,
   },
   fields: {
+    limit: msg.fields.limit,
+    unread_only: msg.fields.unread_only,
     score: msg.fields.score,
     days: msg.fields.days,
     folder: msg.fields.folder,

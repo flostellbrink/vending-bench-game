@@ -1,47 +1,30 @@
 .business-report .report-actions {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.8rem;
   border-bottom: 1px solid #91a290;
   padding: 0.3rem 0 0.55rem;
 }
 .report-actions .report-breakdown {
   min-height: var(--action-height);
-  font-size: 0.9rem;
-}
-.report-actions :is(.mail-folders, .report-breakdown) {
-  gap: var(--control-gap);
+  flex-direction: row-reverse;
 }
 .report-actions input[type="checkbox"] {
   margin: 0;
 }
-.report-actions .control-field :is(select, input) {
-  height: var(--action-height);
-  box-sizing: border-box;
-}
 .report-actions input[type="number"] {
   width: 6ch;
 }
-.report-actions :is(select, input, button) {
-  font: inherit;
-}
-.report-actions .mail-folders button,
 .report-actions button[data-clock-verb] {
   background: #d8e2d6;
   border: 1px solid #829484;
   padding: 0.3em 0.6em;
 }
-.report-actions .mail-folders button,
 .report-actions .mail-compose-trigger {
   box-sizing: border-box;
   height: var(--action-height);
   padding-block: 0;
-}
-.report-actions .mail-compose-trigger {
-  margin-inline-start: 0.45rem;
-}
-.report-actions button[aria-pressed="true"] {
-  color: #f1f4e8;
-  background: #354e40;
 }
 .business-report .report {
   padding-inline: 0;

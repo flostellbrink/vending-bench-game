@@ -140,11 +140,11 @@ export function WorkspaceReadout({
             supplierView
           />
         )}
-        {report?.terms?.minimum !== undefined && (
+        {contact?.quotable !== false && (
           <OrderSlip
             {...controls}
-            report={report}
-            terms={report.terms}
+            report={report?.terms?.minimum !== undefined ? report : undefined}
+            supplier={supplier}
             state={state}
             openReport={setTab}
             supplierView
@@ -161,9 +161,10 @@ export function WorkspaceReadout({
       </article>
     );
   }
-  if (state && tab === "mail") return <Mailbox {...controls} state={state} openReport={setTab} />;
+  if (state && tab === "mail")
+    return <Mailbox {...controls} release={release} state={state} openReport={setTab} />;
   if (state && tab === "sales")
-    return <SalesReports {...controls} state={state} openReport={setTab} />;
+    return <SalesReports {...controls} release={release} state={state} openReport={setTab} />;
   if (context.selected && state)
     return (
       <ObservationView

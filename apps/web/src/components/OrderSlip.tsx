@@ -1,77 +1,59 @@
-import type { QuoteTerms } from "games-common/benchmark";
+import type { Report } from "games-common/benchmark";
 
-import { assertValue } from "games-common/language";
-import { useContext, useId } from "react";
+import { useContext } from "react";
 
-import { quotedWord } from "@/game/command-words";
+import { priceOrder } from "@/game/commands";
+import { orderEntry, type OrderLine } from "@/game/order-entry";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { ControlInput, ControlRow, Field, QuantityInput } from "./FormControls";
 import { GuiToolInfo, ToolReferenceContext } from "./GuiToolInfo";
-import { useQuoteDraft } from "./QuoteDrafts";
+import { useOrderDraft, useQuoteQuantity } from "./QuoteDrafts";
 import "./order-slip.css";
-interface Props extends ObservationProps {
-  terms: QuoteTerms;
-  openReport: (id: number) => void;
-  supplierView?: boolean;
-}
-export function QuoteRequest({
-  report,
-  supplier,
-  t,
-  runCommand,
-  disabled,
-  supplierView = false,
-}: Pick<Props, "state" | "t" | "runCommand" | "disabled" | "supplierView"> & {
+
+type Shared = Pick<ObservationProps, "state" | "t" | "runCommand" | "disabled"> & {
+  report?: Report;
   supplier: string;
-  report?: Props["report"];
-}) {
-  const inputId = useId();
+  supplierView?: boolean;
+};
+
+export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView = false }: Shared) {
   const context = useContext(ToolReferenceContext);
-  const draftKey = report?.id ?? "supplier:" + supplier;
-  const { draft, save } = useQuoteDraft(
-    draftKey,
-    report?.terms?.quantity ?? context?.release.toolDefaults.check_offers.quantity,
+  const { qty, change } = useQuoteQuantity(
+    supplier,
+    context?.release.toolDefaults.check_offers.quantity,
   );
-  const qty = draft.quantity;
   const valid = !disabled && Number.isSafeInteger(Number(qty)) && Number(qty) > 0;
   return (
     <form
       className="quote-request"
-      aria-labelledby={inputId + "-title"}
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) runCommand("quote " + supplier + " " + qty, false, supplierView);
       }}
     >
-      <h3 id={inputId + "-title"}>{t("supplierQuote")}</h3>
-      <div className="control-row">
-        <label htmlFor={inputId}>{t("bundle")}</label>
-        <input
-          className="control-line"
-          id={inputId}
-          type="number"
-          min="1"
-          required
-          value={qty}
-          onChange={(e) =>
-            save(draftKey, { selection: draft.selection, quantity: e.currentTarget.value })
-          }
-        />
+      <h3>{t("supplierQuote")}</h3>
+      <ControlRow>
+        <Field inline label={t("bundle")}>
+          <QuantityInput required value={qty} onChange={(e) => change(e.currentTarget.value)} />
+        </Field>
         <GuiToolInfo verb="quote">
           <button type="submit" disabled={!valid} data-clock-verb="quote">
             {t("reprice")}
           </button>
         </GuiToolInfo>
-      </div>
+      </ControlRow>
     </form>
   );
 }
 
+type Props = Shared &
+  Pick<ObservationProps, "lang" | "reports" | "money"> & { openReport: (id: number) => void };
+
 export function OrderSlip({
-  terms,
   report,
   reports,
   state,
@@ -81,252 +63,247 @@ export function OrderSlip({
   runCommand,
   disabled,
   openReport,
+  supplier,
   supplierView = false,
 }: Props) {
-  const supplier = assertValue(report.args.supplier_id);
-  const previous = reports.findLast(
+  const { draft, save } = useOrderDraft(supplier);
+  const submitted = reports.find(
     (r) =>
-      r.id < report.id &&
-      r.tool === report.tool &&
-      r.args.supplier_id === supplier &&
-      r.terms?.quantity === terms.quantity,
+      r.id === draft.submittedId && r.tool === "order_goods" && r.args.supplier_id === supplier,
   );
-  const newer = reports.findLast(
-    (r) =>
-      r.id > report.id &&
-      r.tool === report.tool &&
-      r.args.supplier_id === supplier &&
-      r.terms?.quantity === terms.quantity,
-  );
+  const terms = report?.terms;
+  const rows = report?.rows ?? [];
+  const comparable =
+    report &&
+    terms &&
+    reports.filter(
+      (r) =>
+        r.tool === "check_offers" &&
+        r.args.supplier_id === supplier &&
+        r.terms?.quantity === terms.quantity,
+    );
+  const previous = report && comparable?.findLast((r) => r.id < report.id);
+  const newer = report && comparable?.findLast((r) => r.id > report.id);
   const oldPrices = new Map(
-    previous?.rows.flatMap(([id, value]) =>
-      typeof id === "string" && typeof value === "number" ? [[id, value] as const] : [],
+    previous?.rows.flatMap(([id, price]) =>
+      typeof id === "string" && typeof price === "number" ? [[id, price] as const] : [],
     ),
   );
-  const rows = report.rows.map((row) => ({
-    product: String(assertValue(row[0])),
-    price: Number(assertValue(row[1])),
-    discount: String(assertValue(row[2])),
-  }));
-  const { draft, save } = useQuoteDraft(report.id, terms.quantity);
-  const { selection, quantity: qty, submittedId } = draft;
-  const submitted =
-    submittedId === undefined
-      ? undefined
-      : reports.find(
-          (r) =>
-            r.id === submittedId && r.tool === "order_goods" && r.args.supplier_id === supplier,
-        );
-  const editingQuote = Number(qty) !== terms.quantity;
-  const total =
-    rows.reduce(
-      (cents, row) =>
-        selection.includes(row.product)
-          ? cents + Math.round(row.price * 100) * terms.quantity
-          : cents,
-      0,
-    ) / 100;
-  const expired = state.day > terms.until;
-  const maximum =
-    rows.reduce((cents, row) => cents + Math.round(row.price * 100) * terms.quantity, 0) / 100;
-  const invalid = editingQuote
-    ? "useNewQuote"
-    : expired
-      ? "expiredQuote"
-      : total < terms.minimum
-        ? "belowMinimum"
-        : total > state.cash
-          ? "lowCash"
-          : null;
-
-  function toggle(id: string) {
-    save(report.id, {
-      quantity: qty,
-      selection: selection.includes(id)
-        ? selection.filter((product) => product !== id)
-        : [...selection, id],
+  const offered = new Set(rows.map((row) => String(row[0])));
+  const entry = orderEntry(supplier, draft.lines);
+  const command = entry.command;
+  const estimate = command ? priceOrder(command, state, { order_goods: [] }, reports) : null;
+  const evidence = estimate?.cost !== undefined ? estimate : null;
+  const langOptions = { locale: lang };
+  const manualLines = draft.lines.filter((line) => line.manual || !offered.has(line.product));
+  const amend = (line: OrderLine) => {
+    const exists = draft.lines.some((item) => item.key === line.key);
+    save({
+      lines: exists
+        ? draft.lines.map((item) => (item.key === line.key ? line : item))
+        : [...draft.lines, line],
     });
-  }
+  };
+  const addLine = () =>
+    save({
+      lines: [
+        ...draft.lines,
+        { key: crypto.randomUUID(), product: "", quantity: "", manual: true },
+      ],
+    });
+  const quantityLabel = msg.fields.quantity({}, langOptions);
+  const idLabel = msg.fields.product_id({}, langOptions);
+  const locked = disabled || Boolean(submitted?.terms?.order);
+  const invalid =
+    entry.error === "duplicate"
+      ? t("duplicateOrderProduct")
+      : entry.error === "incomplete"
+        ? t("incompleteOrderLine")
+        : null;
   return (
-    <div className="order-slip" data-expired={expired}>
+    <>
       {!supplierView && <QuoteRequest {...{ report, supplier, state, t, runCommand, disabled }} />}
-      <div className="slip-layout">
-        <div className="slip-catalog">
+      <form
+        className="order-slip"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!command || locked) return;
+          save({ ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
+          runCommand(command, false, true);
+        }}
+      >
+        <div className="slip-head">
+          <h3>{t("compose")}</h3>
+          {!supplierView && <b>{supplier}</b>}
+        </div>
+        {report && terms?.minimum !== undefined && (
           <div className="slip-terms">
             <span>
+              {t("quotedAtQuantity")}: <b>{terms.quantity}</b>
+            </span>
+            <span>
               {t("expires")} <b>{terms.until}</b>
-              {expired && <strong className="slip-expired"> · {t("expiredQuote")}</strong>}
+              {state.day > terms.until && (
+                <strong className="slip-expired"> · {t("expiredOrderReference")}</strong>
+              )}
             </span>
             <span>
               {t("minimum")} <b>{money(terms.minimum)}</b>
             </span>
             {supplierView && (
-              <button className="slip-source" onClick={() => openReport(report.id)}>
+              <button type="button" className="slip-source" onClick={() => openReport(report.id)}>
                 {t("source")} #{report.id} · {t("day")} {report.day} / {clock(report.minute)}
               </button>
             )}
           </div>
-          {previous && (
-            <p className="quote-comparison">
-              {t("versusQuote")} #{previous.id} · {t("day")} {previous.day} ·{" "}
-              {clock(previous.minute)}
-            </p>
-          )}
-          <div className="slip-ledger" tabIndex={0} role="region" aria-label={t("product")}>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">{t("product")}</th>
-                  <th>{msg.fields.price({}, { locale: lang })}</th>
-                  <th scope="col">
-                    {msg.lineTotalFor({ units: terms.quantity }, { locale: lang })}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ product: id, price, discount }) => (
-                  <tr key={id}>
-                    <td>
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={selection.includes(id)}
-                          disabled={disabled || editingQuote}
-                          aria-label={t("include") + " " + id}
-                          onChange={() => toggle(id)}
-                        />
-                        <span>{id}</span>
-                      </label>
-                    </td>
-                    <td>
-                      {money(price)}
-                      {discount !== "0%" && <small> (−{discount})</small>}
-                      {oldPrices.has(id) && oldPrices.get(id) !== price && (
-                        <small className="unit-delta">
-                          Δ {price > assertValue(oldPrices.get(id)) ? "+" : ""}
-                          {money(price - assertValue(oldPrices.get(id)))}
-                        </small>
-                      )}
-                    </td>
-                    <td>{money(price * terms.quantity)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div className="slip-controls">
-          <div className="dispatch">
-            {submitted?.terms?.order ? (
-              <div role="status">
-                <b>
-                  {submitted.terms.order} <output>{money(submitted.terms.paid)}</output>
-                </b>
-                <small>
-                  {t("expectedClose")} {submitted.terms.eta}
-                </small>
-                <button className="receipt-link" onClick={() => openReport(submitted.id)}>
-                  {t("openReceipt")} #{submitted.id}
-                </button>
-                <button
-                  onClick={() => {
-                    save(report.id, { selection: [], quantity: String(terms.quantity) });
-                  }}
-                >
-                  {t("newOrder")}
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="basket-reading" aria-live="polite">
-                  {selection.length > 0 && (
-                    <>
-                      <b>
-                        {t("quoted")} <output>{money(total)}</output>
-                      </b>
-                      <small>
-                        {t("afterOrder")}: {money(state.cash - total)}
-                      </small>
-                    </>
-                  )}
-                  {!selection.length &&
-                    !expired &&
-                    !editingQuote &&
-                    (maximum < terms.minimum ? (
-                      <span>
-                        {t("allQuotedItems")}: <b>{money(maximum)}</b> · {t("shortBy")}:{" "}
-                        <b>{money(terms.minimum - maximum)}</b>
-                      </span>
-                    ) : (
-                      <span>{t("selectOrderItems")}</span>
-                    ))}
-                  {invalid &&
-                    invalid !== "expiredQuote" &&
-                    (selection.length > 0 || editingQuote) && (
-                      <small>
-                        {t(invalid)}
-                        {(invalid === "belowMinimum" || invalid === "lowCash") && (
-                          <>
-                            {" "}
-                            · {t("shortBy")}:{" "}
-                            {money(
-                              invalid === "belowMinimum"
-                                ? terms.minimum - total
-                                : total - state.cash,
-                            )}
-                          </>
-                        )}
-                      </small>
-                    )}
-                </div>
-                {newer ? (
-                  <button
-                    onClick={() => {
-                      if (selection.length)
-                        save(newer.id, {
-                          quantity: String(terms.quantity),
-                          selection: selection.filter((item) =>
-                            newer.rows.some(([id]) => id === item),
-                          ),
-                        });
-                      openReport(newer.id);
-                    }}
-                  >
-                    {t("newerQuote")} #{newer.id} · {t("noCharge")}
-                  </button>
-                ) : (
-                  <div className="control-field">
-                    <div className="control-row">
-                      <GuiToolInfo verb="order">
-                        <button
-                          data-clock-verb="order"
-                          disabled={disabled || !selection.length || Boolean(invalid)}
-                          onClick={() => {
-                            save(report.id, {
-                              ...draft,
-                              submittedId: (reports.at(-1)?.id ?? 0) + 1,
-                            });
-                            runCommand(
-                              [
-                                "order",
-                                supplier,
-                                ...selection.flatMap((id) => [quotedWord(id), terms.quantity]),
-                              ].join(" "),
-                            );
-                          }}
-                        >
-                          {t("sendOrder")}
-                        </button>
-                      </GuiToolInfo>
-                    </div>
-                  </div>
-                )}
-                {submitted && <p role="status">{submitted.display}</p>}
-              </>
+        )}
+        {(previous || newer) && (
+          <div className="quote-comparison">
+            {previous && (
+              <button
+                type="button"
+                className="receipt-link"
+                onClick={() => openReport(previous.id)}
+              >
+                {t("versusQuote")} #{previous.id} · {t("day")} {previous.day}
+              </button>
+            )}
+            {newer && (
+              <button type="button" className="receipt-link" onClick={() => openReport(newer.id)}>
+                {t("newerQuote")} #{newer.id} · {t("noCharge")}
+              </button>
             )}
           </div>
+        )}
+        <div className="slip-ledger" role="region" aria-label={t("product")} tabIndex={0}>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">{idLabel}</th>
+                {rows.length > 0 && <th scope="col">{t("quotedUnitPrice")}</th>}
+                <th scope="col">{quantityLabel}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(([raw, price, discount]) => {
+                const product = String(raw),
+                  key = "offered:" + product;
+                const quantity = draft.lines.find((line) => line.key === key)?.quantity ?? "";
+                const oldPrice = oldPrices.get(product);
+                return (
+                  <tr key={key} data-ordered={Boolean(quantity)}>
+                    <td>{product}</td>
+                    <td>
+                      {typeof price === "number" ? money(price) : price}
+                      {discount && discount !== "0%" && <small> (−{discount})</small>}
+                      {typeof price === "number" &&
+                        oldPrice !== undefined &&
+                        oldPrice !== price && (
+                          <small className="unit-delta">Δ {money(price - oldPrice)}</small>
+                        )}
+                    </td>
+                    <td>
+                      <QuantityInput
+                        aria-label={quantityLabel + " · " + product}
+                        value={quantity}
+                        disabled={locked}
+                        onChange={(e) =>
+                          amend({ key, product, manual: false, quantity: e.currentTarget.value })
+                        }
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+              {manualLines.map((line) => (
+                <tr key={line.key} className="manual-order-line">
+                  <td>
+                    <ControlInput
+                      aria-label={idLabel}
+                      autoComplete="off"
+                      value={line.product}
+                      readOnly={!line.manual}
+                      disabled={locked}
+                      onChange={(e) => amend({ ...line, product: e.currentTarget.value })}
+                    />
+                  </td>
+                  {rows.length > 0 && <td>—</td>}
+                  <td>
+                    <QuantityInput
+                      aria-label={quantityLabel + (line.product ? " · " + line.product : "")}
+                      disabled={locked}
+                      value={line.quantity}
+                      onChange={(e) => amend({ ...line, quantity: e.currentTarget.value })}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
-    </div>
+        <div className="order-write">
+          <button type="button" className="receipt-link" disabled={locked} onClick={addLine}>
+            {t("addOrderProduct")}
+          </button>
+          {submitted?.terms?.order ? (
+            <ControlRow>
+              <button
+                type="button"
+                className="receipt-link"
+                onClick={() => openReport(submitted.id)}
+              >
+                {submitted.terms.order} · {money(submitted.terms.paid)}
+              </button>
+              <span>
+                {t("expectedClose")} {submitted.terms.eta}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  save({ lines: [{ key: "manual", manual: true, product: "", quantity: "" }] })
+                }
+              >
+                {t("newOrder")}
+              </button>
+            </ControlRow>
+          ) : (
+            <>
+              {command && (
+                <div className="basket-reading" role="status">
+                  {evidence ? (
+                    <>
+                      {t("quoted")}: <output>{money(evidence.cost)}</output> · {t("afterOrder")}:{" "}
+                      {money(evidence.remaining)}
+                      {evidence.status === "belowMinimum" || evidence.status === "lowCash" ? (
+                        <small>{t(evidence.status)}</small>
+                      ) : null}
+                    </>
+                  ) : (
+                    t("orderPriceUnknown")
+                  )}
+                </div>
+              )}
+              {invalid && <small role="status">{invalid}</small>}
+              {submitted && (
+                <button
+                  type="button"
+                  className="receipt-link"
+                  onClick={() => openReport(submitted.id)}
+                >
+                  #{submitted.id} · {submitted.display}
+                </button>
+              )}
+              <ControlRow>
+                <GuiToolInfo verb="order">
+                  <button type="submit" data-clock-verb="order" disabled={locked || !command}>
+                    {t("sendOrder")}
+                  </button>
+                </GuiToolInfo>
+              </ControlRow>
+            </>
+          )}
+        </div>
+      </form>
+    </>
   );
 }

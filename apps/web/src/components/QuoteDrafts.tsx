@@ -1,30 +1,50 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-interface QuoteDraft {
-  selection: string[];
-  quantity: string;
+import type { OrderLine } from "@/game/order-entry";
+
+interface OrderDraft {
+  lines: OrderLine[];
   submittedId?: number;
 }
-
 const Drafts = createContext<{
-  values: Record<string, QuoteDraft>;
-  save: (key: string | number, draft: QuoteDraft) => void;
+  quantities: Record<string, string>;
+  setQuantity: (key: string, value: string) => void;
+  orders: Record<string, OrderDraft>;
+  setOrder: (supplier: string, draft: OrderDraft) => void;
 } | null>(null);
-
 export function QuoteDrafts({ children }: { children: ReactNode }) {
-  const [values, setValues] = useState<Record<string, QuoteDraft>>({});
-  function save(key: string | number, draft: QuoteDraft) {
-    setValues((previous) => ({ ...previous, [key]: draft }));
-  }
-  return <Drafts.Provider value={{ values, save }}>{children}</Drafts.Provider>;
+  const [quantities, setQuantities] = useState<Record<string, string>>({});
+  const [orders, setOrders] = useState<Record<string, OrderDraft>>({});
+  return (
+    <Drafts.Provider
+      value={{
+        quantities,
+        orders,
+        setQuantity: (key, value) => setQuantities((prev) => ({ ...prev, [key]: value })),
+        setOrder: (supplier, draft) => setOrders((prev) => ({ ...prev, [supplier]: draft })),
+      }}
+    >
+      {children}
+    </Drafts.Provider>
+  );
 }
-
-export function useQuoteDraft(key: string | number, quantity: number | undefined) {
-  const store = useContext(Drafts);
-  if (!store) throw Error("Order slip requires a workstation");
-  const draft = store.values[key] ?? {
-    selection: [],
-    quantity: quantity === undefined ? "" : String(quantity),
+function useDrafts() {
+  const drafts = useContext(Drafts);
+  if (!drafts) throw Error("Order slip requires a workstation");
+  return drafts;
+}
+export function useQuoteQuantity(key: string | number, initial?: number) {
+  const drafts = useDrafts();
+  return {
+    qty: drafts.quantities[String(key)] ?? String(initial ?? ""),
+    change: (value: string) => drafts.setQuantity(String(key), value),
   };
-  return { draft, save: store.save };
+}
+export function useOrderDraft(supplier: string) {
+  const drafts = useDrafts();
+  const key = "supplier:" + supplier;
+  const draft = drafts.orders[key] ?? {
+    lines: [{ key: "manual", product: "", quantity: "", manual: true }],
+  };
+  return { draft, save: (value: OrderDraft) => drafts.setOrder(key, value) };
 }

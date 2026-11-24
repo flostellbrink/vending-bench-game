@@ -1,5 +1,40 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  duplicateOrderProduct:
+    .id: ORGUI001
+    ^en: "Use one quantity per product ID."
+    es: "Usa una cantidad por ID de producto."
+    de: "Pro Produkt-ID nur eine Menge angeben."
+  incompleteOrderLine:
+    .id: ORGUI002
+    ^en: "Enter a product ID and a positive whole quantity."
+    es: "Introduce el ID del producto y una cantidad entera positiva."
+    de: "Produkt-ID und eine positive ganze Stückzahl eingeben."
+  quotedAtQuantity:
+    .id: ORGUI003
+    ^en: "Quoted units per product"
+    es: "Unidades cotizadas por producto"
+    de: "Angebotene Stückzahl je Artikel"
+  expiredOrderReference:
+    .id: ORGUI004
+    ^en: "Expired"
+    es: "Caducada"
+    de: "Abgelaufen"
+  quotedUnitPrice:
+    .id: ORGUI005
+    ^en: "Quoted unit price"
+    es: "Precio unitario cotizado"
+    de: "Angebotener Stückpreis"
+  addOrderProduct:
+    .id: ORGUI006
+    ^en: "Add product"
+    es: "Añadir producto"
+    de: "Artikel hinzufügen"
+  orderPriceUnknown:
+    .id: ORGUI007
+    ^en: "No current quote for these quantities. The supplier prices the order when you submit it."
+    es: "No hay una oferta vigente para estas cantidades. El proveedor fija el precio al enviar el pedido."
+    de: "Für diese Mengen liegt kein gültiges Angebot vor. Der Lieferant berechnet den Preis bei der Bestellung."
   lineTotalFor:
     .id: SQDOC004
     .inputs:
@@ -89,9 +124,9 @@ operator:
     de: Ordner abrufen
   folderNotChecked:
     .id: MO000004
-    ^en: No saved listing for this folder.
-    es: No hay una lista guardada de esta carpeta.
-    de: Für diesen Ordner ist keine Nachrichtenliste gespeichert.
+    ^en: No saved mail listing for these filters.
+    es: No hay una lista de correos guardada con estos filtros.
+    de: Keine gespeicherte Nachrichtenliste für diese Filter.
   allSites:
     .id: MO000005
     ^en: All locations

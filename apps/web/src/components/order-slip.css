@@ -76,15 +76,15 @@
   color: #435649;
   border-block: 1px solid #a6b7a5;
 }
-.slip-ledger td label {
-  display: flex;
-  align-items: center;
-  gap: 0.65em;
-  cursor: pointer;
+.slip-ledger input[type="number"] {
+  width: 5.5rem;
+  max-width: 100%;
 }
-.slip-ledger input[type="checkbox"] {
-  flex: none;
-  margin: 0;
+.manual-order-line input:not([type="number"]) {
+  width: min(100%, 19rem);
+}
+.manual-order-line td {
+  border-block-start: 1px dashed #a6b7a5;
 }
 .slip-ledger td:first-child {
   width: 55%;
@@ -93,25 +93,24 @@
 .slip-ledger td:not(:first-child) {
   white-space: nowrap;
 }
-.slip-ledger tr:has(:checked) {
+.slip-ledger tr[data-ordered="true"] {
   background: #d6e6cc;
 }
 .slip-ledger tr:hover {
   background: #e3ecdc;
 }
-.order-slip .slip-controls .dispatch {
+.order-write {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
+  flex-direction: column;
+  align-items: start;
+  gap: 4px;
   padding: 0.55rem 0.7rem;
   border: 0;
   border-top: 1px solid #859a86;
   background: #e5ebe0;
 }
 .basket-reading {
-  flex: 1 1 16rem;
+  font-size: 0.9rem;
 }
 .basket-reading output {
   font:

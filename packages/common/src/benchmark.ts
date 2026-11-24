@@ -53,6 +53,22 @@ export const releaseSchema = v.object({
         { quantity: v.pipe(v.number(), v.integer(), v.minValue(1)) },
         jsonValueSchema,
       ),
+      list_emails: v.objectWithRest(
+        {
+          folder: v.picklist(["inbox", "sent"]),
+          limit: v.pipe(v.number(), v.integer(), v.minValue(1)),
+          unread_only: v.boolean(),
+        },
+        jsonValueSchema,
+      ),
+      get_sales_report: v.objectWithRest(
+        {
+          days: v.pipe(v.number(), v.integer(), v.minValue(1)),
+          location: v.string(),
+          by_product: v.boolean(),
+        },
+        jsonValueSchema,
+      ),
     },
     v.record(v.string(), jsonValueSchema),
   ),

@@ -13,6 +13,7 @@ import {
   priceOrder,
   timing,
 } from "../src/game/commands.ts";
+import { orderEntry } from "../src/game/order-entry.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { displayCell, knownOrders, observation, weatherObservations } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
@@ -202,6 +203,35 @@ await test("an order estimate uses only a matching, unexpired observed quantity"
     assertValue(priceOrder("order supplier item 10", { ...state, day: 8 }, actions, reports))
       .status,
     "expiredQuote",
+  );
+});
+
+await test("the order editor submits independent item quantities without requiring a quote", () => {
+  const lines = [
+    { key: "one", product: "catalog item", quantity: "37", manual: false },
+    { key: "two", product: "new-id", quantity: "12", manual: true },
+    { key: "three", product: "", quantity: "", manual: true },
+  ];
+  const command = assertValue(orderEntry("supplier", lines).command);
+  assert.deepEqual(parse(command, { slots: [], machines: [] }, { order_goods: [] }), [
+    "order_goods",
+    { supplier_id: "supplier", items: { "catalog item": 37, "new-id": 12 } },
+  ]);
+  assert.equal(
+    orderEntry("supplier", [
+      ...lines,
+      { key: "four", product: "new-id", quantity: "4", manual: true },
+    ]).error,
+    "duplicate",
+  );
+  assert.equal(
+    orderEntry("supplier", [{ key: "five", product: "new-id", quantity: "1.5", manual: true }])
+      .error,
+    "incomplete",
+  );
+  assert.equal(
+    orderEntry("supplier", [{ key: "six", product: "", quantity: "10", manual: true }]).error,
+    "incomplete",
   );
 });
 

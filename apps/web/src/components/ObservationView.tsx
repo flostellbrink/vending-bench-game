@@ -109,13 +109,7 @@ export default function ObservationView({
                   <EmailComposer {...letterProps} to={entry.email} />
                 </div>
               </div>
-              <QuoteRequest
-                supplier={entry.id}
-                report={reports.findLast(
-                  (r) => r.args.supplier_id === entry.id && r.terms?.minimum !== undefined,
-                )}
-                {...{ state, t, disabled, runCommand }}
-              />
+              <QuoteRequest supplier={entry.id} {...{ state, t, disabled, runCommand }} />
             </article>
           ))}
           {!action && contact && (
@@ -124,10 +118,10 @@ export default function ObservationView({
               <EmailComposer key={contact.email} {...letterProps} to={contact.email} />
             </div>
           )}
-          {report.terms?.minimum !== undefined ? (
+          {report.terms?.minimum !== undefined && report.args.supplier_id ? (
             <OrderSlip
               key={report.id}
-              terms={report.terms}
+              supplier={report.args.supplier_id}
               openReport={openReport}
               {...{ report, reports, state, lang, t, money, runCommand, disabled }}
             />
