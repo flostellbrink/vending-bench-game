@@ -46,7 +46,9 @@ function OpenNewRun({ lang, release }: { lang: Lang; release: Release }) {
     void Promise.resolve()
       .then(() => {
         const slot = createRun(localStorage, release);
-        location.replace(
+        window.history.replaceState(
+          null,
+          "",
           "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot }),
         );
       })
