@@ -3,7 +3,6 @@ import { useId, useState, type FormEvent } from "react";
 import type { CabinetSlot } from "@/game/cabinet-layout";
 
 import { quotedWord } from "@/game/command-words";
-import { timing } from "@/game/commands";
 import { slotChanges } from "@/game/slot-evidence";
 import { timeLabel } from "@/game/time-label";
 import { stationMessages as msg } from "@/localization/station-messages";
@@ -67,50 +66,47 @@ export function SlotInstrument({
   return (
     <section className="slot-instrument">
       <header>
-        <h3>
-          <b>{slot.code}</b> {slot.product}
-        </h3>
-        <small>
-          {t("seen")} · {t("day")} {stockSource.day} / {clock(stockSource.minute)}
-          {live && (
-            <button
-              type="button"
-              className="slot-source"
-              onClick={() => openReport(stockSource.id)}
-            >
-              #{stockSource.id}
-            </button>
-          )}
-        </small>
+        <b className="slot-code">{slot.code}</b>
+        <div>
+          <h3>{slot.product}</h3>
+          <small>
+            {t("size")}: {slot.size}
+          </small>
+        </div>
       </header>
       <dl className="slot-reading">
         <div>
-          <dt>{t("size")}</dt>
-          <dd>{slot.size}</dd>
-        </div>
-        <div>
           <dt>{field("quantity")}</dt>
           <dd>
-            {slot.quantity}/{slot.capacity}
+            {slot.quantity}
+            <small> / {slot.capacity}</small>
           </dd>
         </div>
         <div>
           <dt>{field("price")}</dt>
           <dd>{slot.price}</dd>
-          {live && priceSource.id !== stockSource.id && (
-            <small>
-              {t("day")} {priceSource.day} / {clock(priceSource.minute)}
-              <button
-                type="button"
-                className="slot-source"
-                onClick={() => openReport(priceSource.id)}
-              >
-                #{priceSource.id}
-              </button>
-            </small>
-          )}
         </div>
       </dl>
+      <div className="slot-evidence">
+        {t("seen")} · {t("day")} {stockSource.day} / {clock(stockSource.minute)}
+        {live && (
+          <button type="button" className="slot-source" onClick={() => openReport(stockSource.id)}>
+            #{stockSource.id}
+          </button>
+        )}
+        {live && priceSource.id !== stockSource.id && (
+          <span>
+            {field("price")} · {t("day")} {priceSource.day} / {clock(priceSource.minute)}{" "}
+            <button
+              type="button"
+              className="slot-source"
+              onClick={() => openReport(priceSource.id)}
+            >
+              #{priceSource.id}
+            </button>
+          </span>
+        )}
+      </div>
       {changes.length > 0 && (
         <div className="slot-amendment">
           <b>{t("laterObservations")}</b>
@@ -130,69 +126,74 @@ export function SlotInstrument({
           ))}
         </div>
       )}
-      <div className="slot-operations">
-        {operations.map((action) => (
-          <button
-            type="button"
-            key={action}
-            aria-pressed={action === verb}
-            data-clock-verb={action}
-            onClick={() => setVerb(action)}
-          >
-            {labels[action]} <small>{timing(action, state)?.minutes} min</small>
-          </button>
-        ))}
-      </div>
       <form onSubmit={submit}>
-        {needsProduct && (
-          <>
+        <div className="slot-operations" role="group" aria-label={field("slot") + " " + slot.code}>
+          {operations.map((action) => (
+            <button
+              type="button"
+              key={action}
+              aria-pressed={action === verb}
+              data-clock-verb={action}
+              onClick={() => setVerb(action)}
+            >
+              {labels[action]}
+            </button>
+          ))}
+        </div>
+        <div className="slot-inputs">
+          {needsProduct && (
+            <>
+              <label>
+                {field("product_id")}
+                <input
+                  value={product}
+                  list={productList}
+                  spellCheck="false"
+                  autoComplete="off"
+                  onChange={(e) => setProduct(e.target.value)}
+                />
+              </label>
+              <datalist id={productList}>
+                {depot &&
+                  sizeMatches?.map((r) => (
+                    <option key={r[0]} value={r[0]}>
+                      {r[1]} ×{r[3]} · {t("depot")} #{depot.id} · {t("day")} {depot.day}{" "}
+                      {clock(depot.minute)}
+                    </option>
+                  ))}
+              </datalist>
+              <label>
+                {field("quantity")}
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  disabled={!product}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
+              </label>
+            </>
+          )}
+          {verb === "price" && (
             <label>
-              {field("product_id")}
-              <input
-                value={product}
-                list={productList}
-                spellCheck="false"
-                autoComplete="off"
-                onChange={(e) => setProduct(e.target.value)}
-              />
-            </label>
-            <datalist id={productList}>
-              {depot &&
-                sizeMatches?.map((r) => (
-                  <option key={r[0]} value={r[0]}>
-                    {r[1]} ×{r[3]} · {t("depot")} #{depot.id} · {t("day")} {depot.day}{" "}
-                    {clock(depot.minute)}
-                  </option>
-                ))}
-            </datalist>
-            <label>
-              {field("quantity")}
+              {field("price")}
               <input
                 type="number"
-                min="1"
-                step="1"
-                disabled={!product}
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                min="0"
+                step=".01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
               />
             </label>
-          </>
-        )}
-        {verb === "price" && (
-          <label>
-            {field("price")}
-            <input
-              type="number"
-              min="0"
-              step=".01"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-            />
-          </label>
-        )}
-        <button data-clock-verb={verb} disabled={disabled || !valid}>
-          {labels[verb]} · {timeLabel(verb, state, t)}
-        </button>
+          )}
+        </div>
+        <div className="slot-submit">
+          <button data-clock-verb={verb} disabled={disabled || !valid}>
+            {labels[verb]} <span aria-hidden="true">↵</span>
+          </button>
+          <span>{timeLabel(verb, state, t)}</span>
+        </div>
       </form>
     </section>
   );

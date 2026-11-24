@@ -6,7 +6,6 @@ import { useMemo, useState } from "react";
 import { cabinetLayout } from "@/game/cabinet-layout";
 import { address } from "@/game/commands";
 import { slotChanges } from "@/game/slot-evidence";
-import { stationMessages as msg } from "@/localization/station-messages";
 
 import type { ObservationProps } from "./panel-props";
 
@@ -17,7 +16,7 @@ interface Props extends ObservationProps {
   openReport: (id: number) => void;
 }
 export default function CabinetBench(props: Props) {
-  const { report, reports, live, money, lang, t } = props;
+  const { report, reports, live, money, t } = props;
   const readings = useMemo(() => {
     const layout = cabinetLayout(report.rows);
     const stockSources = new Map<string, Report>();
@@ -75,7 +74,6 @@ export default function CabinetBench(props: Props) {
               ))}
             </select>
           )}
-          <small>{msg.fields.slot({}, { locale: lang })}</small>
         </header>
         <div className="cabinet-glass">
           {[...shelves].map(([key, shelf]) => (
@@ -90,13 +88,11 @@ export default function CabinetBench(props: Props) {
                   type="button"
                   aria-pressed={s === slot}
                   aria-label={s.code + " · " + s.product + " · " + s.quantity + " / " + s.capacity}
+                  title={s.code + " · " + s.product + " · " + s.quantity + "/" + s.capacity}
                   onClick={() => setPicked(s.id)}
                 >
                   <b>{s.code}</b>
-                  <span>
-                    {s.quantity}
-                    <small>/{s.capacity}</small>
-                  </span>
+                  <span>{s.quantity}</span>
                   <i className="slot-level" aria-hidden="true">
                     <i style={{ width: (s.quantity / Math.max(1, s.capacity)) * 100 + "%" }} />
                   </i>
