@@ -1,4 +1,4 @@
-import { releaseSchema, rivalSchema } from "games-common/benchmark";
+import { releaseSchema, rivalSchema, scriptedReplaySchema } from "games-common/benchmark";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -25,6 +25,7 @@ const metadataSchema = v.object({
     "tools",
   ]).entries,
   rivals: v.array(sourceRivalSchema),
+  scriptedReplay: v.omit(scriptedReplaySchema, ["revision"]),
 });
 type Metadata = v.InferOutput<typeof metadataSchema>;
 export interface SnapshotRelease extends Metadata {

@@ -1,4 +1,9 @@
-import { actionsSchema, parseReleases, snapshotSchema } from "games-common/benchmark";
+import {
+  actionsSchema,
+  parseReleases,
+  scriptedReplaySchema,
+  snapshotSchema,
+} from "games-common/benchmark";
 import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -70,6 +75,51 @@ snapshot()
     Object.keys(v.parse(actionsSchema, pythonJSON(python, "actions()"))).toSorted(),
     Object.keys(release.tools).toSorted(),
   );
+});
+
+await test("the scripted journal reproduces each morning and the final score in the browser engine", async () => {
+  for (const release of catalog) {
+    const journal = v.parse(
+      scriptedReplaySchema,
+      JSON.parse(await readFile(new URL("public/" + release.scriptedReplay, app), "utf8")),
+    );
+    assert.equal(journal.revision, release.revision);
+    assert.equal(journal.seed, release.seed);
+    const python = await loadPyodide();
+    python.unpackArchive(
+      new Uint8Array(await readFile(new URL("public/" + release.engineArchive, app))),
+      "zip",
+    );
+    python.runPython(await readFile(new URL("public/" + release.adapter, app), "utf8"));
+    python.globals.set("encoded_moves", JSON.stringify(journal.moves));
+    python.globals.set("seed", journal.seed);
+    const replay = pythonJSON(
+      python,
+      `
+start(seed)
+mornings = [{"day": 1, "moveCount": 0, "cash": engine.s["balance"]}]
+for count, (tool, args) in enumerate(json.loads(encoded_moves), 1):
+    day = engine.s["day"]
+    act(tool, json.dumps(args))
+    if day != engine.s["day"] and not engine.over:
+        assert engine.s["minute"] == config.DAY_START_MINUTE
+        mornings.append({"day": engine.s["day"], "moveCount": count, "cash": engine.s["balance"]})
+json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
+`,
+    );
+    const result = v.parse(
+      v.object({
+        checkpoints: scriptedReplaySchema.entries.checkpoints,
+        final: v.object({ reward: v.number(), final_balance: v.number(), completed: v.boolean() }),
+      }),
+      replay,
+    );
+    assert.deepEqual(result.checkpoints, journal.checkpoints);
+    const rival = assertValue(release.rivals.find((r) => r.kind === "script"));
+    assert.equal(result.final.reward, rival.score);
+    assert.equal(result.final.final_balance, rival.finalBalance);
+    if (result.final.completed) assert.equal(result.checkpoints.length, release.days);
+  }
 });
 
 await test("published scripted calibration and briefing come from the selected Git revision", async () => {

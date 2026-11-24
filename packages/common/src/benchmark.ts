@@ -48,6 +48,7 @@ export const releaseSchema = v.object({
   }),
   tools: v.record(v.string(), v.string()),
   engineArchive: v.string(),
+  scriptedReplay: v.string(),
   adapter: v.string(),
   rivals: v.array(rivalSchema),
 });
@@ -124,6 +125,13 @@ export const commandArgsSchema = v.object({
 });
 export type Move = v.InferOutput<typeof moveSchema>;
 export const moveSchema = v.tuple([v.string(), commandArgsSchema]);
+export type ScriptedReplay = v.InferOutput<typeof scriptedReplaySchema>;
+export const scriptedReplaySchema = v.object({
+  revision: v.string(),
+  seed: v.number(),
+  moves: v.array(moveSchema),
+  checkpoints: v.array(v.object({ day: v.number(), moveCount: v.number(), cash: v.number() })),
+});
 export type Entry = v.InferOutput<typeof entrySchema>;
 export const entrySchema = v.object({ move: moveSchema, line: v.string() });
 export type PersonalBest = v.InferOutput<typeof personalBestSchema>;

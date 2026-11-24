@@ -6,6 +6,7 @@ import json
 import re
 import sys
 import tomllib
+from copy import deepcopy
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -48,11 +49,17 @@ def tool_descriptions():
 def reference_trace(version):
     engine = Engine.new(config.SEED)
     balances = [engine.s["balance"]]
+    moves = []
+    checkpoints = [{"day": engine.s["day"], "moveCount": 0, "cash": balances[0]}]
 
     class Recorder(DirectClient):
         def call(self, tool, **kwargs):
             day = engine.s["day"]
+            moves.append([tool, deepcopy(kwargs)])
             result = super().call(tool, **kwargs)
+            if day != engine.s["day"] and not engine.over:
+                checkpoints.append({"day": engine.s["day"], "moveCount": len(moves),
+                                    "cash": engine.s["balance"]})
             if len(balances) == day and (day != engine.s["day"] or engine.over):
                 balances.append(engine.s["balance"])
             return result
@@ -79,9 +86,10 @@ def reference_trace(version):
     # A configuration update may precede a published recalibration. In that case the
     # reproducible local bot is still valid; the old published target is not.
     source = calibrated if reproduced else TASK / "solution/reference_bot.py"
-    return {"kind": "script", "score": result["reward"], "values": balances,
+    rival = {"kind": "script", "score": result["reward"], "values": balances,
             "endDay": result["days_operated"], "finalBalance": result["final_balance"],
             "sourcePath": source.relative_to(ROOT).as_posix()}
+    return rival, {"seed": config.SEED, "moves": moves, "checkpoints": checkpoints}
 
 
 def check_batch_source(batch, manifest):
@@ -170,6 +178,7 @@ def metadata():
     task = tomllib.loads((TASK / "task.toml").read_text())
     version = task["task"]["version"]
     brief = render()
+    script, replay = reference_trace(version)
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
                        "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
@@ -177,4 +186,5 @@ def metadata():
                                    "fee":config.DAILY_SPOT_FEE, "opens":config.DAY_START_MINUTE,
                                    "closes":config.DAY_END_MINUTE, "refill":config.TOOL_MINUTES.get("restock_machine",config.DEFAULT_TOOL_MINUTES)},
                        "brief": brief.strip(), "tools": tool_descriptions(),
-                       "rivals": [reference_trace(version), *model_results(version)]}, allow_nan=False)
+                       "scriptedReplay": replay,
+                       "rivals": [script, *model_results(version)]}, allow_nan=False)

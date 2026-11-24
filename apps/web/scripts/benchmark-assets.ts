@@ -41,6 +41,8 @@ function assets(release: SnapshotRelease): Release {
   const { revision, adapter } = release;
   const folder = "benchmarks/" + revision;
   mkdirSync(join(publicDir, folder), { recursive: true });
+  const scriptedReplay = folder + "/scripted-replay.json";
+  writeJSON(join(publicDir, scriptedReplay), { revision, ...release.scriptedReplay });
   const source = (path: string) => repoURL + revision + "/" + path;
   const rivals = release.rivals.map(({ values, sourcePath, ...rival }, i) => {
     const published = { ...rival, source: source(sourcePath) };
@@ -69,7 +71,7 @@ function assets(release: SnapshotRelease): Release {
   const hash = createHash("sha256").update(adapterSource).digest("hex");
   const adapterAsset = folder + "/adapter-" + hash.slice(0, 16) + ".py";
   writeFileSync(join(publicDir, adapterAsset), adapterSource);
-  return { ...release, engineArchive, adapter: adapterAsset, rivals };
+  return { ...release, scriptedReplay, engineArchive, adapter: adapterAsset, rivals };
 }
 
 if (import.meta.main) {
