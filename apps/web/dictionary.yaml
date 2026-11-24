@@ -1404,6 +1404,11 @@ landing:
     ^en: "The original Python simulator runs in your browser. No account, API key or server-side simulation. Your save stays on this device."
     es: "El simulador original de Python se ejecuta en tu navegador. Sin cuenta, clave de API ni simulación en un servidor. La partida se guarda en este dispositivo."
     de: "Der originale Python-Simulator läuft in deinem Browser. Kein Konto, kein API-Schlüssel, keine Simulation auf einem Server. Der Spielstand bleibt auf diesem Gerät."
+  gameSource:
+    .id: HN000017
+    ^en: "Game source"
+    es: "Código del juego"
+    de: "Quellcode des Spiels"
   publication:
     .id: HN000013
     ^en: "Published results"

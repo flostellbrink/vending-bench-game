@@ -78,6 +78,7 @@ function LandingDesk({ release, setup, slot }: Props) {
         <a href={source}>
           {release.version} @ {release.revision.slice(0, 7)}
         </a>
+        <a href="https://github.com/flostellbrink/vending-bench-game">{msg.landing.gameSource()}</a>
       </footer>
     </StationFrame>
   );
