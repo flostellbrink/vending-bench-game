@@ -8,6 +8,7 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { GuiToolInfo } from "./GuiToolInfo";
 import { StorageBatches } from "./StorageBatches";
 type Props = Pick<
   ObservationProps,
@@ -76,7 +77,11 @@ export function ReportGrid({
               </button>
             </th>
           ))}
-          {command && <th>{t("read")}</th>}
+          {command && (
+            <th>
+              {t("read")} <GuiToolInfo verb={command} />
+            </th>
+          )}
         </tr>
       </thead>
       <tbody>

@@ -12,6 +12,7 @@ import { clock } from "@/scene/clock";
 
 import { PaceReview } from "./PaceReview";
 interface Props {
+  embedded?: boolean;
   state: Snapshot | null;
   rivals: Rival[];
   best: PersonalBest | null;
@@ -25,6 +26,7 @@ interface Props {
   reviewDay: (day: number) => void;
 }
 export function Scorecard({
+  embedded,
   state,
   rivals,
   best,
@@ -40,7 +42,11 @@ export function Scorecard({
   const score = state?.final?.reward ?? null;
   return (
     <section className="sheet scorecard">
-      <h2>{state?.over ? (state.failed ? t("bankrupt") : screen("complete")) : t("standings")}</h2>
+      {!embedded && (
+        <h2>
+          {state?.over ? (state.failed ? t("bankrupt") : screen("complete")) : t("standings")}
+        </h2>
+      )}
       {score === null ? (
         <p>{t("unfinished")}</p>
       ) : (

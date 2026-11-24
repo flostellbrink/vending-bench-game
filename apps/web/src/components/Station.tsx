@@ -24,7 +24,7 @@ interface Props {
   changeLang: (locale: Lang) => void;
 }
 export function Station({ release, slot, parentBalance, lang, changeLang, newRun }: Props) {
-  const nav = useNavigation(newRun ? "brief" : "desk"),
+  const nav = useNavigation(newRun ? "brief" : "suppliers"),
     run = useRun(release, slot, nav.setTab);
   const t = useMemo(() => operatorLabels(lang), [lang]),
     screen = useMemo(() => screenLabels(lang), [lang]);

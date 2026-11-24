@@ -31,7 +31,6 @@ export function OrderRegister({ orders, t, money, open }: Props) {
                   <button className="receipt-link" onClick={() => open(order.id)}>
                     {order.order}
                   </button>
-                  <small>{order.supplier}</small>
                 </td>
                 <td data-field="price">{money(order.paid)}</td>
                 <td>

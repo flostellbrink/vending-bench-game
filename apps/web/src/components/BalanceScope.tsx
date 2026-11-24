@@ -10,6 +10,7 @@ import { msg } from "@/dictionary";
 const ink = ["#1d5941", "#6b496b", "#536879", "#765e39"];
 
 interface BalanceScopeProps {
+  embedded?: boolean;
   parentBalance?: ParentBalance;
   history: number[];
   rivals: Rival[];
@@ -29,6 +30,7 @@ interface Trace {
   finalBalance?: number | null;
 }
 export function BalanceScope({
+  embedded,
   parentBalance,
   history,
   rivals,
@@ -82,7 +84,8 @@ export function BalanceScope({
     <section className="scope balance-scope">
       <header>
         <b>
-          {t("bank")} / {release.currency}
+          {!embedded && t("bank") + " / "}
+          {release.currency}
         </b>
         <small>
           {t("day")} {day} / {release.days}

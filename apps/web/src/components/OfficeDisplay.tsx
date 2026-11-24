@@ -8,6 +8,8 @@ import { timing } from "@/game/commands";
 import { clock } from "@/scene/clock";
 import { useClock } from "@/scene/useClock";
 import { World } from "@/scene/World";
+
+import { GuiToolInfo } from "./GuiToolInfo";
 interface Props {
   state: Snapshot | null;
   release: Release;
@@ -112,8 +114,10 @@ export const OfficeDisplay = memo(function OfficeDisplay({
             closeDay();
           }}
         >
-          {armed ? t("confirmClose") : t("closeShift")}
+          <span aria-hidden={armed}>{t("closeShift")}</span>
+          <span aria-hidden={!armed}>{t("confirmClose")}</span>
         </button>
+        <GuiToolInfo verb="close" />
       </div>
     </>
   );

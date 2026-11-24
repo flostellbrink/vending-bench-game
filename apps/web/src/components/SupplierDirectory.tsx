@@ -1,22 +1,25 @@
+import type { ObservedSupplier } from "@/game/suppliers";
+
 import type { ObservationProps } from "./panel-props";
 
+import "./supplier-desk.css";
 import { DirectorySearch } from "./DirectorySearch";
 
-type Props = Pick<ObservationProps, "state" | "t" | "reports" | "runCommand" | "disabled"> & {
+type Props = Pick<ObservationProps, "state" | "t" | "runCommand" | "disabled"> & {
   openObject: (id: string) => void;
+  suppliers: ObservedSupplier[];
 };
-export function SupplierDirectory({ reports, openObject, ...props }: Props) {
-  const contacts = [...new Map(reports.flatMap((r) => r.directory.map((s) => [s.id, s]))).values()];
+export function SupplierDirectory({ suppliers, openObject, ...props }: Props) {
   return (
     <section className="sheet">
-      <h2>{props.t("supply")}</h2>
       <DirectorySearch {...props} />
-      {contacts.length > 0 && (
+      {suppliers.length > 0 && (
         <ul className="desk-archive">
-          {contacts.map((s) => (
+          {suppliers.map((s) => (
             <li key={s.id}>
               <button type="button" onClick={() => openObject("supplier:" + s.id)}>
-                {s.name} · {s.id}
+                {s.name}
+                {s.name !== s.id && " · " + s.id}
               </button>
             </li>
           ))}

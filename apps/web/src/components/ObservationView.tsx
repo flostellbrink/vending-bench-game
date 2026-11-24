@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { operatorText, priceOrder } from "@/game/commands";
+import { purchaseSupplier as supplierForPurchase } from "@/game/suppliers";
 import { timeLabel } from "@/game/time-label";
 import { clock, receiptEnd } from "@/scene/clock";
 
@@ -9,6 +10,7 @@ import type { ObservationProps } from "./panel-props";
 import CabinetBench from "./CabinetBench";
 import { DayStatement } from "./DayStatement";
 import { EmailComposer } from "./EmailComposer";
+import { GuiToolInfo } from "./GuiToolInfo";
 import { Metrics } from "./Metrics";
 import { OrderSlip } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
@@ -19,7 +21,7 @@ function ReceiptHeading({
 }: Pick<ObservationProps, "report" | "t"> & { action?: ReactNode }) {
   return (
     <header className="receipt-heading">
-      {action ?? <h2>{report.terms?.order ?? report.line}</h2>}
+      {action ?? (report.terms?.order && <h3>{report.terms.order}</h3>)}
       <small>
         #{report.id} · {t("day")} {report.day} · {clock(report.minute)} →{" "}
         {receiptEnd(report, t("day"))} · {report.minutes} min
@@ -55,12 +57,7 @@ export default function ObservationView({
         reports.filter((r) => r.id < report.id),
       )
     : null;
-  const purchaseSupplier = report.terms?.order
-    ? (report.args.supplier_id ??
-      reports
-        .flatMap((r) => r.directory)
-        .find((entry) => entry.email.toLowerCase() === report.args.to?.toLowerCase())?.id)
-    : undefined;
+  const purchaseSupplier = supplierForPurchase(report, reports);
   const letterProps = { state, reports, t, disabled, send: runCommand };
   const contact =
     report.terms?.minimum === undefined
@@ -118,6 +115,7 @@ export default function ObservationView({
               >
                 {t("reprice")} · {timeLabel("quote", state, t)}
               </button>
+              <GuiToolInfo verb="quote" />
             </article>
           ))}
           {!action && contact && (

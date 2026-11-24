@@ -7,6 +7,7 @@ import type { Translate } from "@/localization/messages";
 import { quotedWord } from "@/game/command-words";
 import { timeLabel } from "@/game/time-label";
 
+import { GuiToolInfo } from "./GuiToolInfo";
 import "./email-composer.css";
 
 interface Props {
@@ -126,6 +127,7 @@ export function EmailComposer({ to, subject, reports, state, t, disabled, send }
             >
               {t("sendLetter")} · {timeLabel("mail", state, t)}
             </button>
+            <GuiToolInfo verb="mail" />
           </div>
         </form>
       </dialog>

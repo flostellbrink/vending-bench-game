@@ -6,16 +6,15 @@ import { clock } from "@/scene/clock";
 
 interface Props {
   reports: Report[];
-  title: string;
   t: Translate;
   money: Money;
   open: (id: number) => void;
   backToBalance?: () => void;
 }
-export function ReportList({ reports, title, t, money, open, backToBalance }: Props) {
+export function ReportList({ reports, t, money, open, backToBalance }: Props) {
   const days = Map.groupBy(reports.toReversed(), (report) => report.day);
   return (
-    <section className="sheet journal-sheet" aria-label={title}>
+    <div className="sheet journal-sheet">
       {backToBalance && (
         <button className="receipt-link" onClick={backToBalance}>
           {t("bank")}
@@ -24,9 +23,11 @@ export function ReportList({ reports, title, t, money, open, backToBalance }: Pr
       {reports.length === 0 && <p>{t("empty")}</p>}
       {Array.from(days, ([day, entries]) => (
         <section className="journal-day" key={day}>
-          <h3>
-            {t("day")} {day}
-          </h3>
+          {!backToBalance && (
+            <h3>
+              {t("day")} {day}
+            </h3>
+          )}
           {entries.map((r) => (
             <button key={r.id} onClick={() => open(r.id)}>
               <small>#{r.id}</small>
@@ -42,6 +43,6 @@ export function ReportList({ reports, title, t, money, open, backToBalance }: Pr
           ))}
         </section>
       ))}
-    </section>
+    </div>
   );
 }

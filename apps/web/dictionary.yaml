@@ -1,5 +1,20 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  toolInformation:
+    .id: TI000001
+    ^en: Tool information
+    es: Información de la herramienta
+    de: Werkzeuginformationen
+  toolCommand:
+    .id: TI000002
+    ^en: Command
+    es: Comando
+    de: Befehl
+  dismissInfo:
+    .id: TI000003
+    ^en: Close information
+    es: Cerrar información
+    de: Informationen schließen
   serviceReceipts:
     .id: SRDAT001
     ^en: Cabinet service receipts
@@ -188,11 +203,6 @@ operator:
     ^en: "No loss of ground on the recorded days."
     es: "No perdiste terreno en los días registrados."
     de: "An den erfassten Tagen hast du keinen Boden verloren."
-  priceAfterClose:
-    .id: PLCA0001
-    ^en: A successful refill loads before overnight sales. This price change comes afterward.
-    es: Si la reposición tiene éxito, el producto entra antes de las ventas nocturnas. Este cambio de precio llega después.
-    de: Bei erfolgreicher Befüllung liegt die Ware vor dem Nachtverkauf im Fach. Diese Preisänderung erfolgt erst danach.
   planHelp:
     .id: SP000011
     ^en: "Ctrl+Enter: add the prompt to the shift strip without spending time. Shift+Tab reaches the plan controls. Execute first sends one command."
@@ -340,14 +350,9 @@ operator:
     de: "Prüfen"
   searchSuppliers:
     .id: SI000001
-    ^en: "Find suppliers"
-    es: "Buscar proveedores"
-    de: "Lieferanten suchen"
-  searchExample:
-    .id: SI000002
-    ^en: "e.g. coffee"
-    es: "p. ej., café"
-    de: "z. B. Kaffee"
+    ^en: "Search the web"
+    es: "Buscar en la web"
+    de: "Web durchsuchen"
   mailbox:
     .id: SI000003
     ^en: "Mailbox"
@@ -540,9 +545,9 @@ operator:
     de: Kontakt
   needQuote:
     .id: RELQ0001
-    ^en: No quote for this quantity. Check the price before ordering.
-    es: No hay oferta para esta cantidad. Consulta el precio antes de comprar.
-    de: Kein Angebot für diese Menge. Prüfe den Preis vor der Bestellung.
+    ^en: No quote for this quantity.
+    es: No hay oferta para esta cantidad.
+    de: Kein Angebot für diese Menge.
   expiredQuote:
     .id: RELQ0002
     ^en: Quote expired. Request a new quote.
@@ -705,11 +710,6 @@ operator:
     ^en: "Operator shell"
     es: "Consola de operaciones"
     de: "Bedienkonsole"
-  first:
-    .id: OPS00002
-    ^en: "Start with find snacks to locate a supplier. Use help for commands."
-    es: "Empieza con find snacks para buscar un proveedor. Usa help para ver los comandos."
-    de: "Suche mit find snacks einen Lieferanten. help zeigt die Befehle."
   ready:
     .id: OPS00003
     ^en: "Ready"
@@ -1044,9 +1044,9 @@ screen:
 commands:
   search_web:
     .id: VB000014
-    ^en: "Find suppliers"
-    es: "Buscar proveedores"
-    de: "Lieferanten suchen"
+    ^en: "Search the web"
+    es: "Buscar en la web"
+    de: "Web durchsuchen"
   check_offers:
     .id: VB000015
     ^en: "Check offers"

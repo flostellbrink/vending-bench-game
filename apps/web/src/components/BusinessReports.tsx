@@ -7,6 +7,7 @@ import { stationMessages as msg } from "@/localization/station-messages";
 import type { ObservationProps } from "./panel-props";
 
 import { EmailComposer } from "./EmailComposer";
+import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import "./business-reports.css";
 
@@ -46,6 +47,7 @@ export function Mailbox(props: Props) {
         >
           {msg.operator.checkFolder({}, options)} · {timeLabel("inbox", state, t)}
         </button>
+        <GuiToolInfo verb="inbox" />
         <EmailComposer to="" {...{ state, t, disabled, reports }} send={runCommand} />
       </header>
       {report ? (
@@ -116,6 +118,7 @@ export function SalesReports(props: Props) {
         <button disabled={disabled} data-clock-verb="sales">
           {t("execute")} · {timeLabel("sales", state, t)}
         </button>
+        <GuiToolInfo verb="sales" />
       </form>
       {report ? (
         <ObservationView {...props} report={report} />

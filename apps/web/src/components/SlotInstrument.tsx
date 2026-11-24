@@ -10,6 +10,8 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { GuiToolInfo } from "./GuiToolInfo";
+
 const operations = ["refill", "price", "clear", "swap"] as const;
 type Props = ObservationProps & {
   slot: CabinetSlot;
@@ -194,6 +196,7 @@ export function SlotInstrument({
             {labels[verb]} <span aria-hidden="true">↵</span>
           </button>
           <span>{timeLabel(verb, state, t)}</span>
+          <GuiToolInfo verb={verb} />
         </div>
       </form>
     </section>

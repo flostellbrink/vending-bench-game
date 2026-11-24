@@ -1,6 +1,7 @@
-import type { Report, Snapshot } from "games-common/benchmark";
+import type { Snapshot } from "games-common/benchmark";
 import type { KeyboardEvent, ReactNode } from "react";
 
+import type { ObservedSupplier } from "@/game/suppliers";
 import type { Translate } from "@/localization/messages";
 
 import { address } from "@/game/commands";
@@ -9,7 +10,7 @@ import "./object-navigator.css";
 
 interface Props {
   state: Snapshot | null;
-  reports: Report[];
+  suppliers: ObservedSupplier[];
   t: Translate;
   value: string;
   onOpen: (id: string) => void;
@@ -46,33 +47,25 @@ function navigate(event: KeyboardEvent<HTMLElement>) {
   next?.focus();
 }
 
-export function ObjectNavigator({ state, reports, t, value, onOpen }: Props) {
-  const suppliers = [
-    ...new Map(reports.flatMap((r) => r.directory.map((s) => [s.id, s]))).values(),
-  ];
+export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
   const items: Destination[] = [
-    { id: "desk", label: t("dispatchDesk") },
     { id: "world", label: t("bank") },
     { id: "scores", label: t("standings") },
     {
+      id: "site:depot",
       label: t("network"),
-      children: [
-        ...(state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? []),
-        { id: "site:depot", label: t("depot") },
-      ],
+      children: state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? [],
     },
     {
+      id: "suppliers",
       label: t("supply"),
-      children: [
-        { id: "suppliers", label: t("searchSuppliers") },
-        ...suppliers.map((s) => ({ id: "supplier:" + s.id, label: s.name })),
-        { id: "orders", label: t("orders") },
-      ],
+      children: suppliers.map((s) => ({ id: "supplier:" + s.id, label: s.name })),
     },
     { id: "mail", label: t("mailbox") },
     { id: "sales", label: t("revenue") },
     { id: "tabs", label: t("journal") },
     { id: "brief", label: t("rules") },
+    { id: "help", label: t("help") },
   ];
   function render(nodes: Destination[], prefix = ""): ReactNode {
     return (

@@ -5,6 +5,7 @@ import type { OperatorLabel } from "@/localization/messages";
 
 import { address } from "./commands.ts";
 import { belongsTo, recordObject } from "./report-object";
+import { purchaseSupplier } from "./suppliers";
 
 const tools: Record<string, string> = {
   mail: "list_emails",
@@ -12,15 +13,13 @@ const tools: Record<string, string> = {
   "site:depot": "get_storage_inventory",
 };
 const labels: Partial<Record<string, OperatorLabel>> = {
-  desk: "dispatchDesk",
   world: "bank",
   tabs: "journal",
-  orders: "orders",
   help: "help",
   scores: "standings",
   brief: "rules",
   mail: "mailbox",
-  suppliers: "searchSuppliers",
+  suppliers: "supply",
   "site:depot": "depot",
   sales: "revenue",
 };
@@ -37,16 +36,22 @@ export function readoutContext(tab: View, reports: Report[]) {
           if (key.startsWith("supplier:")) return r.tool === "check_offers" && belongsTo(r, key);
           return r.tool === tools[key];
         });
-  const object = typeof tab === "number" && selected ? recordObject(selected) : objectKey;
+  const supplier =
+    typeof tab === "number" && selected ? purchaseSupplier(selected, reports) : undefined;
+  const object = supplier
+    ? "supplier:" + supplier
+    : typeof tab === "number" && selected
+      ? recordObject(selected)
+      : objectKey;
   const history = reports.filter((r) => belongsTo(r, object));
-  const name = key.startsWith("machine:")
-    ? address(key.slice(8))
-    : key.startsWith("supplier:")
-      ? key.slice(9)
+  const name = objectKey.startsWith("machine:")
+    ? address(objectKey.slice(8))
+    : objectKey.startsWith("supplier:")
+      ? objectKey.slice(9)
       : typeof tab === "number"
         ? selected?.line
         : undefined;
-  return { selected, object, history, name, label: labels[key] ?? "history" };
+  return { selected, object, history, name, label: labels[objectKey] ?? "history" };
 }
 export type ReadoutContext = ReturnType<typeof readoutContext>;
 

@@ -7,7 +7,6 @@ import {
   commandGroups,
   completions,
   local,
-  operatorText,
   parse,
   priceOrder,
   syntax,
@@ -140,7 +139,7 @@ export function useCommandLine(
             (label ? " — " + label : "") +
             " · " +
             timeLabel(topic, state, t) +
-            (description ? "\n" + operatorText(description) : "")
+            (description ? "\n" + topicTool + "\n" + description : "")
           : entries(commandGroups)
               .map(
                 ([group, names]) =>
@@ -167,7 +166,7 @@ export function useCommandLine(
           return;
         }
         nav.setTab(id);
-      } else nav.setTab(commandName === "world" ? "desk" : commandName);
+      } else nav.setTab(commandName === "world" ? "suppliers" : commandName);
       edit("");
       return;
     }

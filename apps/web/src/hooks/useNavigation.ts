@@ -10,18 +10,22 @@ export function useNavigation(initialView: View) {
     history = useRef<View[]>([]);
   const [sceneObject, setSceneObject] = useState<string | null>(null);
   const [balanceDay, setBalanceDay] = useState<number | null>(null);
+  const [canGoBack, setCanGoBack] = useState(false);
   const rememberObject = useCallback((id: string) => {
     if (id.startsWith("machine:") || id === "site:depot") setSceneObject(id);
   }, []);
-  const setTab = useCallback((id: View) => {
+  const setTab = useCallback((next: View) => {
+    const id = next === "desk" || next === "orders" ? "suppliers" : next;
     if (current.current === id) return;
-    if (id === "desk") history.current = [];
-    else history.current.push(current.current);
+    history.current.push(current.current);
+    setCanGoBack(true);
     current.current = id;
     setView(id);
   }, []);
   function back() {
-    const id = history.current.pop() ?? "desk";
+    const id = history.current.pop();
+    if (id === undefined) return;
+    setCanGoBack(history.current.length > 0);
     current.current = id;
     setView(id);
   }
@@ -38,6 +42,7 @@ export function useNavigation(initialView: View) {
   }
   return {
     tab,
+    canGoBack,
     setTab,
     back,
     sceneObject,

@@ -23,15 +23,6 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
   const available = state.closes - state.minute;
   const today = projected.filter(({ span }) => span?.day === state.day);
   const last = today.at(-1)?.span;
-  const latePrice = projected.some(
-    ({ step, span }) =>
-      step.verb === "price" &&
-      span &&
-      span.day > state.day &&
-      today.some(
-        (action) => action.step.verb === "refill" && action.step.move[1].slot === step.move[1].slot,
-      ),
-  );
   const remaining = last && !last.rolls ? state.closes - last.to : 0;
   return (
     <section className="shift-plan" aria-label={t("shiftPlan")}>
@@ -72,7 +63,6 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
           {t("remaining")} · {remaining} min
         </p>
       )}
-      {latePrice && <p className="plan-consequence">{t("priceAfterClose")}</p>}
       <ol>
         {projected.map(({ step, span }, index) => (
           <li key={step.id}>

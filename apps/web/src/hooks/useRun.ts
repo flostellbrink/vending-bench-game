@@ -39,7 +39,7 @@ export interface LocalLine {
 export type LogLine = Report | LocalLine;
 type BootStage = "runtime" | "mount" | "ready";
 type SaveIssue = "" | "saveConflict" | "saveFailed";
-type View = number | "scores" | "desk" | `machine:${string}`;
+type View = number | "scores" | "suppliers" | `machine:${string}`;
 type SimulatorResult = Extract<WorkerReply, { state: Snapshot }>;
 
 interface RunView {
@@ -183,7 +183,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           );
           retry((n) => n + 1);
           setView({ ...initialView(), revision: release.revision });
-          onView("desk");
+          onView("suppliers");
           replay();
           return;
         }

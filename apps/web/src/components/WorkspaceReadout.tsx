@@ -1,7 +1,6 @@
-import { useMemo } from "react";
+import type { ObservedSupplier } from "@/game/suppliers";
 
 import { inspectionCommand, type ReadoutContext } from "@/game/readout-route";
-import { knownOrders } from "@/game/reports";
 import { timeLabel } from "@/game/time-label";
 
 import type { WorkspaceProps } from "./Workspace";
@@ -9,8 +8,8 @@ import type { WorkspaceProps } from "./Workspace";
 import { BalanceScope } from "./BalanceScope";
 import { Mailbox, SalesReports } from "./BusinessReports";
 import { CommandIndex } from "./CommandIndex";
-import DispatchDesk from "./DispatchDesk";
 import { EmailComposer } from "./EmailComposer";
+import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import { OperatorBrief } from "./OperatorBrief";
 import { OrderRegister } from "./OrderRegister";
@@ -20,6 +19,7 @@ import { SupplierDirectory } from "./SupplierDirectory";
 
 interface Props extends WorkspaceProps {
   context: ReadoutContext;
+  suppliers: ObservedSupplier[];
 }
 export function WorkspaceReadout({
   run,
@@ -31,26 +31,17 @@ export function WorkspaceReadout({
   screen,
   money,
   context,
+  suppliers,
   parentBalance,
 }: Props) {
   const { state, reports } = run;
   const { tab, setTab } = nav;
-  const orders = useMemo(() => knownOrders(reports), [reports]);
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
   const controls = { t, lang, money, reports, disabled, runCommand: shell.runCommand };
-  if (tab === "desk")
-    return (
-      <DispatchDesk
-        {...controls}
-        state={state}
-        orders={orders}
-        onView={setTab}
-        onOrders={() => setTab("orders")}
-      />
-    );
   if (tab === "world")
     return (
       <BalanceScope
+        embedded
         history={run.history}
         parentBalance={parentBalance}
         rivals={run.rivals}
@@ -66,7 +57,14 @@ export function WorkspaceReadout({
       />
     );
   if (state && tab === "suppliers")
-    return <SupplierDirectory {...controls} state={state} openObject={nav.openObject} />;
+    return (
+      <SupplierDirectory
+        {...controls}
+        state={state}
+        suppliers={suppliers}
+        openObject={nav.openObject}
+      />
+    );
   const cmd = inspectionCommand(tab);
   if (
     state &&
@@ -84,14 +82,17 @@ export function WorkspaceReadout({
         : report;
     const verb = cmd.split(" ")[0] ?? "";
     const action = (
-      <button
-        className="asset-check"
-        disabled={disabled}
-        data-clock-verb={verb}
-        onClick={() => shell.runCommand(cmd, false, true)}
-      >
-        {verb === "quote" ? t("reprice") : t("inspectNow")} · {timeLabel(verb, state, t)}
-      </button>
+      <>
+        <button
+          className="asset-check"
+          disabled={disabled}
+          data-clock-verb={verb}
+          onClick={() => shell.runCommand(cmd, false, true)}
+        >
+          {verb === "quote" ? t("reprice") : t("inspectNow")} · {timeLabel(verb, state, t)}
+        </button>
+        <GuiToolInfo verb={verb} />
+      </>
     );
     const instrument = scoped ? (
       <ObservationView
@@ -106,17 +107,12 @@ export function WorkspaceReadout({
     );
     if (!tab.startsWith("supplier:")) return instrument;
     const supplier = tab.slice(9);
-    const contact = reports.flatMap((r) => r.directory).find((entry) => entry.id === supplier);
-    const purchases = orders.filter(
-      (o) =>
-        o.supplier === supplier ||
-        (contact && o.supplier.toLowerCase() === contact.email.toLowerCase()),
-    );
+    const contact = suppliers.find((entry) => entry.id === supplier);
+    const purchases = contact?.orders ?? [];
     return (
       <>
-        {contact && (
+        {contact?.email && (
           <header className="supplier-contact">
-            <b>{contact.name}</b>
             <EmailComposer
               to={contact.email}
               {...{ state, t, disabled, reports }}
@@ -130,7 +126,7 @@ export function WorkspaceReadout({
           </h3>
           <OrderRegister {...{ t, money }} orders={purchases} open={setTab} />
         </section>
-        {instrument}
+        {contact?.quotable !== false && instrument}
       </>
     );
   }
@@ -148,36 +144,30 @@ export function WorkspaceReadout({
       />
     );
   if (typeof tab === "string" && tab.startsWith("past:"))
-    return (
-      <ReportList
-        reports={context.history}
-        title={t("history") + " · " + context.object.replace(/^(machine|supplier|site):/, "")}
-        {...{ t, money }}
-        open={setTab}
-      />
-    );
+    return <ReportList reports={context.history} {...{ t, money }} open={setTab} />;
   if (cmd && state)
     return (
       <section className="sheet">
-        <h2>{context.name ?? t(context.label)}</h2>
         <button disabled={disabled} onClick={() => shell.runCommand(cmd)}>
           {cmd} · {timeLabel(cmd.split(" ")[0] ?? "", state, t)}
         </button>
+        <GuiToolInfo verb={cmd.split(" ")[0] ?? ""} />
       </section>
     );
-  if (tab === "orders") return <OrderRegister {...{ orders, t, money }} open={setTab} />;
   if (tab === "help")
     return (
       <CommandIndex
         actions={run.actions}
+        release={release}
         {...{ state, lang, t }}
         openBrief={() => setTab("brief")}
       />
     );
-  if (tab === "brief") return <OperatorBrief {...{ release, state, t, money }} />;
+  if (tab === "brief") return <OperatorBrief embedded {...{ release, state, t, money }} />;
   if (tab === "scores")
     return (
       <Scorecard
+        embedded
         history={run.history}
         reviewDay={(day) => {
           nav.setBalanceDay(day);
@@ -195,7 +185,6 @@ export function WorkspaceReadout({
       reports={byDay ? reports.filter((r) => r.day === nav.balanceDay) : reports}
       {...{ t, money }}
       open={setTab}
-      title={byDay ? t("results") + " · " + t("day") + " " + nav.balanceDay : t("results")}
       backToBalance={byDay ? () => setTab("world") : undefined}
     />
   );

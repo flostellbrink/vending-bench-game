@@ -9,6 +9,7 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { GuiToolInfo } from "./GuiToolInfo";
 import { useQuoteDraft } from "./QuoteDrafts";
 import "./order-slip.css";
 interface Props extends ObservationProps {
@@ -177,6 +178,7 @@ export function OrderSlip({
             >
               {t("reprice")} · {assertValue(timing("quote", state)).minutes} min
             </button>
+            <GuiToolInfo verb="quote" />
           </div>
           <div className="dispatch">
             {submitted?.terms?.order ? (
@@ -238,22 +240,25 @@ export function OrderSlip({
                     {t("newerQuote")} #{newer.id} · {t("noCharge")}
                   </button>
                 ) : (
-                  <button
-                    data-clock-verb="order"
-                    disabled={disabled || !selection.length || Boolean(invalid)}
-                    onClick={() => {
-                      save(report.id, { ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
-                      runCommand(
-                        [
-                          "order",
-                          supplier,
-                          ...selection.flatMap((id) => [quotedWord(id), terms.quantity]),
-                        ].join(" "),
-                      );
-                    }}
-                  >
-                    {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
-                  </button>
+                  <>
+                    <button
+                      data-clock-verb="order"
+                      disabled={disabled || !selection.length || Boolean(invalid)}
+                      onClick={() => {
+                        save(report.id, { ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
+                        runCommand(
+                          [
+                            "order",
+                            supplier,
+                            ...selection.flatMap((id) => [quotedWord(id), terms.quantity]),
+                          ].join(" "),
+                        );
+                      }}
+                    >
+                      {t("sendOrder")} · {assertValue(timing("order", state)).minutes} min
+                    </button>
+                    <GuiToolInfo verb="order" />
+                  </>
                 )}
                 {submitted && <p role="status">{submitted.display}</p>}
               </>

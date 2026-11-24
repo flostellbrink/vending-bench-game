@@ -19,6 +19,7 @@ import { clock } from "@/scene/clock";
 import { PlanEvidence } from "./PlanEvidence";
 import { Receipts } from "./Receipts";
 import { ShiftPlan } from "./ShiftPlan";
+import { ToolInfo } from "./ToolInfo";
 interface Props {
   release: Release;
   lang: Lang;
@@ -219,6 +220,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             ? screen("loading")
             : "Tab " + t("completeKey") + " · Enter " + t("execute") + " · ↑ " + t("history")}
         </small>
+        <ToolInfo release={release} lang={lang} verb={tool ? verb : undefined} />
       </div>
     </aside>
   );

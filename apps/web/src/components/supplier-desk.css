@@ -1,0 +1,63 @@
+.desk-archive {
+  list-style: none;
+  padding: 0;
+}
+.sheet.asset-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem 0.8rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #9caa9c;
+}
+.desk-archive button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0.22em 0;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+.supplier-search label {
+  display: block;
+  font:
+    700 0.8rem/1.25 Arial,
+    sans-serif;
+  margin: 0 0 0.3rem;
+}
+.supplier-search input {
+  min-width: 0;
+  padding: 0.26rem 0.35rem;
+  background: #fbfbf3;
+  border: 1px solid #a2ad9d;
+}
+.supplier-search button[type="submit"] {
+  padding: 0.24rem 0.6rem;
+  border: 1px solid #6c7d70;
+  background: #dce2d5;
+}
+.supplier-orders {
+  padding: 0.5rem 0.75rem 0;
+}
+.supplier-orders h3 {
+  margin: 0;
+  font-size: 1em;
+}
+.supplier-orders h3 small {
+  margin-inline-start: 0.35em;
+}
+.supplier-orders .sheet {
+  padding: 0;
+  max-height: 9.5rem;
+  overflow: auto;
+}
+.supplier-contact {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #9caa9c;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5em;
+}

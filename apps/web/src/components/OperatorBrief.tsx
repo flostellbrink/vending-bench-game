@@ -7,6 +7,7 @@ import { operatorText } from "@/game/commands";
 import { clock } from "@/scene/clock";
 
 interface Props {
+  embedded?: boolean;
   release: Release;
   state: Snapshot | null;
   t: (key: "rules" | "day" | "fee") => string;
@@ -44,12 +45,14 @@ function briefBody(source: string) {
   }
   return sections;
 }
-export function OperatorBrief({ release, state, t, money }: Props) {
+export function OperatorBrief({ release, state, t, money, embedded }: Props) {
   return (
     <section className="sheet brief">
-      <h2>
-        {t("rules")} · {release.id}
-      </h2>
+      {!embedded && (
+        <h2>
+          {t("rules")} · {release.id}
+        </h2>
+      )}
       {state && (
         <p>
           {t("day")} {state.days} · {clock(state.opens)}–{clock(state.closes)} · {t("fee")}{" "}
