@@ -71,6 +71,9 @@ export function SaveLibrarySection({
               !run.damaged &&
               !run.finished &&
               run.day === startDay &&
+              run.checkpoints.some(
+                (point) => point.day === startDay && point.moveCount === run.moves,
+              ) &&
               (run.id === id || (run.parent?.slot === id && run.parent.day === startDay)),
           )
           .toSorted(
