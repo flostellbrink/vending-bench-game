@@ -1,6 +1,6 @@
 import type { Optional } from "games-common/language";
 
-import { useId, memo } from "react";
+import { useId, useMemo, memo } from "react";
 
 import { RoomShell, Sunlight, BackWall, WallClock } from "./Architecture";
 import {
@@ -12,6 +12,7 @@ import {
   concourse,
 } from "./Atrium";
 import { Machine, type CabinetStock } from "./Cabinet";
+import { cabinetLayout } from "./cabinet-layout";
 import { Depot } from "./Depot";
 import { Furniture } from "./Furniture";
 import { Polygon } from "./geometry";
@@ -21,6 +22,7 @@ import { ServiceVisit, Person, type ServiceMotion } from "./ServiceVisit";
 import { StreetTree, Outside } from "./Street";
 
 interface OfficeProps {
+  slots: Optional<readonly string[]>;
   depotCases: number | null;
   site: string;
   phase: number;
@@ -34,6 +36,7 @@ interface OfficeProps {
 
 export default function Office({
   site,
+  slots,
   depotCases,
   light,
   phase,
@@ -44,6 +47,13 @@ export default function Office({
   weather,
 }: OfficeProps) {
   const id = useId().replaceAll(":", "");
+  const layouts = useMemo(
+    () => ({
+      snack: cabinetLayout(slots ?? [], site + ".snack"),
+      drinks: cabinetLayout(slots ?? [], site + ".drinks"),
+    }),
+    [slots, site],
+  );
   const depot = site === "depot",
     house = site === "house",
     communal = site === "main-lounge";
@@ -100,6 +110,7 @@ export default function Office({
             key={i}
             x={(communal ? concourse.machineX : 126) + i * 36}
             drink={drink}
+            layout={layouts[drink ? "drinks" : "snack"]}
             stock={stock?.[drink ? "drinks" : "snack"]}
             open={service?.drink === drink ? service.open : 0}
             selected={focus === (drink ? "DRINKS" : "SNACK")}

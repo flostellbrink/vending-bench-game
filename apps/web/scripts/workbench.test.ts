@@ -10,6 +10,32 @@ import { largestPaceLoss } from "../src/game/pace.ts";
 import { observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
+import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
+
+await test("a cabinet draws only its declared cells on uneven shelves", () => {
+  const slots = [
+    "AI-HOUSE:SNACK:F10",
+    "AI-HOUSE:SNACK:F2",
+    "AI-HOUSE:SNACK:E2",
+    "AI-HOUSE:SNACK:F10",
+    "AI-HOUSE:DRINKS:A1",
+    "AI-LOUNGE:SNACK:A3",
+  ];
+  assert.deepEqual(cabinetLayout(slots, "house.snack"), {
+    columns: 2,
+    rows: [
+      {
+        name: "F",
+        cells: [
+          { slot: "F10", column: 1 },
+          { slot: "F2", column: 0 },
+        ],
+      },
+      { name: "E", cells: [{ slot: "E2", column: 0 }] },
+    ],
+  });
+  assert.deepEqual(cabinetLayout(slots, "main-lounge.drinks"), { columns: 0, rows: [] });
+});
 
 await test("a letter draft preserves quoted subjects, newlines and literal backslashes", () => {
   const subject = 'Re: the "small" pack',

@@ -3,6 +3,8 @@ import type { SlotObservation } from "games-common/benchmark";
 import { assertValue, type Optional } from "games-common/language";
 import { memo } from "react";
 
+import type { CabinetLayout } from "./cabinet-layout";
+
 import {
   Box,
   Floor,
@@ -32,6 +34,7 @@ function Cabinet({
   selected,
   progress,
   stock,
+  layout,
 }: {
   x: number;
   drink: boolean;
@@ -39,6 +42,7 @@ function Cabinet({
   selected: boolean;
   progress: Optional<number>;
   stock: Optional<CabinetStock>;
+  layout: CabinetLayout;
 }) {
   const y = 11,
     w = 32,
@@ -46,6 +50,10 @@ function Cabinet({
     h = 66,
     Y = y + d;
   const ang = open * Math.PI * 0.46;
+  const rowHeight = 34.4 / Math.max(1, layout.rows.length);
+  const columnWidth = 18.3 / Math.max(1, layout.columns);
+  const sx = Math.min(1, columnWidth / 6.1);
+  const sy = Math.min(1, rowHeight / 8.6);
   const [sideX, sideY] = project([x + w + 0.1, Y - 1, 53]);
   const illuminated = selected || progress != null;
   const doorPoint = ([u, v]: Point): Vertex => [
@@ -87,46 +95,43 @@ function Cabinet({
         />
       </g>
       <Front x={x + 1} y={Y} z={4} w={w - 2} h={h - 6} fill={illuminated ? "#536858" : "#263c37"} />
-      {repeat(4, (r) => (
-        <g>
-          {repeat(3, (c) => {
-            const item = stock?.[String.fromCharCode(68 - r) + (c + 1)];
-            const z = 20 + r * 8.6,
-              left = x + 5 + c * 6.1;
-            const [cx, cy] = project([left, Y + 0.24, z]);
+      {layout.rows.map((row, r) => (
+        <g key={row.name}>
+          {row.cells.map(({ slot, column }) => {
+            const item = stock?.[slot];
+            const z = 20 + r * rowHeight;
+            const left = x + 5 + column * columnWidth + (columnWidth - 6.1 * sx) / 2;
+            const [cx, cy] = project([left, Y + 0.2, z]);
             return (
-              <g>
-                {drink && <Front x={left - 0.7} y={Y + 0.1} z={z} w={0.9} h={8.6} fill="#849890" />}
+              <g key={slot} transform={`matrix(${sx} ${sx * 0.5} 0 ${sy} ${cx} ${cy})`}>
+                {drink && (
+                  <rect
+                    x={-0.7}
+                    y={-rowHeight / sy}
+                    width=".9"
+                    height={rowHeight / sy}
+                    fill="#849890"
+                  />
+                )}
                 {item?.qty && item.item ? (
                   <>
-                    <Front
-                      x={left}
-                      y={Y + 0.1}
-                      z={z}
-                      w={4.8}
-                      h={5.5}
-                      fill={wrapperColor(item.item)}
-                    />
-                    <Front x={left + 0.5} y={Y + 0.2} z={z + 1.8} w={3.7} h={1.6} fill="#ece0bf" />
-                    {drink && (
-                      <Front x={left + 1} y={Y + 0.1} z={z + 5.4} w={2.5} h={1.5} fill="#b2bcaf" />
-                    )}
+                    <rect y="-5.5" width="4.8" height="5.5" fill={wrapperColor(item.item)} />
+                    <rect x=".5" y="-3.4" width="3.7" height="1.6" fill="#ece0bf" />
+                    {drink && <rect x="1" y="-6.9" width="2.5" height="1.5" fill="#b2bcaf" />}
                   </>
                 ) : null}
                 {!drink && (
-                  <g transform={`matrix(1 .5 0 1 ${cx} ${cy})`}>
-                    <path
-                      d="M0 -1 C-1 -6 5 -7 5 -3 C5 0 1 1 1 -2 C1 -4 4 -5 4 -3"
-                      stroke="#b8bca5"
-                      strokeWidth=".95"
-                      fill="none"
-                    />
-                  </g>
+                  <path
+                    d="M0 -1 C-1 -6 5 -7 5 -3 C5 0 1 1 1 -2 C1 -4 4 -5 4 -3"
+                    stroke="#b8bca5"
+                    strokeWidth=".95"
+                    fill="none"
+                  />
                 )}
               </g>
             );
           })}
-          <Front x={x + 3} y={Y + 0.3} z={19 + r * 8.6} w={21} h={1} fill="#829288" />
+          <Front x={x + 3} y={Y + 0.3} z={20 + r * rowHeight - sy} w={21} h={sy} fill="#829288" />
         </g>
       ))}
       {panel(0, 4, 30, 13, "#304d42")}

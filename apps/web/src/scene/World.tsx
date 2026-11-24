@@ -136,6 +136,7 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
       <figure className="live-room">
         <Office
           site={active.id}
+          slots={state?.slots}
           depotCases={depotCases}
           phase={(value % minutesPerDay) / minutesPerDay}
           light={light}
