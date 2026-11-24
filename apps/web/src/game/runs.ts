@@ -71,7 +71,6 @@ type StorageReader = Pick<Storage, "getItem" | "length" | "key">;
 
 export type RunSlot = v.InferOutput<typeof slotSchema>;
 export interface ParentBalance {
-  run: number;
   values: number[];
 }
 export function recordedClosings(slot: Pick<RunSlot, "checkpoints" | "finished" | "day" | "cash">) {

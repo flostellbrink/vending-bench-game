@@ -16,8 +16,7 @@
     monospace;
 }
 .save-console > header,
-.save-console-actions,
-.save-focus-note {
+.save-console-actions {
   display: flex;
   justify-content: space-between;
   gap: 0.45rem 0.9rem;
@@ -46,8 +45,7 @@
   margin: 0.3rem 0 0;
   color: #c6d2c4;
 }
-.save-console header small,
-.save-focus-note {
+.save-console header small {
   font-size: 0.84rem;
   color: #b5c8b8;
 }
@@ -69,7 +67,7 @@
   position: sticky;
   z-index: 3;
   top: 0;
-  height: 44px;
+  height: 36px;
   background: var(--scope);
   border-bottom: 1px solid #566a5c;
 }
@@ -82,20 +80,6 @@
   white-space: nowrap;
   color: #adbfad;
 }
-.save-new {
-  position: sticky;
-  left: 0;
-  z-index: 6;
-  top: 4px;
-  width: 100px;
-  white-space: nowrap;
-  height: 34px;
-  line-height: 1.05;
-  border: 1px dashed #abbba6;
-  color: var(--luminous);
-  background: var(--scope);
-  font: inherit;
-}
 .save-map-lanes > svg {
   position: absolute;
   top: 0;
@@ -107,22 +91,6 @@
   stroke-width: 1.5;
   stroke-dasharray: 2.5 3.5;
   fill: none;
-}
-.save-map-lanes > svg .current path {
-  stroke: #bdcdb5;
-}
-.save-lane-name {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  width: 100px;
-  height: 100%;
-  padding: 15px 0.3rem 0 0;
-  box-sizing: border-box;
-  background: var(--scope);
-  color: #a9bcae;
-  line-height: 1.2;
-  font-size: 0.83rem;
 }
 .save-card {
   position: absolute;
@@ -151,38 +119,15 @@
   font-weight: bold;
   font-variant-numeric: tabular-nums;
 }
-.save-card.tip {
-  border-style: double;
-  border-width: 3px;
+.save-card.fresh {
+  border-style: dashed;
 }
-.save-card.newest {
-  border-color: var(--hot);
-}
-.save-card em {
-  position: absolute;
-  top: 100%;
-  left: -3px;
-  margin-top: 3px;
-  font:
-    normal 0.68rem/0.9 ui-monospace,
-    monospace;
-  color: var(--hot);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.save-card[aria-current="true"] {
+.save-card[aria-pressed="true"] {
   color: #18261d;
   background: #c1d8c2;
 }
-.save-card[aria-current="true"] small {
+.save-card[aria-pressed="true"] small {
   color: #304b38;
-}
-.save-map-row.reference {
-  height: 52px;
-  border-top: 1px dotted #566a5c;
-}
-.save-map-row.reference .save-lane-name {
-  padding-top: 0.6rem;
 }
 .save-card.reference {
   background: transparent;
@@ -197,17 +142,25 @@
 .save-card:hover small {
   color: inherit;
 }
-.save-card.damaged {
-  line-height: 1.1;
-  font-size: 0.65rem;
-  border-style: dotted;
+.save-decision {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid #566a5c;
+  padding-top: 0.65rem;
 }
-.save-focus-note {
-  justify-content: flex-start;
-  min-height: 2.2rem;
-  padding: 0.65rem 0 0.3rem;
-  border-block: 1px solid #586e5f;
-  margin: 0.4rem 0;
+.save-decision :is(button, a) {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid #b0c4b1;
+  background: #24382a;
+  color: var(--luminous);
+  font: inherit;
+  text-decoration: none;
+}
+.save-decision small {
+  color: #b5c8b8;
 }
 .save-console-actions {
   padding: 0.55rem 0 0;
@@ -228,11 +181,10 @@
   outline-offset: 2px;
 }
 @media (forced-colors: active) {
-  .save-map-lanes > svg path,
-  .save-map-lanes > svg .current path {
+  .save-map-lanes > svg path {
     stroke: CanvasText;
   }
-  .save-card[aria-current="true"] {
+  .save-card[aria-pressed="true"] {
     outline: 2px solid Highlight;
   }
 }

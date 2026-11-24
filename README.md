@@ -18,11 +18,9 @@ Use `balance` to review daily balances, `tabs` to list receipts, or `view <resul
 
 ## Saved runs
 
-Each new run gets its own slot in this browser. Open **Saved runs** to resume a run at its latest command or start a branch from an earlier morning. The original run and its later days remain available. A branch uses its parent’s benchmark revision and seed. Its balance graph compares the two runs on days when both have a recorded closing balance.
+All saves for a challenge share one tree. Select **New** under **Day 1**, then **Start**, to play from scratch. To play from a later morning, select its box, then **Continue**. A box under **Day 2** holds the business as it stood after day 1. The top track is the scripted reference. Continuing a reference day restores its orders, deliveries, stock and prices.
 
-Older saves appear alongside new slots. Resume an older save once to reconstruct its morning checkpoints from its command journal.
-
-Select a morning in the scripted reference row to take over the operator’s business in a new slot. The game replays its commands up to that morning, including orders, deliveries and price changes. The final closing balance is a result, not another playable day.
+Selection does not change a save. When a different path reaches the next day, its checkpoint appears below the source track. The original path remains available. The closing balance after the last day is a result, not another playable morning.
 
 ## Static export
 

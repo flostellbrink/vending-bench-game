@@ -1163,6 +1163,11 @@ landing:
     es: "Modelo"
     de: "Modell"
 session:
+  sourceTrack:
+    .id: TRSRC001
+    ^en: Original track
+    es: Trayectoria de origen
+    de: Ursprungspfad
   setup:
     .id: SX000021
     ^en: "Run setup"
@@ -1180,14 +1185,14 @@ session:
     de: "Tagesschluss"
   newSlot:
     .id: SLTR0017
-    ^en: "New run"
-    es: "Nueva partida"
-    de: "Neuer Lauf"
+    ^en: "New"
+    es: "Nueva"
+    de: "Neu"
   saveTimeline:
     .id: SLTR0014
-    ^en: "Choose a morning to take over the scripted run or branch your own. Choose your latest save to continue."
-    es: "Elige una mañana para tomar el relevo del operador programado o crear una rama de tu partida. Abre tu último guardado para continuar."
-    de: "Wähle einen Morgen, um den Skriptlauf zu übernehmen oder deinen Lauf zu verzweigen. Öffne deinen letzten Spielstand, um fortzufahren."
+    ^en: "Select day to continue or start a new game"
+    es: "Selecciona un día para continuar o iniciar una partida nueva"
+    de: "Tag zum Fortsetzen wählen oder ein neues Spiel starten"
   back:
     .id: SLTR0015
     ^en: "Back to setup"
@@ -1210,9 +1215,9 @@ session:
     .inputs:
       - $run :integer
       - $difference :string
-    ^en: "Difference from run {$run} at the same morning: {$difference}"
-    es: "Diferencia con la partida {$run} al inicio del mismo día: {$difference}"
-    de: "Differenz zu Lauf {$run} am gleichen Morgen: {$difference}"
+    ^en: "Difference from track {$run} that morning: {$difference}"
+    es: "Diferencia con la rama {$run} esa mañana: {$difference}"
+    de: "Differenz zu Zweig {$run} an diesem Morgen: {$difference}"
   damaged:
     .id: SLTR0010
     ^en: "This save cannot be read. The other runs are unaffected."
@@ -1264,9 +1269,9 @@ session:
     .inputs:
       - $run :integer
       - $day :integer
-    ^en: "From run {$run}, day {$day}"
-    es: "Desde la partida {$run}, día {$day}"
-    de: "Aus Lauf {$run}, Tag {$day}"
+    ^en: "From track {$run} · day {$day}"
+    es: "Desde la rama {$run} · día {$day}"
+    de: "Aus Zweig {$run} · Tag {$day}"
   finished:
     .id: SLTR0008
     ^en: "Finished"
@@ -1329,9 +1334,9 @@ session:
     de: "Für diese Bedingungen liegt noch keine veröffentlichte KI-Wertung vor."
   start:
     .id: SX000009
-    ^en: "Start run"
-    es: "Iniciar partida"
-    de: "Lauf starten"
+    ^en: "Start"
+    es: "Iniciar"
+    de: "Starten"
   again:
     .id: SX000010
     ^en: "Start new run"
@@ -1339,9 +1344,9 @@ session:
     de: "Neuen Lauf starten"
   resume:
     .id: SX000011
-    ^en: "Resume run"
-    es: "Continuar partida"
-    de: "Lauf fortsetzen"
+    ^en: "Continue"
+    es: "Continuar"
+    de: "Fortsetzen"
   reopen:
     .id: SX000012
     ^en: "Review finished run"

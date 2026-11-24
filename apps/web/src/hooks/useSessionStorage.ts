@@ -8,7 +8,11 @@ function subscribeToNavigation(update: () => void) {
 }
 function subscribeToStorage(update: () => void) {
   window.addEventListener("storage", update);
-  return () => window.removeEventListener("storage", update);
+  window.addEventListener("pageshow", update);
+  return () => {
+    window.removeEventListener("storage", update);
+    window.removeEventListener("pageshow", update);
+  };
 }
 export function useLocationSearch() {
   return useSyncExternalStore(

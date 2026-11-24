@@ -10,9 +10,12 @@ import { loadRival } from "@/game/rival-balances";
 import {
   forkRun,
   forkScriptedRun,
+  listRuns,
+  runKey,
   scriptedSlot,
   readSlotSnapshot,
   slotSnapshot,
+  withRunLock,
 } from "@/game/runs";
 import { unavailable, useStoredText } from "@/hooks/useSessionStorage";
 
@@ -55,17 +58,32 @@ export function SaveLibrarySection({
     [sending, setSending] = useState(false);
   const options = { locale: lang };
   const newForm = useId();
+  const resume = (id: string) =>
+    "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot: id });
   async function branch(id: string, startDay: number) {
     if (sending || typeof snapshot !== "string") return;
     setSending(true);
     try {
-      const child =
-        id === scriptedSlot
-          ? await forkScriptedRun(localStorage, release, startDay)
+      const child = await withRunLock(runKey(release) + ":fork:" + id + ":" + startDay, () => {
+        const existing = listRuns(localStorage, release)
+          .filter(
+            (run) =>
+              !run.damaged &&
+              !run.finished &&
+              run.day === startDay &&
+              (run.id === id || (run.parent?.slot === id && run.parent.day === startDay)),
+          )
+          .toSorted(
+            (a, b) =>
+              Number(b.id === slot) - Number(a.id === slot) ||
+              (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
+          )[0];
+        if (existing) return existing.id;
+        return id === scriptedSlot
+          ? forkScriptedRun(localStorage, release, startDay)
           : forkRun(localStorage, release, id, startDay);
-      location.assign(
-        "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot: child }),
-      );
+      });
+      location.assign(resume(child));
     } catch {
       setProblem(true);
       setSending(false);
@@ -76,11 +94,10 @@ export function SaveLibrarySection({
       <header>
         <div>
           {embedded ? (
-            <h2>{msg.session.library({}, options)}</h2>
+            <h2>{msg.session.saveTimeline({}, options)}</h2>
           ) : (
-            <h1>{msg.session.library({}, options)}</h1>
+            <h1>{msg.session.saveTimeline({}, options)}</h1>
           )}
-          <p>{msg.session.saveTimeline({}, options)}</p>
         </div>
         <small>
           {msg.session.version({}, options)} {release.id} · {msg.session.seed({}, options)}{" "}
@@ -120,9 +137,6 @@ export function SaveLibrarySection({
         <form id={newForm} action={"/" + lang + "/run/"} method="get">
           <input type="hidden" name="bench" value={release.revision} />
           <input type="hidden" name="slot" value="new" />
-          {!runs.length && !closings.length && !embedded && (
-            <button type="submit">{msg.session.again({}, options)}</button>
-          )}
         </form>
       </div>
     </section>

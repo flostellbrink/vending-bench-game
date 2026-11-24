@@ -30,20 +30,26 @@ await test("each exported page ships only its own localized messages", async () 
       const route = new URL(locale + "/" + segment, directory);
       const html = await readFile(new URL("index.html", route), "utf8");
       assert.ok(html.includes('<html lang="' + locale + '">'));
-      if (segment === "") {
-        const form = html.match(
-          /<form\b(?=[^>]*class="session-actions")[^>]*>[\s\S]*?<\/form>/,
-        )?.[0];
-        assert.ok(form, "Missing native setup form");
-        assert.ok(
-          form.includes('action="/' + locale + '/run/"'),
-          "Start must navigate without landing-page JavaScript",
-        );
+      if (segment !== "run/") {
+        const headings = assertValue(html.match(/class="save-map-head"[^>]*>(.*?)<\/div>/s)?.[1]);
+        assert.ok(!headings.includes("<button"), "The day headings must not contain the New box");
+        const firstTrack = assertValue(html.match(/class="save-map-row"[^>]*>(.*?)<\/div>/s)?.[1]);
+        const nodes = [...firstTrack.matchAll(/<button\b[^>]+>/g)].map(([button]) => button);
+        assert.ok(assertValue(nodes[0]).includes('data-checkpoint="new:1"'));
+        assert.ok(assertValue(nodes[1]).includes('data-checkpoint="scripted-reference:2"'));
+        const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]
+          .map(([form]) => form)
+          .filter((form) => form.includes('action="/' + locale + '/run/"'));
+        assert.equal(forms.length, 1, "Only the timeline starts a new game");
+        const form = assertValue(forms[0]);
+        const id = assertValue(form.match(/\bid="([^"]+)"/)?.[1]);
         assert.ok(form.includes('name="slot"') && form.includes('value="new"'));
-        assert.ok(
-          !form.match(/<button\b[^>]*\bdisabled/),
-          "A fresh exported start must not depend on the save tree hydrating",
-        );
+        const buttons = [...html.matchAll(/<button\b[^>]*>/g)]
+          .map(([button]) => button)
+          .filter((button) => button.includes('form="' + id + '"'));
+        assert.equal(buttons.length, 1, "The selected checkpoint has one launch control");
+        assert.ok(assertValue(buttons[0]).includes('type="submit"'));
+        assert.ok(!assertValue(buttons[0]).includes("disabled"), "Start works before hydration");
       }
       const flight = await readFile(new URL("index.txt", route), "utf8");
       const line = flight

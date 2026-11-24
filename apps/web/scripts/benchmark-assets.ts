@@ -49,7 +49,9 @@ function assets(release: SnapshotRelease): Release {
     if (!values) return published;
     const balances = folder + "/rival-" + i + ".json";
     writeJSON(join(publicDir, balances), values);
-    return { ...published, balances };
+    return rival.kind === "script"
+      ? { ...published, balances, values }
+      : { ...published, balances };
   });
   const mtime = git("show", "-s", "--format=%cI", revision).toString().trim();
   const engineArchive = folder + "/engine.zip";

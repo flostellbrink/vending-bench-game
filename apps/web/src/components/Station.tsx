@@ -19,20 +19,11 @@ interface Props {
   newRun: boolean;
   release: Release;
   slot: string;
-  runNumber: number;
   parentBalance?: ParentBalance;
   lang: Lang;
   changeLang: (locale: Lang) => void;
 }
-export function Station({
-  release,
-  slot,
-  runNumber,
-  parentBalance,
-  lang,
-  changeLang,
-  newRun,
-}: Props) {
+export function Station({ release, slot, parentBalance, lang, changeLang, newRun }: Props) {
   const nav = useNavigation(newRun ? "brief" : "desk"),
     run = useRun(release, slot, nav.setTab);
   const t = useMemo(() => operatorLabels(lang), [lang]),
@@ -61,9 +52,7 @@ export function Station({
           <i className="brand-mark" aria-hidden />
           Vending Bench
         </h1>
-        <span className="operator">
-          {msg.session.runNumber({ index: runNumber }, { locale: lang })}
-        </span>
+        <span className="operator">{msg.landing.human({}, { locale: lang })}</span>
         <i className="vent" aria-hidden />
         {opponent && (
           <button className="pace-key" onClick={() => nav.setTab("scores")}>

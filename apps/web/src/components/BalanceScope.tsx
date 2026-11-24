@@ -53,7 +53,7 @@ export function BalanceScope({
     ...(parentBalance
       ? [
           {
-            name: msg.session.parentRun({ run: parentBalance.run }, { locale: lang }),
+            name: msg.session.sourceTrack({}, { locale: lang }),
             values: parentBalance.values,
             color: "#9a431c",
           },
