@@ -118,6 +118,12 @@ export async function readSnapshot(revision: string) {
     };
     record("/upstream");
     if (needed.size) {
+      if (git("rev-parse", "--is-shallow-repository").toString().trim() === "true") {
+        throw Error(
+          "The Vending Bench submodule is a shallow clone, so its published study runs " +
+            "cannot be verified. Run git -C vendor/vending-bench fetch --unshallow.",
+        );
+      }
       // Team and reporting scripts participate in upstream's hash but do not run a solo game.
       const candidates = git("log", "--format=%H", revision, "--", "scripts/*.py", "tests/*.py")
         .toString()

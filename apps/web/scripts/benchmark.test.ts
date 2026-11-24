@@ -12,29 +12,19 @@ import test from "node:test";
 import { loadPyodide } from "pyodide";
 import * as v from "valibot";
 
-import {
-  pinSchema,
-  pythonJSON,
-  readReleases,
-  readSnapshot,
-  sourceRivalSchema,
-} from "./benchmark-source.ts";
+import { pythonJSON, readReleases, readSnapshot, sourceRivalSchema } from "./benchmark-source.ts";
 
 const root = new URL("../../../", import.meta.url);
 const app = new URL("../", import.meta.url);
 const catalog = parseReleases(
   JSON.parse(await readFile(new URL("src/generated/releases.json", app), "utf8")),
 );
-const pins = v.parse(
-  v.array(pinSchema),
-  JSON.parse(await readFile(new URL("releases.json", root), "utf8")),
-);
-const retained = assertValue(pins.find((pin) => pin.revision !== "submodule")).revision;
+const pinned = assertValue(catalog[0]).revision;
 const git = (...args: string[]) =>
   execFileSync("git", ["-C", "vendor/vending-bench", ...args], { cwd: root, encoding: "utf8" });
 
 await test("the published solo study contributes one final score per model, using the latest attempt", async () => {
-  const revision = "0d9e1a1e34f04091a315943b6ca74f800869bf5c";
+  const revision = pinned;
   const release = assertValue((await readReleases([{ revision }]))[0]);
   const study = "results/two-agent-seed1/single-agent";
   const trials = git(
@@ -76,7 +66,7 @@ await test("the published solo study contributes one final score per model, usin
   }
 });
 await test("quote defaults come from the published MCP signature, not a frontend constant", async () => {
-  const python = await readSnapshot(retained);
+  const python = await readSnapshot(pinned);
   const path = v.parse(v.string(), python.runPython('str(SERVER / "server.py")'));
   python.FS.writeFile(
     path,
@@ -109,7 +99,7 @@ const calibrationSchema = v.object({
   completed: v.boolean(),
 });
 await test("a saved command sequence replays to the same final score", async () => {
-  const release = assertValue(catalog.find((r) => r.revision === retained));
+  const release = assertValue(catalog[0]);
   const python = await loadPyodide();
   python.unpackArchive(
     new Uint8Array(await readFile(new URL("public/" + release.engineArchive, app))),
@@ -228,25 +218,19 @@ await test("published scripted calibration and briefing come from the selected G
 });
 
 await test("different commits sharing one release version remain distinct; duplicate pins collapse", async () => {
-  const previous = execFileSync(
-    "git",
-    ["-C", "vendor/vending-bench", "rev-parse", retained + "^"],
-    { cwd: root, encoding: "utf8" },
-  ).trim();
-  const releases = await readReleases(
-    [retained, previous, retained].map((revision) => ({ revision })),
-  );
+  const previous = git("rev-parse", pinned + "^").trim();
+  const releases = await readReleases([pinned, previous, pinned].map((revision) => ({ revision })));
   assert.equal(releases.length, 2);
   assert.equal(assertValue(releases[0]).version, assertValue(releases[1]).version);
   assert.notEqual(assertValue(releases[0]).id, assertValue(releases[1]).id);
   assert.deepEqual(
     releases.map((r) => r.revision),
-    [retained, previous],
+    [pinned, previous],
   );
 });
 
 await test("model endpoints need matching source and conditions; only recorded closings become a trace", async () => {
-  const release = assertValue(catalog.find((entry) => entry.revision === retained));
+  const release = assertValue(catalog[0]);
   const python = await readSnapshot(release.revision);
   const batch = "/upstream/results/baselines/models-30d";
   const trial = batch + "/example";

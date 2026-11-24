@@ -8,8 +8,8 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-`pnpm build` writes a static site to `apps/web/out/`. It needs no server or API key.
+`pnpm build` writes a static site to `apps/web/out/`. It needs no server or API key. `wrangler deploy` publishes it to Cloudflare.
 
-The benchmark is a submodule. To keep old saves playable after a bump, keep each released commit in `releases.json`.
+The game supports only the benchmark commit that the submodule pins. The build needs the full submodule history to verify the published study runs.
 
 Design, release goal and status: [docs](docs/).
