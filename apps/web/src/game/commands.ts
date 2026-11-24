@@ -110,6 +110,12 @@ export const operatorText = (text: string) =>
   });
 
 type Geometry = Pick<Snapshot, "machines" | "slots">;
+function siteNames(state: Geometry) {
+  return [...new Set(state.machines.map((id) => id.split(":")[0] ?? ""))];
+}
+function siteFor(token: string, state: Geometry) {
+  return siteNames(state).find((site) => address(site) === address(token));
+}
 type ClockState = Pick<Snapshot, "minute" | "opens" | "closes" | "costs"> & {
   defaultCost?: number;
 };
@@ -172,6 +178,7 @@ export function parse(line: string, state: Geometry, actions: Actions): Move {
   for (const spec of entry[1].split(" ").filter(Boolean)) {
     if (!tokens.length && spec.endsWith("?")) continue;
     const key = spec.replace(/[?.]/g, "");
+    if (key === "days" && verb === "sales" && tokens[0] && siteFor(tokens[0], state)) continue;
     if (key === "items") {
       if (!tokens.length) throw Error(usage);
       const items = new Map<string, number>();
@@ -201,9 +208,7 @@ export function parse(line: string, state: Geometry, actions: Actions): Move {
       if (!found) throw Error(usage);
       token = found;
     } else if (field === "location") {
-      const site = state.machines
-        .map((id) => id.split(":")[0])
-        .find((id) => id && (address(id) === token.toLowerCase() || id === token.toUpperCase()));
+      const site = siteFor(token, state);
       if (site) token = site;
     }
     args[field] = token;
@@ -215,14 +220,17 @@ export function parse(line: string, state: Geometry, actions: Actions): Move {
 export function completions(line: string, state: Geometry, actions: Actions, reports: Report[]) {
   const parts = line.trimStart().split(/\s+/);
   const partial = (parts.pop() ?? "").toLowerCase(),
-    verb = parts[0] ?? "";
+    verb = parts[0]?.toLowerCase() ?? "";
   const spec = definitionFor(verb)?.[1].split(" ")[parts.length - 1]?.replace(/[?.]/g, "");
   let choices: string[] = [];
   if (!verb) choices = [...vocabulary(actions).map(([v]) => v), ...local];
   else if (spec === "machine_id") choices = state.machines.map(address);
   else if (spec === "slot") choices = state.slots.map(address);
-  else if (spec === "location")
-    choices = state.machines.map((id) => address(id).split(".")[0] ?? "");
+  else if (verb === "sales") {
+    const positional = parts.slice(1).filter((word) => word !== "--by-product");
+    if (!positional.length || (positional.length === 1 && Number.isInteger(Number(positional[0]))))
+      choices = siteNames(state).map(address);
+  } else if (spec === "location") choices = siteNames(state).map(address);
   else if (spec === "channel") choices = ["prints", "slack", "mail"];
   else if (spec === "supplier_id") choices = reports.flatMap((r) => r.suppliers);
   else if (verb === "mail" && spec === "to")

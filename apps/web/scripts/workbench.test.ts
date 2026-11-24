@@ -5,12 +5,33 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { commandWords, quotedWord } from "../src/game/command-words.ts";
-import { commandForMove, draftMachine, parse, priceOrder, timing } from "../src/game/commands.ts";
+import {
+  commandForMove,
+  completions,
+  draftMachine,
+  parse,
+  priceOrder,
+  timing,
+} from "../src/game/commands.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
 import { observation } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
+
+await test("a site sales report can use the benchmark's default time window", () => {
+  const state = { machines: ["AI-HOUSE:SNACK", "MAIN-LOUNGE:DRINKS"], slots: [] };
+  const actions = { get_sales_report: [] };
+  assert.deepEqual(completions("sales --by-product ho", state, actions, []), ["house"]);
+  assert.deepEqual(parse("sales --by-product house", state, actions), [
+    "get_sales_report",
+    { by_product: true, location: "AI-HOUSE" },
+  ]);
+  assert.deepEqual(parse("sales 3 main-lounge", state, actions), [
+    "get_sales_report",
+    { days: 3, location: "MAIN-LOUNGE" },
+  ]);
+});
 
 await test("inherited commands can be recalled and submitted with the same arguments", () => {
   const geometry = { machines: ["AI-HOUSE:SNACK"], slots: ["AI-HOUSE:SNACK:A1"] };
