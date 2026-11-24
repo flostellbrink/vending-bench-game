@@ -271,3 +271,20 @@ export function knownOrders(reports: Report[]): KnownOrder[] {
   }
   return [...orders.values()].toReversed();
 }
+
+export function weatherObservations(reports: readonly Report[]) {
+  const days = new Map<number, { minute: number; weather: string }>();
+  for (const r of reports) {
+    if (r.tool === "get_status" && !days.has(r.day)) {
+      const match = /^Weather today: ([^\n]+)$/m.exec(r.body ?? r.output);
+      if (match?.[1]) days.set(r.day, { minute: r.minute, weather: match[1] });
+    }
+    if (r.endDay === r.day) continue;
+    for (const notice of r.notices) {
+      const match = /^--- Day (\d+), [^\n]+?\. Weather: ([^.]+)\./.exec(notice);
+      if (match?.[2] && Number(match[1]) === r.endDay)
+        days.set(r.endDay, { minute: r.endMinute, weather: match[2] });
+    }
+  }
+  return days;
+}

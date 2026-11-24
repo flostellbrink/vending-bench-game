@@ -14,7 +14,7 @@ import {
   timing,
 } from "../src/game/commands.ts";
 import { largestPaceLoss } from "../src/game/pace.ts";
-import { displayCell, knownOrders, observation } from "../src/game/reports.ts";
+import { displayCell, knownOrders, observation, weatherObservations } from "../src/game/reports.ts";
 import { readRun, saveRun } from "../src/game/runs.ts";
 import { projectPlan, remainingPlan, type PlannedCommand } from "../src/game/shift-plan.ts";
 import { cabinetLayout } from "../src/scene/cabinet-layout.ts";
@@ -356,4 +356,41 @@ await test("a sales receipt keeps original evidence and exposes sortable amounts
       currency.format(1100),
     );
   }
+});
+await test("weather and search suggestions do not reveal unobserved benchmark information", () => {
+  const receipt = {
+    day: 1,
+    minute: 565,
+    endDay: 1,
+    endMinute: 570,
+    minutes: 5,
+    openingCash: 1500,
+    closingCash: 1500,
+    output: "Weather today: rainy",
+    body: "Weather today: rainy",
+    notices: [],
+  };
+  const note = observation(receipt, ["read_notes", {}], 1);
+  const status = observation(receipt, ["get_status", {}], 2);
+  const closing = observation(
+    {
+      ...receipt,
+      endDay: 2,
+      endMinute: 540,
+      notices: [
+        "--- Day 2, Tuesday 06 January 2026. Weather: clear. Balance €1,488.00. 1 unread email(s).",
+      ],
+    },
+    ["wait_for_next_day", {}],
+    3,
+  );
+  assert.equal(weatherObservations([note]).size, 0);
+  assert.deepEqual(
+    [...weatherObservations([note, status, closing])],
+    [
+      [1, { minute: 565, weather: "rainy" }],
+      [2, { minute: 540, weather: "clear" }],
+    ],
+  );
+  assert.deepEqual(completions("find ", { machines: [], slots: [] }, { search_web: [] }, []), []);
 });

@@ -247,7 +247,6 @@ export function completions(line: string, state: Geometry, actions: Actions, rep
       .flatMap((r) => r.rows.flatMap(([id]) => (typeof id === "string" ? [id] : [])));
   else if (spec === "folder") choices = ["inbox", "sent"];
   else if (verb === "help") choices = [...vocabulary(actions).map(([v]) => v), ...local];
-  else if (verb === "find") choices = ["snacks", "coffee", "wholesalers"];
   if (verb === "sales" && partial.startsWith("-")) choices = ["--by-product"];
   if (verb === "inbox" && partial.startsWith("-")) choices = ["--unread", "--limit"];
   return [...new Set(choices)].filter((s) => s.toLowerCase().startsWith(partial));

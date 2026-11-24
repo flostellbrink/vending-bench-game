@@ -40,7 +40,7 @@ def tool_descriptions():
                     description = eval(expression, {"__builtins__": {}, "config": config})
             if not description or not hasattr(Engine, "tool_" + node.name):
                 raise ValueError(f"Missing engine method or description: {node.name}")
-            descriptions[node.name] = " ".join(description.split())
+            descriptions[node.name] = description.strip()
     if not descriptions:
         raise ValueError("No published MCP business tools in server.py")
     return descriptions

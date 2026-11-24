@@ -82,7 +82,6 @@ export const snapshotSchema = v.object({
   slots: v.array(v.string()),
   sites: v.array(siteSchema),
   machines: v.array(v.string()),
-  weather: v.string(),
   costs: v.record(v.string(), v.number()),
   defaultCost: v.number(),
   opens: v.number(),

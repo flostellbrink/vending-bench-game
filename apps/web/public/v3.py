@@ -73,7 +73,7 @@ def snapshot():
                            startDate=s["start_date"], slots=config.all_slots(),
                            sites=[{"id": key, "name": location["name"]}
                                   for key, location in config.LOCATIONS.items()],
-                           machines=config.machine_ids(), weather=s["weather"],
+                           machines=config.machine_ids(),
                            costs=config.TOOL_MINUTES, defaultCost=config.DEFAULT_TOOL_MINUTES,
                            opens=config.DAY_START_MINUTE, closes=config.DAY_END_MINUTE, fee=config.DAILY_SPOT_FEE, days=config.SIM_DAYS,
                            final=engine.score() if engine.over else None))

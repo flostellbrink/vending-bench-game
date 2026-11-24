@@ -4,6 +4,7 @@ import { msPerDay, type Optional } from "games-common/language";
 import { useMemo, type CSSProperties } from "react";
 
 import { address, moveDestination } from "@/game/commands";
+import { weatherObservations } from "@/game/reports";
 
 import type { CabinetStock } from "./Cabinet";
 
@@ -67,6 +68,8 @@ export function World({ value, state, t, reports, sceneObject, onOpen }: WorldPr
   const inventories = useMemo(() => depotObservations(reports), [reports]);
   const depotCases = inventories.findLast((inventory) => inventory.time <= value)?.cases ?? null;
   const last = reports.at(-1);
+  const weatherByDay = useMemo(() => weatherObservations(reports), [reports]);
+  const observed = weatherByDay.get(1 + Math.floor(value / minutesPerDay));
   const lastObject = useMemo(() => {
     const report = reports.findLast((r) => moveDestination([r.tool, r.args]) !== undefined);
     return report && moveDestination([report.tool, report.args]);
@@ -133,7 +136,9 @@ export function World({ value, state, t, reports, sceneObject, onOpen }: WorldPr
           depotCases={depotCases}
           phase={(value % minutesPerDay) / minutesPerDay}
           light={light}
-          weather={state?.weather}
+          weather={
+            observed && observed.minute <= value % minutesPerDay ? observed.weather : undefined
+          }
           service={service}
           focus={focus?.split(":")[1]}
           machines={machines}
