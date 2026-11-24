@@ -226,6 +226,23 @@ await test("an observation carries overnight notices separately from a paid repl
   assert.match(result.display, /no price set/);
   assert.doesNotMatch(result.display, /Delivery/);
   assert.deepEqual(result.notices, data.notices);
+  const copied = observation(
+    { ...data, output: data.body },
+    ["read_notes", { key: "service-log" }],
+    9,
+  );
+  assert.deepEqual(copied.slots, {});
+  const rejected = observation(
+    {
+      ...data,
+      body: "No units in storage.",
+      output: "No units in storage.\n" + data.body,
+      notices: [data.body],
+    },
+    ["restock_machine", { slot: "TEST:SNACK:A1" }],
+    10,
+  );
+  assert.deepEqual(rejected.slots, {});
   assert.deepEqual(
     timing("refill", { minute: 990, closes: 1020, opens: 540, costs: { restock_machine: 45 } }),
     { minutes: 45, rolls: true, from: 990, to: 540 },

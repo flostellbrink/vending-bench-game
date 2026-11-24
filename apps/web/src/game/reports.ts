@@ -81,7 +81,7 @@ export function observation(
   }
   if (move[0] === "get_machine_inventory") {
     columns = ["slot", "size", "product", "quantity", "capacity", "price"];
-    for (const line of output.split("\n")) {
+    for (const line of lines) {
       const m = /^(\S+:\w\d+)\s+(\w+)\s+(.+?)\s{2,}(\d+)\s+(\d+)\s+(.+)$/.exec(line);
       if (m) {
         rows.push(m.slice(1));
@@ -197,14 +197,16 @@ export function observation(
       rendered.add(lines[0] ?? "");
     }
   }
-  const loaded = /Loaded \d+ x (.+?) into slot (\S+) \((\d+)\/(\d+)\)/.exec(output);
+  const loaded =
+    (move[0] === "restock_machine" || move[0] === "swap_item") &&
+    /^Loaded \d+ x (.+?) into slot (\S+) \((\d+)\/(\d+)\)/m.exec(body);
   if (loaded)
     slots[capture(loaded, 2)] = {
       item: capture(loaded, 1),
       qty: Number(capture(loaded, 3)),
       capacity: Number(capture(loaded, 4)),
     };
-  if (move[0] === "clear_slot" && move[1].slot && /was already empty\.|to storage\./.test(output)) {
+  if (move[0] === "clear_slot" && move[1].slot && /was already empty\.|to storage\./.test(body)) {
     slots[move[1].slot] = { item: null, qty: 0, capacity: null };
   }
   let display = operatorText(
