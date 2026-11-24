@@ -47,6 +47,10 @@ export const releaseSchema = v.object({
     refill: v.number(),
   }),
   tools: v.record(v.string(), v.string()),
+  reportLimits: v.object({
+    mailCount: v.pipe(v.number(), v.integer(), v.minValue(1)),
+    salesDays: v.pipe(v.number(), v.integer(), v.minValue(1)),
+  }),
   toolDefaults: v.objectWithRest(
     {
       check_offers: v.objectWithRest(

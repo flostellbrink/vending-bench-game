@@ -215,5 +215,7 @@ def metadata():
                                    "fee":config.DAILY_SPOT_FEE, "opens":config.DAY_START_MINUTE,
                                    "closes":config.DAY_END_MINUTE, "refill":config.TOOL_MINUTES.get("restock_machine",config.DEFAULT_TOOL_MINUTES)},
                        "brief": brief.strip(), "tools": tools, "toolDefaults": defaults,
+                       "reportLimits": {"mailCount": config.EMAIL_LIST_LIMIT_MAX,
+                                        "salesDays": config.SALES_REPORT_MAX_DAYS},
                        "scriptedReplay": replay,
                        "rivals": [script, *model_results(version)]}, allow_nan=False)

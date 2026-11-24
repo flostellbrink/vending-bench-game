@@ -289,3 +289,22 @@ json.dumps({
   assert.match(changed.script.sourcePath, /reference_bot\.py$/);
   assert.equal(assertValue(changed.script.values).length, release.days + 1);
 });
+
+await test("GUI report limits follow the selected benchmark, independently of MCP defaults", async () => {
+  const release = assertValue(catalog[0]);
+  const python = await readSnapshot(release.revision);
+  assert.deepEqual(
+    pythonJSON(
+      python,
+      `
+config.EMAIL_LIST_LIMIT_MAX += 3
+config.SALES_REPORT_MAX_DAYS += 7
+json.dumps(json.loads(metadata())["reportLimits"])
+`,
+    ),
+    {
+      mailCount: release.reportLimits.mailCount + 3,
+      salesDays: release.reportLimits.salesDays + 7,
+    },
+  );
+});

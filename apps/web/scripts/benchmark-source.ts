@@ -24,6 +24,7 @@ const metadataSchema = v.object({
     "network",
     "tools",
     "toolDefaults",
+    "reportLimits",
   ]).entries,
   rivals: v.array(sourceRivalSchema),
   scriptedReplay: v.omit(scriptedReplaySchema, ["revision"]),
