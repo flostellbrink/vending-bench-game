@@ -2,6 +2,7 @@ import { assertValue } from "games-common/language";
 import { Fragment, useState, useMemo } from "react";
 
 import { timing } from "@/game/commands";
+import { displayCell } from "@/game/reports";
 import { fieldLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
@@ -10,13 +11,14 @@ import type { ObservationProps } from "./panel-props";
 import { StorageBatches } from "./StorageBatches";
 type Props = Pick<
   ObservationProps,
-  "report" | "reports" | "t" | "lang" | "state" | "runCommand" | "disabled"
+  "report" | "reports" | "t" | "lang" | "money" | "state" | "runCommand" | "disabled"
 > & { openReport: (id: number) => void };
 export function ReportGrid({
   report,
   reports,
   t,
   lang,
+  money,
   state,
   runCommand,
   disabled,
@@ -48,11 +50,15 @@ export function ReportGrid({
   }, [command, reports]);
   const rows = useMemo(() => {
     if (!sort) return report.rows;
-    return report.rows.toSorted(
-      (a, b) =>
-        String(a[sort.index]).localeCompare(String(b[sort.index]), lang, { numeric: true }) *
-        sort.dir,
-    );
+    return report.rows.toSorted((a, b) => {
+      const first = a[sort.index],
+        second = b[sort.index];
+      const difference =
+        typeof first === "number" && typeof second === "number"
+          ? first - second
+          : String(first).localeCompare(String(second), lang, { numeric: true });
+      return difference * sort.dir;
+    });
   }, [report, sort, lang]);
   return (
     <table className="observation-grid">
@@ -91,7 +97,7 @@ export function ReportGrid({
                         {c}
                       </button>
                     ) : (
-                      c
+                      displayCell(c, report.columns[j], money)
                     )}
                     {j === 1 && report.batches && (
                       <StorageBatches report={report} product={String(r[0])} lang={lang} />

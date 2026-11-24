@@ -38,6 +38,22 @@ function capture(match: RegExpMatchArray, index: number): string {
   return value;
 }
 
+function monetaryValue(text: string): number | string {
+  const amount = /^[^\d.,-]*(-?\d[\d,]*\.\d{2})$/.exec(text)?.[1];
+  return amount === undefined ? text : Number(amount.replaceAll(",", ""));
+}
+
+export function displayCell(
+  value: number | string,
+  column: string | undefined,
+  money: (n: number) => string,
+) {
+  return typeof value === "number" &&
+    (column === "price" || column === "revenue" || column === "averageCost")
+    ? money(value)
+    : value;
+}
+
 export function observation(
   receipt: Receipt,
   move: Move,
@@ -84,7 +100,7 @@ export function observation(
     for (const line of lines) {
       const m = /^(\S+)\s{2,}(.+?)\s{2,}(\S+)\s+(\d+)\s+(\S*[\d.,]+)\s*$/.exec(line);
       if (m) {
-        rows.push(m.slice(1));
+        rows.push([...m.slice(1, 5), monetaryValue(capture(m, 5))]);
         product = capture(m, 1);
         products.push(product);
         rendered.add(line);
@@ -169,7 +185,7 @@ export function observation(
     for (const line of lines) {
       const m = pattern.exec(line);
       if (m) {
-        rows.push(m.slice(1));
+        rows.push([...m.slice(1, -1), monetaryValue(capture(m, m.length - 1))]);
         rendered.add(line);
       }
     }

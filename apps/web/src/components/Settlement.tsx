@@ -6,6 +6,7 @@ import type { ParentBalance } from "@/game/runs";
 import type { Run } from "@/hooks/useCommandLine";
 import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
 
+import { displayCell } from "@/game/reports";
 import { fieldLabel } from "@/localization/messages";
 import { clock, receiptEnd } from "@/scene/clock";
 
@@ -120,7 +121,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
                       <tr key={i}>
                         {row.map((cell, j) => (
                           <td key={j}>
-                            {cell}
+                            {displayCell(cell, selected.columns[j], money)}
                             {j === 1 && selected.batches && (
                               <StorageBatches
                                 report={selected}
