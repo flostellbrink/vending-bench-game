@@ -7,7 +7,7 @@ import type { Run } from "@/hooks/useCommandLine";
 import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
 
 import { fieldLabel } from "@/localization/messages";
-import { clock } from "@/scene/clock";
+import { clock, receiptEnd } from "@/scene/clock";
 
 import { BalanceScope } from "./BalanceScope";
 import { DayStatement } from "./DayStatement";
@@ -93,8 +93,8 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
                 #{selected.id} · {selected.line}
               </h2>
               <p>
-                {t("day")} {selected.day} · {clock(selected.minute)} → {clock(selected.endMinute)} ·{" "}
-                {selected.minutes} min
+                {t("day")} {selected.day} · {clock(selected.minute)} →{" "}
+                {receiptEnd(selected, t("day"))} · {selected.minutes} min
               </p>
               <p>
                 {t("bank")}: {money(selected.openingCash)} → {money(selected.closingCash)}

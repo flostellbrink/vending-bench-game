@@ -1,6 +1,6 @@
 import { operatorText } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
-import { clock } from "@/scene/clock";
+import { clock, receiptEnd } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
@@ -16,8 +16,7 @@ function ReceiptHeading({ report, t }: Pick<ObservationProps, "report" | "t">) {
       <h2>{report.line}</h2>
       <small>
         #{report.id} · {t("day")} {report.day} · {clock(report.minute)} →{" "}
-        {report.endDay !== report.day ? t("day") + " " + report.endDay + " " : ""}
-        {clock(report.endMinute)} · {report.minutes} min
+        {receiptEnd(report, t("day"))} · {report.minutes} min
       </small>
     </header>
   );

@@ -6,7 +6,7 @@ import type { Money } from "@/localization/messages";
 import { opensInstrument } from "@/game/receipt-routing";
 import { translate, type Lang } from "@/localization/messages";
 import { stationMessages as msg } from "@/localization/station-messages";
-import { clock } from "@/scene/clock";
+import { clock, receiptEnd } from "@/scene/clock";
 export const Receipts = memo(function Receipts({
   lines,
   lang,
@@ -48,7 +48,7 @@ export const Receipts = memo(function Receipts({
       {!("localText" in r) && !opensInstrument(r) && (
         <div className="write-ack">
           <small>
-            {clock(r.minute)} → {clock(r.endMinute)} · {r.minutes} min
+            {clock(r.minute)} → {receiptEnd(r, day)} · {r.minutes} min
             {r.closingCash !== r.openingCash && " · " + money(r.closingCash - r.openingCash)}
           </small>
           {r.terms?.order && (
@@ -71,7 +71,7 @@ export const Receipts = memo(function Receipts({
       {peek === r.id && !("localText" in r) && (
         <div className="receipt-peek">
           <small>
-            {clock(r.minute)} → {clock(r.endMinute)} · {r.minutes} min
+            {clock(r.minute)} → {receiptEnd(r, day)} · {r.minutes} min
           </small>
           {r.mail ? (
             <p>
