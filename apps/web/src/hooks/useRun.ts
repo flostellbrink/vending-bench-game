@@ -15,7 +15,8 @@ import {
 import { errorToString } from "games-common/language";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { opensInstrument } from "@/game/receipt-routing";
+import type { ResponseDestination } from "@/game/receipt-routing";
+
 import { observation } from "@/game/reports";
 import { loadRival } from "@/game/rival-balances";
 import {
@@ -39,7 +40,7 @@ export interface LocalLine {
 export type LogLine = Report | LocalLine;
 type BootStage = "runtime" | "mount" | "ready";
 type SaveIssue = "" | "saveConflict" | "saveFailed";
-type View = number | "scores" | "suppliers" | `machine:${string}`;
+type View = number | "scores" | "suppliers";
 type SimulatorResult = Extract<WorkerReply, { state: Snapshot }>;
 
 interface RunView {
@@ -107,7 +108,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   const [runtimeError, setRuntimeError] = useState("");
   const [epoch, retry] = useState(0);
   const worker = useRef<Worker | null>(null);
-  const pending = useRef<{ entry: Entry; keepInstrument: boolean } | null>(null);
+  const pending = useRef<{ entry: Entry; destination: ResponseDestination } | null>(null);
   const saveKey = runKey(release, slot);
   const bestKey = recordKey(release);
   const setError = useCallback((error: string) => setView((old) => ({ ...old, error })), []);
@@ -237,14 +238,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         boot: !entry ? (first ? [...(old.boot ?? []), "ready"] : null) : old.boot,
       }));
       if (data.state.over) onView("scores");
-      else if (request && !request.keepInstrument && reports[0] && opensInstrument(reports[0])) {
-        const report = reports[0];
-        onView(
-          report.tool === "get_machine_inventory" && report.args.machine_id && report.rows.length
-            ? `machine:${report.args.machine_id}`
-            : report.id,
-        );
-      }
+      else if (request?.destination === "dialog" && reports[0]) onView(reports[0].id);
     }
 
     current.addEventListener("error", (e) => fail(e.message), { signal: abort.signal });
@@ -322,10 +316,10 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     return () => abort.abort();
   }, [release, setError]);
 
-  function submit(entry: Entry, keepInstrument = false): boolean {
+  function submit(entry: Entry, destination: ResponseDestination): boolean {
     if (view.busy || !view.state || view.state.over || pending.current || !worker.current)
       return false;
-    pending.current = { entry, keepInstrument };
+    pending.current = { entry, destination };
     clearSaveIssue();
     setView((old) => ({ ...old, busy: true, error: "" }));
     post(worker.current, { moves: [entry.move] });

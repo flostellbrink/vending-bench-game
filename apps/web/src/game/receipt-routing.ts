@@ -1,4 +1,6 @@
 import type { Report } from "games-common/benchmark";
+export type GuiResponse = "dialog" | "inline";
+export type ResponseDestination = GuiResponse | "console";
 
 const reads = new Set([
   "search_web",
@@ -14,7 +16,7 @@ const reads = new Set([
   "list_reminders",
 ]);
 
-/** An inspection opens its result. A write acknowledges the action without displacing the working document. */
-export function opensInstrument(report: Pick<Report, "tool">): boolean {
+/** Read receipts use the compact preview rather than the terminal's write acknowledgment. */
+export function isReadReceipt(report: Pick<Report, "tool">): boolean {
   return reads.has(report.tool);
 }

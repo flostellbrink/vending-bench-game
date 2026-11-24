@@ -36,7 +36,7 @@ export function OperationsDesk(props: Props) {
   const locationList = useId();
   const keyList = useId();
   function dispatch(tool: ToolName, args: CommandArgs = {}) {
-    if (!disabled) runCommand(commandForMove([tool, args]), false, true);
+    if (!disabled) runCommand(commandForMove([tool, args]), "inline");
   }
   function submit(tool: ToolName, getArgs: (form: FormData) => CommandArgs) {
     return (event: FormEvent<HTMLFormElement>) => {

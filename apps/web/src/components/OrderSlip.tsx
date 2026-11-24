@@ -45,8 +45,7 @@ export function QuoteRequest({ supplier, runCommand, disabled, supplierView = fa
           if (valid)
             runCommand(
               commandForMove(["check_offers", { supplier_id: supplier, quantity: Number(qty) }]),
-              false,
-              supplierView,
+              supplierView ? "inline" : "dialog",
             );
         }}
       >
@@ -135,7 +134,7 @@ export function OrderSlip({
           event.preventDefault();
           if (!command || locked) return;
           save({ ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
-          runCommand(command, false, true);
+          runCommand(command, "inline");
         }}
       >
         <div className="slip-head">

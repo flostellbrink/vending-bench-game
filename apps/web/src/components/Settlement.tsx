@@ -30,6 +30,7 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
   const [balanceDay, setBalanceDay] = useState<number | null>(null);
   const nav = useNavigation("scores");
   const { state, rivals, best, reports, history } = run;
+  const finalReceipt = reports.at(-1);
   const openDay = (day: number) => nav.setTab("day:" + day);
   return (
     <StationFrame revision={release.revision} slot={slot} page="run">
@@ -40,6 +41,16 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
             reviewDay={openDay}
             openReport={nav.setTab}
           />
+          {finalReceipt && (
+            <button
+              className="receipt-link"
+              aria-haspopup="dialog"
+              onClick={() => nav.setTab(finalReceipt.id)}
+            >
+              {msg.operator.openReceipt()} #{finalReceipt.id} ·{" "}
+              {resultTitle(finalReceipt.id, finalReceipt)}
+            </button>
+          )}
           <BalanceScope
             {...{ history, rivals, best, parentBalance, release }}
             selected={

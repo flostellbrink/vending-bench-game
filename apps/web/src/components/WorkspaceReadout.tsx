@@ -99,7 +99,7 @@ export function WorkspaceReadout({
           className="asset-check"
           disabled={disabled}
           data-clock-verb={verb}
-          onClick={() => shell.runCommand(cmd, false, true)}
+          onClick={() => shell.runCommand(cmd, "inline")}
         />
       </GuiToolInfo>
     );
@@ -147,6 +147,9 @@ export function WorkspaceReadout({
           {...controls}
           supplierView
         />
+        {report && report.terms?.minimum === undefined && (
+          <ObservationView {...controls} report={report} state={state} openReport={setTab} />
+        )}
         <OrderSlip
           {...controls}
           report={report?.terms?.minimum !== undefined ? report : undefined}

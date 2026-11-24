@@ -57,8 +57,7 @@ export function Mailbox(props: Props) {
                   "list_emails",
                   { folder, unread_only: unread, limit: Number(limit) },
                 ]),
-                false,
-                true,
+                "inline",
               );
           }}
         >
@@ -174,8 +173,7 @@ export function SalesReports(props: Props) {
                 "get_sales_report",
                 { days: Number(days), location: site, by_product: byProduct },
               ]),
-              false,
-              true,
+              "inline",
             );
         }}
       >

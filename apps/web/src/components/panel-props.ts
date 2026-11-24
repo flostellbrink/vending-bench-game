@@ -1,5 +1,6 @@
 import type { Report, Snapshot } from "games-common/benchmark";
 
+import type { GuiResponse } from "@/game/receipt-routing";
 import type { Money } from "@/localization/messages";
 export interface ObservationProps {
   report: Report;
@@ -7,6 +8,6 @@ export interface ObservationProps {
   state: Snapshot;
 
   money: Money;
-  runCommand: (command: string, fromPrompt?: false, keepInstrument?: boolean) => void;
+  runCommand: (command: string, response?: GuiResponse) => void;
   disabled: boolean;
 }

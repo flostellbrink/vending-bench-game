@@ -102,11 +102,7 @@ export function SlotInstrument({
           ))}
         </div>
       )}
-      <SlotService
-        slotId={slot.rawId}
-        size={slot.size}
-        {...{ reports, runCommand, disabled, live }}
-      />
+      <SlotService slotId={slot.rawId} size={slot.size} {...{ reports, runCommand, disabled }} />
     </section>
   );
 }
@@ -137,7 +133,7 @@ export function UninspectedMachine({
           ))}
         </datalist>
       </Field>
-      <SlotService {...props} slotId={slotId} live />
+      <SlotService {...props} slotId={slotId} />
     </section>
   );
 }
@@ -148,8 +144,7 @@ function SlotService({
   reports,
   runCommand,
   disabled,
-  live,
-}: ServiceProps & { slotId: string; size?: string; live: boolean }) {
+}: ServiceProps & { slotId: string; size?: string }) {
   const [verb, setVerb] = useState<(typeof operations)[number]>("restock_machine");
   const [product, setProduct] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -175,7 +170,7 @@ function SlotService({
         : verb === "set_price"
           ? { price: Number(price) }
           : {};
-      runCommand(commandForMove([verb, { slot: slotId, ...args }]), false, live);
+      runCommand(commandForMove([verb, { slot: slotId, ...args }]));
     }
   }
   return (

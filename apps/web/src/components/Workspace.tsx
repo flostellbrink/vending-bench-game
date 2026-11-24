@@ -182,6 +182,19 @@ export function Workspace(props: WorkspaceProps) {
           <ObjectNavigator {...directoryProps} onOpen={nav.openObject} />
           <QuoteDrafts>
             <section className="readout" aria-labelledby={headingId} key={section}>
+              {run.runtimeError && (
+                <p role="alert">
+                  {run.runtimeError}{" "}
+                  <button onClick={() => location.reload()}>{msg.operator.resumeSavedRun()}</button>
+                </p>
+              )}
+              {run.saveIssue && (
+                <p role="alert">
+                  {run.saveIssue === "saveConflict"
+                    ? msg.operator.saveConflict()
+                    : msg.operator.saveFailed()}
+                </p>
+              )}
               <WorkspaceReadout {...props} tab={section} context={context} suppliers={suppliers} />
             </section>
             {nav.path.slice(1).map((view) => {
@@ -213,6 +226,15 @@ export function Workspace(props: WorkspaceProps) {
                 </ResultDialog>
               );
             })}
+            {shell.guiError && (
+              <ResultDialog
+                title={msg.operator.results()}
+                close={shell.dismissGuiError}
+                opener={opener}
+              >
+                <p role="alert">{shell.guiError}</p>
+              </ResultDialog>
+            )}
           </QuoteDrafts>
         </div>
       </section>

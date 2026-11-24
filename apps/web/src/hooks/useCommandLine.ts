@@ -2,6 +2,8 @@ import type { Release } from "games-common/benchmark";
 
 import { useRef, useState, type KeyboardEvent } from "react";
 
+import type { GuiResponse, ResponseDestination } from "@/game/receipt-routing";
+
 import { msg } from "@/dictionary";
 import {
   commandForMove,
@@ -33,6 +35,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
   const sequence = useRef(0);
   const [plan, setPlan] = useState<PlannedCommand[]>([]);
   const [editing, setEditing] = useState<number | null>(null);
+  const [guiError, setGuiError] = useState("");
   const steps = remainingPlan(plan, run.journal);
   const { state, actions, reports } = run;
   const inputName = line.trim().split(/\s+/)[0] ?? "",
@@ -101,7 +104,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
   function dispatchFirst() {
     const first = steps[0];
     if (!first || !state || state.over || run.busy || editing !== null) return;
-    if (run.submit({ move: first.move, line: first.line }, true)) {
+    if (run.submit({ move: first.move, line: first.line }, "console")) {
       setPlan(
         steps.map((step) =>
           step === first ? { ...step, dispatchedAt: run.journal.length } : step,
@@ -110,7 +113,8 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
       nav.followMove(first.move);
     }
   }
-  function runCommand(command: string, fromPrompt = false, keepInstrument = false) {
+  function execute(command: string, destination: ResponseDestination) {
+    const fromPrompt = destination === "console";
     const raw = command.trim(),
       [name = "", topic, ...extra] = raw.split(/\s+/);
     if (!raw || !state || run.busy) return;
@@ -142,12 +146,14 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
     }
     try {
       const move = parse(raw, actions);
-      if (run.submit({ move, line: commandForMove(move) }, fromPrompt || keepInstrument)) {
+      if (run.submit({ move, line: commandForMove(move) }, destination)) {
         nav.followMove(move);
         if (fromPrompt) edit("");
       }
     } catch (error) {
-      run.setError(error instanceof Error ? error.message : String(error));
+      const message = error instanceof Error ? error.message : String(error);
+      run.setError(message);
+      if (!fromPrompt) setGuiError(message);
     }
   }
   function keys(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -155,7 +161,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (e.ctrlKey || e.metaKey || editing !== null) stage();
-      else runCommand(line, true);
+      else execute(line, "console");
       return;
     }
     if (e.key === "Escape") {
@@ -206,6 +212,8 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
     setPick(0);
   }
   return {
+    guiError,
+    dismissGuiError: () => setGuiError(""),
     line,
     verb,
     tool,
@@ -216,7 +224,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
     pick,
     edit,
     complete,
-    runCommand,
+    runCommand: (command: string, response: GuiResponse = "dialog") => execute(command, response),
     keys,
     setCaret,
     steps,

@@ -4,7 +4,7 @@ import type { LogLine } from "@/hooks/useRun";
 import type { Money } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
-import { opensInstrument } from "@/game/receipt-routing";
+import { isReadReceipt } from "@/game/receipt-routing";
 import { clock, receiptEnd } from "@/scene/clock";
 export const Receipts = memo(function Receipts({
   lines,
@@ -43,7 +43,7 @@ export const Receipts = memo(function Receipts({
                   : (r.display.split("\n")[0] ?? "").slice(0, 110))}
         </button>
       )}
-      {!("localText" in r) && !opensInstrument(r) && (
+      {!("localText" in r) && !isReadReceipt(r) && (
         <div className="write-ack">
           <small>
             {clock(r.minute)} → {receiptEnd(r, day)} · {r.minutes} min
