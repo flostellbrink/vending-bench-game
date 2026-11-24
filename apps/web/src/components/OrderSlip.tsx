@@ -1,7 +1,6 @@
 import type { QuoteTerms } from "games-common/benchmark";
 
 import { assertValue } from "games-common/language";
-import { useState } from "react";
 
 import { quotedWord } from "@/game/command-words";
 import { timing } from "@/game/commands";
@@ -10,6 +9,7 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
+import { useQuoteDraft } from "./QuoteDrafts";
 import "./order-slip.css";
 interface Props extends ObservationProps {
   terms: QuoteTerms;
@@ -53,9 +53,8 @@ export function OrderSlip({
     price: Number(assertValue(row[1])),
     discount: String(assertValue(row[2])),
   }));
-  const [selection, setSelection] = useState<string[]>([]);
-  const [qty, setQty] = useState(String(terms.quantity));
-  const [submittedId, setSubmittedId] = useState<number>();
+  const { draft, save } = useQuoteDraft(report.id, terms.quantity);
+  const { selection, quantity: qty, submittedId } = draft;
   const submitted =
     submittedId === undefined
       ? undefined
@@ -85,10 +84,12 @@ export function OrderSlip({
           : null;
 
   function toggle(id: string) {
-    setSubmittedId(undefined);
-    setSelection((picked) =>
-      picked.includes(id) ? picked.filter((product) => product !== id) : [...picked, id],
-    );
+    save(report.id, {
+      quantity: qty,
+      selection: selection.includes(id)
+        ? selection.filter((product) => product !== id)
+        : [...selection, id],
+    });
   }
   return (
     <div className="order-slip">
@@ -165,8 +166,7 @@ export function OrderSlip({
                 min="1"
                 value={qty}
                 onChange={(e) => {
-                  setSubmittedId(undefined);
-                  setQty(e.target.value);
+                  save(report.id, { selection, quantity: e.target.value });
                 }}
               />
             </label>
@@ -192,8 +192,7 @@ export function OrderSlip({
                 </button>
                 <button
                   onClick={() => {
-                    setSubmittedId(undefined);
-                    setSelection([]);
+                    save(report.id, { selection: [], quantity: String(terms.quantity) });
                   }}
                 >
                   {t("newOrder")}
@@ -224,7 +223,18 @@ export function OrderSlip({
                   )}
                 </div>
                 {newer ? (
-                  <button onClick={() => openReport(newer.id)}>
+                  <button
+                    onClick={() => {
+                      if (selection.length)
+                        save(newer.id, {
+                          quantity: String(terms.quantity),
+                          selection: selection.filter((item) =>
+                            newer.rows.some(([id]) => id === item),
+                          ),
+                        });
+                      openReport(newer.id);
+                    }}
+                  >
                     {t("newerQuote")} #{newer.id} · {t("noCharge")}
                   </button>
                 ) : (
@@ -232,7 +242,7 @@ export function OrderSlip({
                     data-clock-verb="order"
                     disabled={disabled || !selection.length || Boolean(invalid)}
                     onClick={() => {
-                      setSubmittedId((reports.at(-1)?.id ?? 0) + 1);
+                      save(report.id, { ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
                       runCommand(
                         [
                           "order",

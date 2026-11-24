@@ -11,6 +11,7 @@ import { readoutContext } from "@/game/readout-route";
 
 import { ObjectNavigator } from "./ObjectNavigator";
 import { OfficeDisplay } from "./OfficeDisplay";
+import { QuoteDrafts } from "./QuoteDrafts";
 import { WorkspaceReadout } from "./WorkspaceReadout";
 
 export interface WorkspaceProps {
@@ -86,9 +87,11 @@ export function Workspace(props: WorkspaceProps) {
           value={context.object}
           onOpen={nav.openObject}
         />
-        <div className="readout" key={nav.tab}>
-          <WorkspaceReadout {...props} context={context} />
-        </div>
+        <QuoteDrafts>
+          <div className="readout" key={nav.tab}>
+            <WorkspaceReadout {...props} context={context} />
+          </div>
+        </QuoteDrafts>
       </div>
     </section>
   );
