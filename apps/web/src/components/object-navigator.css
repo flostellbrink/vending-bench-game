@@ -39,7 +39,8 @@
   user-select: none;
 }
 .object-name {
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .object-directory button:hover {
   background: #bfccbd;

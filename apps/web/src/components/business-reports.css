@@ -1,23 +1,38 @@
-.business-report .report-actions {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.8rem;
-  border-bottom: 1px solid #91a290;
-  padding: 0.3rem 0 0.55rem;
+.business-report {
+  container-type: inline-size;
+  min-inline-size: 0;
 }
-.report-actions .report-breakdown {
+.mail-workbench {
+  display: grid;
+  justify-items: start;
+  gap: 0.65rem;
+}
+.mail-list-controls,
+.sales-controls {
+  --action-columns: minmax(8rem, 17rem) 7ch max-content;
+  --narrow-action-columns: minmax(6rem, 1fr) 7ch;
+}
+.business-report .report-breakdown {
   min-height: var(--action-height);
   flex-direction: row-reverse;
+  justify-content: end;
 }
-.report-actions input[type="checkbox"] {
+.business-report input[type="checkbox"] {
   margin: 0;
 }
-.report-actions input[type="number"] {
-  width: 6ch;
+.mail-lookup {
+  --action-columns: minmax(0, 17rem);
+  margin-block-start: 0.75rem;
+  padding-block-start: 0.55rem;
+  border-block-start: 1px solid var(--rule);
 }
-.business-report .report {
+.readout .business-report > .report {
   padding-inline: 0;
+  margin-block-start: 0.6rem;
+}
+.readout-empty {
+  margin: 0.65rem 0 0;
+  color: #4d5d52;
 }
 .asset-check {
   border: 1px solid #829484;
@@ -32,13 +47,10 @@
   display: block;
   margin: 0.22em 0;
 }
-@media (max-width: 600px) {
-  .business-report .report-actions {
-    padding-block: 0.18rem 0.32rem;
-  }
-  .business-report .control-row {
-    row-gap: 0.25rem;
-  }
+.report:has(> .observation-grid) {
+  container-type: inline-size;
+}
+@container (max-width: 36rem) {
   .business-report .report {
     padding: 0.3rem 0;
   }
@@ -49,8 +61,11 @@
   .readout .observation-grid :is(th, td) {
     padding: 0.24em 0.28em;
   }
-  .observation-grid[data-report="list_emails"] {
-    table-layout: fixed;
+  .observation-grid[data-report="list_emails"],
+  .observation-grid[data-report="list_emails"] :is(thead, tbody) {
+    display: block;
+    width: 100%;
+    min-width: 0;
   }
   .observation-grid[data-report="list_emails"] thead tr {
     display: flex;
@@ -59,6 +74,9 @@
   .observation-grid[data-report="list_emails"] thead th {
     position: static;
     flex: auto;
+  }
+  .observation-grid[data-report="list_emails"] thead th:last-child {
+    display: none;
   }
   .observation-grid[data-report="list_emails"] tbody tr {
     display: grid;
@@ -91,5 +109,12 @@
   .sales-evidence td button {
     max-width: 100%;
     overflow-wrap: anywhere;
+  }
+}
+@container (max-width: 26rem) {
+  .business-report .report-breakdown {
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-height: 0;
   }
 }

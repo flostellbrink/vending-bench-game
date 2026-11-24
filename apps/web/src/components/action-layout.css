@@ -1,0 +1,44 @@
+.action-form {
+  display: grid;
+  justify-content: start;
+  justify-items: start;
+  gap: 0.45rem;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  margin: 0;
+}
+.action-fields {
+  display: grid;
+  grid-template-columns: var(--action-columns, minmax(0, 20rem));
+  align-items: end;
+  gap: 0.35rem 0.65rem;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+.action-fields > .field-wide {
+  grid-column: 1 / -1;
+}
+.action-fields > .control-field {
+  justify-items: stretch;
+}
+.action-fields :is(.control-input:not([type="checkbox"]), .control-textarea) {
+  inline-size: 100%;
+}
+.action-submit {
+  display: flex;
+  align-items: center;
+  gap: var(--control-gap);
+  max-inline-size: 100%;
+}
+.action-form.compact {
+  grid-template-columns: minmax(0, auto) auto;
+  align-items: end;
+}
+@container (max-width: 26rem) {
+  .action-fields {
+    grid-template-columns: var(--narrow-action-columns, minmax(0, 1fr));
+  }
+  .action-form.compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

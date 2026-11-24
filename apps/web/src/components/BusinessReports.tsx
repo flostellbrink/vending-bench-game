@@ -8,7 +8,7 @@ import { commandForMove } from "@/game/commands";
 import type { ObservationProps } from "./panel-props";
 
 import { EmailComposer } from "./EmailComposer";
-import { ControlInput, ControlRow, Field } from "./FormControls";
+import { ActionForm, ControlInput, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import "./business-reports.css";
@@ -37,8 +37,18 @@ export function Mailbox(props: Props) {
   );
   return (
     <section className="business-report sheet">
-      <div className="report-actions">
-        <form
+      <div className="mail-workbench">
+        <div className="mail-composition">
+          <EmailComposer to="" {...{ disabled, reports }} send={runCommand} />
+        </div>
+        <ActionForm
+          className="mail-list-controls"
+          aria-label={msg.commands.list_emails()}
+          actions={
+            <GuiToolInfo verb="list_emails">
+              <button type="submit" disabled={disabled || !valid} data-clock-verb="list_emails" />
+            </GuiToolInfo>
+          }
           onSubmit={(event) => {
             event.preventDefault();
             if (valid && !disabled)
@@ -52,78 +62,81 @@ export function Mailbox(props: Props) {
               );
           }}
         >
-          <ControlRow>
-            <Field label={msg.fields.folder()}>
-              <ControlInput
-                value={folder}
-                list={folders}
-                onChange={(e) => setFolder(e.currentTarget.value)}
+          <Field label={msg.fields.folder()}>
+            <ControlInput
+              value={folder}
+              list={folders}
+              onChange={(e) => setFolder(e.currentTarget.value)}
+            />
+            <datalist id={folders}>
+              <option value="inbox">{msg.operator.incomingMail()}</option>
+              <option value="sent">{msg.operator.sentMail()}</option>
+            </datalist>
+          </Field>
+          <Field label={msg.fields.limit()}>
+            <ControlInput
+              type="number"
+              step="1"
+              required
+              value={limit}
+              onChange={(e) => setLimit(e.currentTarget.value)}
+            />
+          </Field>
+          <Field inline className="report-breakdown" label={msg.fields.unread_only()}>
+            <ControlInput
+              type="checkbox"
+              checked={unread}
+              onChange={(e) => setUnread(e.currentTarget.checked)}
+            />
+          </Field>
+        </ActionForm>
+      </div>
+      {report ? (
+        <ObservationView {...props} report={report} />
+      ) : (
+        <p className="readout-empty">{msg.operator.folderNotChecked()}</p>
+      )}
+      <div className="mail-lookup">
+        <ActionForm
+          className="compact"
+          aria-label={msg.commands.read_email()}
+          actions={
+            <GuiToolInfo verb="read_email">
+              <button
+                type="submit"
+                aria-haspopup="dialog"
+                disabled={disabled || !emailId}
+                data-clock-verb="read_email"
               />
-              <datalist id={folders}>
-                <option value="inbox">{msg.operator.incomingMail()}</option>
-                <option value="sent">{msg.operator.sentMail()}</option>
-              </datalist>
-            </Field>
-            <Field label={msg.fields.limit()}>
-              <ControlInput
-                type="number"
-                step="1"
-                required
-                value={limit}
-                onChange={(e) => setLimit(e.currentTarget.value)}
-              />
-            </Field>
-            <Field inline className="report-breakdown" label={msg.fields.unread_only()}>
-              <ControlInput
-                type="checkbox"
-                checked={unread}
-                onChange={(e) => setUnread(e.currentTarget.checked)}
-              />
-            </Field>
-            <GuiToolInfo verb="list_emails">
-              <button type="submit" disabled={disabled || !valid} data-clock-verb="list_emails" />
             </GuiToolInfo>
-          </ControlRow>
-        </form>
-        <form
+          }
           onSubmit={(event) => {
             event.preventDefault();
             if (!disabled && emailId)
               runCommand(commandForMove(["read_email", { email_id: emailId }]));
           }}
         >
-          <ControlRow>
-            <Field label={msg.fields.email_id()}>
-              <ControlInput
-                required
-                list={emailIds}
-                value={emailId}
-                onChange={(event) => setEmailId(event.currentTarget.value)}
-              />
-              <datalist id={emailIds}>
-                {[
-                  ...new Set(
-                    reports
-                      .filter((r) => r.tool === "list_emails")
-                      .flatMap((r) => r.rows.map((row) => String(row[0]))),
-                  ),
-                ].map((id) => (
-                  <option key={id} value={id} />
-                ))}
-              </datalist>
-            </Field>
-            <GuiToolInfo verb="read_email">
-              <button type="submit" disabled={disabled || !emailId} data-clock-verb="read_email" />
-            </GuiToolInfo>
-          </ControlRow>
-        </form>
-        <EmailComposer to="" {...{ disabled, reports }} send={runCommand} />
+          <Field label={msg.fields.email_id()}>
+            <ControlInput
+              required
+              list={emailIds}
+              value={emailId}
+              onChange={(event) => setEmailId(event.currentTarget.value)}
+            />
+            <datalist id={emailIds}>
+              {[
+                ...new Set(
+                  reports
+                    .filter((r) => r.tool === "list_emails")
+                    .flatMap((r) => r.rows.map((row) => String(row[0]))),
+                ),
+              ].map((id) => (
+                <option key={id} value={id} />
+              ))}
+            </datalist>
+          </Field>
+        </ActionForm>
       </div>
-      {report ? (
-        <ObservationView {...props} report={report} />
-      ) : (
-        <p>{msg.operator.folderNotChecked()}</p>
-      )}
     </section>
   );
 }
@@ -145,8 +158,14 @@ export function SalesReports(props: Props) {
   );
   return (
     <section className="business-report sheet">
-      <form
-        className="report-actions"
+      <ActionForm
+        className="sales-controls"
+        aria-label={msg.commands.get_sales_report()}
+        actions={
+          <GuiToolInfo verb="get_sales_report">
+            <button disabled={disabled || !valid} data-clock-verb="get_sales_report" />
+          </GuiToolInfo>
+        }
         onSubmit={(e) => {
           e.preventDefault();
           if (!disabled && valid)
@@ -160,47 +179,42 @@ export function SalesReports(props: Props) {
             );
         }}
       >
-        <ControlRow>
-          <Field label={msg.fields.location()}>
-            <ControlInput
-              list={siteList}
-              value={site}
-              placeholder={msg.operator.allSites()}
-              onChange={(e) => setSite(e.currentTarget.value)}
-            />
-            <datalist id={siteList}>
-              {state.sites.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </datalist>
-          </Field>
-          <Field label={msg.fields.days()}>
-            <ControlInput
-              type="number"
-              step="1"
-              required
-              value={days}
-              onChange={(e) => setDays(e.currentTarget.value)}
-            />
-          </Field>
-          <Field inline className="report-breakdown" label={msg.operator.productBreakdown()}>
-            <ControlInput
-              type="checkbox"
-              checked={byProduct}
-              onChange={(e) => setByProduct(e.currentTarget.checked)}
-            />
-          </Field>
-          <GuiToolInfo verb="get_sales_report">
-            <button disabled={disabled || !valid} data-clock-verb="get_sales_report" />
-          </GuiToolInfo>
-        </ControlRow>
-      </form>
+        <Field label={msg.fields.location()}>
+          <ControlInput
+            list={siteList}
+            value={site}
+            placeholder={msg.operator.allSites()}
+            onChange={(e) => setSite(e.currentTarget.value)}
+          />
+          <datalist id={siteList}>
+            {state.sites.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </datalist>
+        </Field>
+        <Field label={msg.fields.days()}>
+          <ControlInput
+            type="number"
+            step="1"
+            required
+            value={days}
+            onChange={(e) => setDays(e.currentTarget.value)}
+          />
+        </Field>
+        <Field inline className="report-breakdown" label={msg.operator.productBreakdown()}>
+          <ControlInput
+            type="checkbox"
+            checked={byProduct}
+            onChange={(e) => setByProduct(e.currentTarget.checked)}
+          />
+        </Field>
+      </ActionForm>
       {report ? (
         <ObservationView {...props} report={report} />
       ) : (
-        <p>{msg.operator.noSalesObservation()}</p>
+        <p className="readout-empty">{msg.operator.noSalesObservation()}</p>
       )}
     </section>
   );

@@ -27,7 +27,7 @@
   }
   .station .mast h1 {
     flex: 1;
-    min-width: 0;
+    min-width: min-content;
     margin: 0;
     gap: 3px;
     font-size: 1.1rem;
@@ -41,10 +41,17 @@
     padding: 2px 3px;
   }
   .station .mast .pace-key {
+    min-inline-size: 0;
     max-width: 8.5rem;
     padding: 0;
     font-size: 0.76rem;
     line-height: 1.15;
+  }
+  .station .mast .pace-key :is(span, b) {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .station .desk {
     display: grid;
@@ -64,13 +71,6 @@
     gap: 2px;
     border-width: 1px;
   }
-  .station .workspace .work-surface {
-    grid-template-columns: minmax(0, 1fr);
-    min-width: 0;
-  }
-  .station .work-surface > .object-directory {
-    display: none;
-  }
   .station .workspace .readout {
     min-width: 0;
     border-width: 1px;
@@ -79,16 +79,6 @@
     gap: 5px;
     padding: 0 3px;
     block-size: calc(var(--action-height) + 3px);
-  }
-  .station .desk-trail .sections-trigger {
-    flex: none;
-    display: inline-block;
-    border: 1px solid #7c8d7e;
-    padding: 0 0.45rem;
-    height: var(--action-height);
-    background: #e0e8d9;
-    font: inherit;
-    color: #21382a;
   }
   .station .desk-trail h2 {
     min-width: 0;
@@ -159,6 +149,25 @@
   .station > footer a {
     color: #e4efe0;
   }
+}
+@media (max-width: 760px) {
+  .station .workspace .work-surface {
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+  .station .work-surface > .object-directory {
+    display: none;
+  }
+  .station .desk-trail .sections-trigger {
+    flex: none;
+    display: inline-block;
+    border: 1px solid #7c8d7e;
+    padding: 0 0.45rem;
+    height: var(--action-height);
+    background: #e0e8d9;
+    font: inherit;
+    color: #21382a;
+  }
   .sections-dialog[open] {
     position: fixed;
     inset: 0;
@@ -166,7 +175,7 @@
     grid-template-rows: auto minmax(0, 1fr);
     width: min(25rem, calc(100vw - 1rem));
     height: fit-content;
-    max-height: calc(var(--visible-phone-height) - 1rem);
+    max-height: calc(var(--visible-phone-height, 100dvh) - 1rem);
     margin: auto;
     padding: 0;
     border: 2px ridge #7d8d80;
@@ -208,6 +217,27 @@
   .sections-dialog .object-directory button {
     min-height: 2.05rem;
     align-items: center;
+  }
+}
+@media (max-width: 480px) {
+  .station .desk-trail {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-rows: 1.3rem var(--action-height);
+    block-size: auto;
+    align-content: center;
+    gap: 0 0.4rem;
+    padding: 2px 4px;
+  }
+  .station .desk-trail h2 {
+    grid-area: 1 / 1 / 2 / -1;
+  }
+  .station .desk-trail button {
+    grid-row: 2;
+  }
+  .station .desk-trail .history-key {
+    grid-column: -2;
+    justify-self: end;
   }
 }
 @container phone-station (max-height: 480px) {

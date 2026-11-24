@@ -1,5 +1,21 @@
 import type { ComponentProps, ReactNode } from "react";
 
+import "./action-layout.css";
+
+export function ActionForm({
+  actions,
+  children,
+  className = "",
+  ...props
+}: ComponentProps<"form"> & { actions: ReactNode }) {
+  return (
+    <form {...props} className={("action-form " + className).trim()}>
+      <div className="action-fields">{children}</div>
+      <div className="action-submit">{actions}</div>
+    </form>
+  );
+}
+
 export function ActionButton({ className = "", ...props }: ComponentProps<"button">) {
   return <button {...props} className={("workbench-button " + className).trim()} />;
 }
@@ -11,17 +27,21 @@ export function ControlRow({ className = "", ...props }: ComponentProps<"div">) 
 export function Field({
   label,
   inline = false,
+  wide = false,
   children,
   className = "",
 }: {
   label: string;
   inline?: boolean;
+  wide?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <label
-      className={["control-field", inline && "inline-field", className].filter(Boolean).join(" ")}
+      className={["control-field", inline && "inline-field", wide && "field-wide", className]
+        .filter(Boolean)
+        .join(" ")}
     >
       <span className="field-label">{label}</span>
       {children}

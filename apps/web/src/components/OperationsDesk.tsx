@@ -9,7 +9,7 @@ import { commandLabel } from "@/localization/messages";
 
 import type { ObservationProps } from "./panel-props";
 
-import { ControlInput, ControlRow, ControlTextarea, Field } from "./FormControls";
+import { ActionForm, ControlInput, ControlTextarea, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import "./operations-desk.css";
@@ -30,7 +30,7 @@ export function OperationsDesk(props: Props) {
   const { desk, release, state, reports, disabled, runCommand } = props;
   const defaultKey = release.toolDefaults.read_notes?.key;
   const defaultDays = release.toolDefaults.set_reminder?.in_days;
-  const [noteKey, setNoteKey] = useState(typeof defaultKey === "string" ? defaultKey : "");
+  const [noteKey, setNoteKey] = useState("");
   const [noteText, setNoteText] = useState("");
   const channelList = useId();
   const locationList = useId();
@@ -64,54 +64,62 @@ export function OperationsDesk(props: Props) {
   function inspect(tool: ToolName) {
     return button(tool, { onClick: () => dispatch(tool) });
   }
+  function block(tool: ToolName, controls: ReactNode, title?: string) {
+    const report = reports.findLast((entry) => entry.tool === tool);
+    return (
+      <section className="operation-block" aria-label={title ?? commandLabel(tool)}>
+        {title && <h3>{title}</h3>}
+        {controls}
+        {report && <ObservationView {...props} report={report} />}
+      </section>
+    );
+  }
   let forms: ReactNode;
-  let tools: ToolName[];
   switch (desk) {
     case "status":
-      tools = ["get_status"];
-      forms = inspect("get_status");
+      forms = block("get_status", inspect("get_status"));
       break;
     case "payments":
-      tools = ["send_payment"];
-      forms = (
-        <form
+      forms = block(
+        "send_payment",
+        <ActionForm
+          className="payment-fields"
+          actions={button("send_payment")}
           onSubmit={submit("send_payment", (data) => ({
             recipient: value(data, "recipient"),
             amount: Number(value(data, "amount")),
             reference: value(data, "reference"),
           }))}
         >
-          <ControlRow>
-            <Field label={msg.fields.recipient()}>
-              <ControlInput name="recipient" required />
-            </Field>
-            <Field label={msg.fields.amount()}>
-              <ControlInput name="amount" type="number" step="any" required />
-            </Field>
-            <Field label={msg.fields.reference()}>
-              <ControlInput name="reference" required />
-            </Field>
-            {button("send_payment")}
-          </ControlRow>
-        </form>
+          <Field label={msg.fields.recipient()}>
+            <ControlInput name="recipient" required />
+          </Field>
+          <Field label={msg.fields.amount()}>
+            <ControlInput name="amount" type="number" step="any" required />
+          </Field>
+          <Field label={msg.fields.reference()}>
+            <ControlInput name="reference" required />
+          </Field>
+        </ActionForm>,
       );
       break;
     case "marketing": {
-      tools = ["get_marketing_report", "run_marketing"];
       const rules = reports.findLast((r) => r.channels)?.channels?.rules.channels;
       const channels =
         rules && typeof rules === "object" && !Array.isArray(rules) ? Object.keys(rules) : [];
       forms = (
         <>
-          {inspect("get_marketing_report")}
-          <form
-            onSubmit={submit("run_marketing", (data) => ({
-              location: value(data, "location"),
-              channel: value(data, "channel"),
-              message: value(data, "message"),
-            }))}
-          >
-            <ControlRow>
+          {block(
+            "run_marketing",
+            <ActionForm
+              className="campaign-fields"
+              actions={button("run_marketing")}
+              onSubmit={submit("run_marketing", (data) => ({
+                location: value(data, "location"),
+                channel: value(data, "channel"),
+                message: value(data, "message"),
+              }))}
+            >
               <Field label={msg.fields.location()}>
                 <ControlInput name="location" list={locationList} required />
               </Field>
@@ -130,71 +138,97 @@ export function OperationsDesk(props: Props) {
                   <option key={channel} value={channel} />
                 ))}
               </datalist>
-            </ControlRow>
-            <Field label={msg.fields.message()}>
-              <ControlTextarea rows={2} name="message" required />
-            </Field>
-            {button("run_marketing")}
-          </form>
+              <Field wide label={msg.fields.message()}>
+                <ControlTextarea rows={2} name="message" required />
+              </Field>
+            </ActionForm>,
+            msg.operator.campaignDraft(),
+          )}
+          {block("get_marketing_report", inspect("get_marketing_report"))}
         </>
       );
       break;
     }
     case "notes": {
-      tools = ["read_notes", "write_note"];
       const keys = [
         ...new Set(
           reports.flatMap((r) => (r.tool === "write_note" && r.args.key ? [r.args.key] : [])),
         ),
       ];
       forms = (
-        <form onSubmit={submit("read_notes", () => ({ key: noteKey }))}>
-          <ControlRow>
-            <Field label={msg.fields.key()}>
-              <ControlInput
-                value={noteKey}
-                list={keyList}
-                onChange={(event) => setNoteKey(event.currentTarget.value)}
-              />
-            </Field>
-            <datalist id={keyList}>
-              {keys.map((key) => (
-                <option key={key} value={key} />
-              ))}
-            </datalist>
-            {button("read_notes")}
-          </ControlRow>
-          <Field label={msg.fields.text()}>
-            <ControlTextarea
-              rows={2}
-              value={noteText}
-              onChange={(event) => setNoteText(event.currentTarget.value)}
-            />
-          </Field>
-          {button("write_note", {
-            inactive: !noteKey.trim(),
-            label: !noteText && noteKey.trim() ? msg.operator.deleteNote() : undefined,
-            onClick: () => dispatch("write_note", { key: noteKey, text: noteText }),
-          })}
-        </form>
+        <>
+          {block(
+            "read_notes",
+            <ActionForm
+              className="note-lookup compact"
+              onSubmit={submit("read_notes", (data) => ({ key: value(data, "key") }))}
+              actions={button("read_notes")}
+            >
+              <Field label={msg.fields.key()}>
+                <ControlInput
+                  name="key"
+                  list={keyList}
+                  defaultValue={typeof defaultKey === "string" ? defaultKey : ""}
+                />
+              </Field>
+            </ActionForm>,
+            msg.operator.savedNotes(),
+          )}
+          {block(
+            "write_note",
+            <ActionForm
+              className="note-editor"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (noteKey.trim() && noteText)
+                  dispatch("write_note", { key: noteKey, text: noteText });
+              }}
+              actions={button("write_note", {
+                inactive: !noteKey.trim(),
+                label: !noteText && noteKey.trim() ? msg.operator.deleteNote() : undefined,
+                onClick: () => dispatch("write_note", { key: noteKey, text: noteText }),
+              })}
+            >
+              <Field label={msg.fields.key()}>
+                <ControlInput
+                  name="key"
+                  value={noteKey}
+                  list={keyList}
+                  onChange={(event) => setNoteKey(event.currentTarget.value)}
+                />
+              </Field>
+              <datalist id={keyList}>
+                {keys.map((key) => (
+                  <option key={key} value={key} />
+                ))}
+              </datalist>
+              <Field wide label={msg.fields.text()}>
+                <ControlTextarea
+                  rows={2}
+                  value={noteText}
+                  onChange={(event) => setNoteText(event.currentTarget.value)}
+                />
+              </Field>
+            </ActionForm>,
+            msg.operator.noteEditor(),
+          )}
+        </>
       );
       break;
     }
     case "reminders":
-      tools = ["list_reminders", "set_reminder"];
       forms = (
         <>
-          {inspect("list_reminders")}
-          <form
-            onSubmit={submit("set_reminder", (data) => ({
-              text: value(data, "text"),
-              in_days: Number(value(data, "in_days")),
-            }))}
-          >
-            <Field label={msg.fields.text()}>
-              <ControlTextarea rows={2} name="text" />
-            </Field>
-            <ControlRow>
+          {block(
+            "set_reminder",
+            <ActionForm
+              className="reminder-fields"
+              actions={button("set_reminder")}
+              onSubmit={submit("set_reminder", (data) => ({
+                text: value(data, "text"),
+                in_days: Number(value(data, "in_days")),
+              }))}
+            >
               <Field label={msg.fields.in_days()}>
                 <ControlInput
                   type="number"
@@ -204,18 +238,20 @@ export function OperationsDesk(props: Props) {
                   required
                 />
               </Field>
-              {button("set_reminder")}
-            </ControlRow>
-          </form>
+              <Field wide label={msg.fields.text()}>
+                <ControlTextarea rows={2} name="text" />
+              </Field>
+            </ActionForm>,
+            msg.operator.newReminder(),
+          )}
+          {block("list_reminders", inspect("list_reminders"))}
         </>
       );
       break;
   }
-  const report = reports.findLast((r) => tools.some((tool) => tool === r.tool));
   return (
     <section className="sheet business-report operations-desk">
       <div className="operations-controls">{forms}</div>
-      {report && <ObservationView {...props} report={report} />}
     </section>
   );
 }

@@ -10,7 +10,7 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
-import { ControlRow, Field, QuantityInput } from "./FormControls";
+import { ActionButton, ActionForm, Field, QuantityInput } from "./FormControls";
 import { GuiToolInfo, ToolReferenceContext } from "./GuiToolInfo";
 import { ProductInput } from "./ProductInput";
 import { useOrderDraft, useQuoteQuantity } from "./QuoteDrafts";
@@ -30,28 +30,31 @@ export function QuoteRequest({ supplier, runCommand, disabled, supplierView = fa
   );
   const valid = !disabled && Number.isSafeInteger(Number(qty)) && Number(qty) > 0;
   return (
-    <form
-      className="quote-request"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (valid)
-          runCommand(
-            commandForMove(["check_offers", { supplier_id: supplier, quantity: Number(qty) }]),
-            false,
-            supplierView,
-          );
-      }}
-    >
+    <section className="quote-request">
       <h3>{msg.operator.supplierQuote()}</h3>
-      <ControlRow>
-        <Field inline label={msg.operator.bundle()}>
+      <ActionForm
+        className="compact"
+        aria-label={msg.operator.supplierQuote()}
+        actions={
+          <GuiToolInfo verb="check_offers">
+            <button type="submit" disabled={!valid} data-clock-verb="check_offers" />
+          </GuiToolInfo>
+        }
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (valid)
+            runCommand(
+              commandForMove(["check_offers", { supplier_id: supplier, quantity: Number(qty) }]),
+              false,
+              supplierView,
+            );
+        }}
+      >
+        <Field label={msg.operator.bundle()}>
           <QuantityInput required value={qty} onChange={(e) => change(e.currentTarget.value)} />
         </Field>
-        <GuiToolInfo verb="check_offers">
-          <button type="submit" disabled={!valid} data-clock-verb="check_offers" />
-        </GuiToolInfo>
-      </ControlRow>
-    </form>
+      </ActionForm>
+    </section>
   );
 }
 
@@ -246,12 +249,16 @@ export function OrderSlip({
             </tbody>
           </table>
         </div>
+        {!submitted?.terms?.order && (
+          <div className="ledger-add">
+            <button type="button" className="receipt-link" disabled={locked} onClick={addLine}>
+              {msg.operator.addOrderProduct()}
+            </button>
+          </div>
+        )}
         <div className="order-write">
-          <button type="button" className="receipt-link" disabled={locked} onClick={addLine}>
-            {msg.operator.addOrderProduct()}
-          </button>
           {submitted?.terms?.order ? (
-            <ControlRow>
+            <div className="order-confirmation">
               <button
                 type="button"
                 className="receipt-link"
@@ -262,15 +269,15 @@ export function OrderSlip({
               <span>
                 {msg.operator.expectedClose()} {submitted.terms.eta}
               </span>
-              <button
+              <ActionButton
                 type="button"
                 onClick={() =>
                   save({ lines: [{ key: "manual", manual: true, product: "", quantity: "" }] })
                 }
               >
                 {msg.operator.newOrder()}
-              </button>
-            </ControlRow>
+              </ActionButton>
+            </div>
           ) : (
             <>
               {command && (
@@ -298,15 +305,9 @@ export function OrderSlip({
                   #{submitted.id} · {submitted.display}
                 </button>
               )}
-              <ControlRow>
-                <GuiToolInfo verb="order_goods">
-                  <button
-                    type="submit"
-                    data-clock-verb="order_goods"
-                    disabled={locked || !command}
-                  />
-                </GuiToolInfo>
-              </ControlRow>
+              <GuiToolInfo verb="order_goods">
+                <button type="submit" data-clock-verb="order_goods" disabled={locked || !command} />
+              </GuiToolInfo>
             </>
           )}
         </div>

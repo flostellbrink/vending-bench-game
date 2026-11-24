@@ -1,31 +1,61 @@
-.operations-controls,
-.operations-controls form {
-  display: grid;
-  justify-items: start;
-  gap: 0.45rem;
-  min-width: 0;
-}
 .operations-controls {
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #91a290;
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-inline-size: 0;
 }
-.operations-controls form {
-  width: 100%;
+.operation-block {
+  container-type: inline-size;
+  min-inline-size: 0;
 }
-.operations-controls > .tool-action-pair + form {
-  border-top: 1px solid #a8b6a6;
-  padding-top: 0.45rem;
+.operation-block + .operation-block {
+  border-block-start: 1px solid #91a290;
+  padding-block-start: 0.55rem;
 }
-.operations-controls .control-field {
-  max-width: 100%;
+.operation-block > h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
 }
-.operations-controls .control-field:has(textarea) {
-  width: min(100%, 42rem);
+.operation-block > .report {
+  margin-block-start: 0.4rem;
+}
+.operation-block .action-form:not(.compact) {
+  inline-size: min(100%, var(--operation-width, 44rem));
+  grid-template-columns: minmax(0, 1fr);
+}
+.operation-block .action-form:not(.compact) > .action-fields {
+  justify-self: stretch;
+}
+.note-editor {
+  --operation-width: 36rem;
+  --action-columns: minmax(0, 1fr);
+}
+.note-editor input {
+  max-inline-size: 20rem;
+}
+.payment-fields {
+  --action-columns: minmax(11rem, 18rem) 9rem minmax(11rem, 18rem);
+}
+@container (max-width: 36rem) {
+  .payment-fields {
+    --action-columns: minmax(0, 18rem) minmax(0, 9rem);
+    --narrow-action-columns: minmax(0, 18rem) minmax(0, 7rem);
+  }
+  .payment-fields .control-field:last-child {
+    grid-column: 1 / -1;
+  }
+}
+.campaign-fields {
+  --action-columns: minmax(0, 18rem) minmax(0, 15rem);
+  --narrow-action-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.reminder-fields {
+  --operation-width: 32rem;
+  --action-columns: minmax(0, 1fr);
+}
+.reminder-fields input[type="number"] {
+  inline-size: 9ch;
 }
 .operations-controls textarea {
-  width: 100%;
   resize: vertical;
-}
-.operations-controls input[type="number"] {
-  width: 11ch;
 }

@@ -146,16 +146,31 @@
   margin-top: 0.3rem;
   font-size: 0.85rem;
 }
-.slot-instrument form {
+.uninspected-machine .asset-actions {
+  border-block-end: 1px solid #8f9d8c;
+  padding-block-end: 0.45rem;
+  margin-block-end: 0.45rem;
+}
+.uninspected-machine > .control-field input {
+  inline-size: min(100%, 23rem);
+}
+.slot-service {
+  container-type: inline-size;
+  min-inline-size: 0;
   margin-top: 0.55rem;
   border-top: 1px solid #8f9d8c;
 }
 .slot-operations {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-inline-size: 41rem;
   gap: 4px;
   margin: 0.4rem 0 0.55rem;
+}
+@container (min-width: 41rem) {
+  .slot-operations {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 .slot-operations button {
   border: 0;
@@ -178,11 +193,16 @@
   color: #273e2f;
   font-size: 0.88rem;
 }
-.slot-instrument input {
-  width: 11rem;
+.slot-inputs {
+  --action-columns: minmax(0, 18rem) minmax(0, 7rem);
+  --narrow-action-columns: minmax(0, 18rem) minmax(0, 6rem);
 }
-.slot-instrument input[type="number"] {
-  width: 4.25rem;
+.slot-single {
+  --action-columns: minmax(0, 9rem);
+  --narrow-action-columns: minmax(0, 9rem);
+}
+.slot-single .action-fields:empty {
+  display: none;
 }
 @media (max-width: 600px) {
   .cabinet-bench {
@@ -236,7 +256,7 @@
   .slot-reading dd {
     font-size: 1rem;
   }
-  .slot-instrument > form {
+  .slot-instrument > .slot-service {
     grid-column: 1 / -1;
     margin-top: 0.2rem;
   }
@@ -245,11 +265,5 @@
   }
   .slot-operations button {
     padding-inline: 0.3em;
-  }
-  .slot-inputs {
-    gap: var(--control-gap);
-  }
-  .slot-inputs .product-picker {
-    max-width: min(10rem, 45vw);
   }
 }

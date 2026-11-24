@@ -1,5 +1,20 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  noteEditor:
+    .id: NOTEEDIT
+    ^en: Note editor
+    es: Editor de notas
+    de: Notizeditor
+  campaignDraft:
+    .id: CAMPDRFT
+    ^en: Campaign draft
+    es: Borrador de campaña
+    de: Kampagnenentwurf
+  newReminder:
+    .id: REMDRAFT
+    ^en: New reminder
+    es: Nuevo recordatorio
+    de: Neue Erinnerung
   reminders:
     .id: NAVREM01
     ^en: Reminders
@@ -40,11 +55,11 @@ operator:
     ^en: Delete note
     es: Eliminar nota
     de: Notiz löschen
-  allNotes:
+  savedNotes:
     .id: OPDALL02
-    ^en: All notes
-    es: Todas las notas
-    de: Alle Notizen
+    ^en: Saved notes
+    es: Notas guardadas
+    de: Gespeicherte Notizen
   sections:
     .id: MOB00001
     ^en: Sections

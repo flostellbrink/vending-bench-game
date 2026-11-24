@@ -11,7 +11,7 @@ import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
-import { ControlRow, ControlInput, Field, QuantityInput } from "./FormControls";
+import { ActionForm, ControlInput, Field, QuantityInput } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 import { ProductInput } from "./ProductInput";
 
@@ -123,7 +123,7 @@ export function UninspectedMachine({
   const [slotId, setSlotId] = useState(slots[0] ?? "");
   const slotList = useId();
   return (
-    <section className="sheet slot-instrument">
+    <section className="sheet slot-instrument uninspected-machine">
       <div className="asset-actions">{action}</div>
       <Field label={msg.fields.slot()}>
         <ControlInput
@@ -179,7 +179,7 @@ function SlotService({
     }
   }
   return (
-    <form onSubmit={submit}>
+    <div className="slot-service">
       <div className="slot-operations" role="group" aria-label={msg.fields.slot() + " " + slotId}>
         {operations.map((action) => (
           <button
@@ -193,7 +193,17 @@ function SlotService({
           </button>
         ))}
       </div>
-      <ControlRow className="slot-inputs">
+      <ActionForm
+        onSubmit={submit}
+        className={needsProduct ? "slot-inputs" : "slot-single"}
+        actions={
+          <GuiToolInfo verb={verb}>
+            <button data-clock-verb={verb} disabled={disabled || !valid}>
+              {labels[verb]}
+            </button>
+          </GuiToolInfo>
+        }
+      >
         {needsProduct && (
           <>
             <Field label={msg.fields.product_id()}>
@@ -227,14 +237,7 @@ function SlotService({
             />
           </Field>
         )}
-        <span className="control-line slot-submit">
-          <GuiToolInfo verb={verb}>
-            <button data-clock-verb={verb} disabled={disabled || !valid}>
-              {labels[verb]}
-            </button>
-          </GuiToolInfo>
-        </span>
-      </ControlRow>
-    </form>
+      </ActionForm>
+    </div>
   );
 }

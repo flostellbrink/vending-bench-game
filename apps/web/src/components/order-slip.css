@@ -42,6 +42,14 @@
 }
 .slip-terms {
   color: #405449;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  align-items: baseline;
+  justify-content: start;
+}
+.slip-terms .slip-source {
+  grid-column: 1 / -1;
+  justify-self: start;
 }
 .slip-expired {
   color: #85402a;
@@ -111,11 +119,17 @@
 .slip-ledger tr:hover {
   background: #e3ecdc;
 }
+.ledger-add {
+  padding: 0.25rem 0.7rem;
+}
+.order-write,
+.order-confirmation {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 0.35rem;
+}
 .order-write {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: 4px;
   padding: 0.55rem 0.7rem;
   border: 0;
   border-top: 1px solid #859a86;
@@ -133,16 +147,8 @@
   display: block;
   color: #42594a;
 }
-.slip-controls [role="status"] {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.8rem;
-}
-.quote-request input {
-  width: 6rem;
-}
 .quote-request {
+  --action-columns: minmax(6rem, max-content);
   min-inline-size: 0;
   border: 0;
   padding: 0;
@@ -156,15 +162,8 @@
     bold 1.04rem/1.25 ui-monospace,
     monospace;
 }
-.quote-request > .control-row {
-  align-items: center;
-}
-.quote-request label {
-  font: inherit;
-  margin-inline-end: 0.3rem;
-}
-.slip-terms .slip-source {
-  margin-inline-start: auto;
+.quote-request input[type="number"] {
+  inline-size: 6rem;
 }
 .order-slip > .quote-request {
   padding: 0.45rem 0.65rem;
@@ -200,6 +199,7 @@
     overflow-wrap: anywhere;
   }
   .slip-terms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.2rem 0.4rem;
   }
   .slip-terms .slip-source {
