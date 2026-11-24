@@ -19,16 +19,14 @@ interface Props {
   lang: Locale;
   initialRevision?: string;
   activeSlot?: string;
-  initialDay?: number;
   compact?: boolean;
-  renderPage?: (release: Release, setup: ReactElement) => ReactElement;
+  renderPage?: (release: Release, setup: ReactElement, slot?: string) => ReactElement;
 }
 
 export default function SessionSetup({
   lang,
   initialRevision,
   activeSlot,
-  initialDay,
   compact = false,
   renderPage,
 }: Props) {
@@ -53,8 +51,6 @@ export default function SessionSetup({
       ? (activeSlot ?? params.get("slot"))
       : null;
   if (selectedSlot) savedParams.set("slot", selectedSlot);
-  if (initialDay !== undefined && current.revision === initialRevision)
-    savedParams.set("day", String(initialDay));
   const setupTitle = compact
     ? msg.session.next({}, options)
     : releases.length === 1
@@ -124,11 +120,7 @@ export default function SessionSetup({
       )}
       {!renderPage && (
         <p className="save-library-link">
-          <a href={"/" + lang + "/saves/?" + savedParams}>
-            {msg.session.library({}, options)}
-            {savedParams.has("day") &&
-              " · " + msg.session.dayNumber({ day: Number(savedParams.get("day")) }, options)}
-          </a>
+          <a href={"/" + lang + "/?" + savedParams}>{msg.session.mainMenu({}, options)}</a>
         </p>
       )}
       {!renderPage && record === unavailable && (
@@ -136,5 +128,5 @@ export default function SessionSetup({
       )}
     </section>
   );
-  return renderPage ? renderPage(current, setup) : setup;
+  return renderPage ? renderPage(current, setup, selectedSlot ?? undefined) : setup;
 }

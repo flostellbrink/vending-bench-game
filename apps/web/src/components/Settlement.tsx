@@ -144,13 +144,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
           )}
         </section>
         <aside className="launch-bay">
-          <SessionSetup
-            lang={lang}
-            initialRevision={release.revision}
-            activeSlot={slot}
-            initialDay={day ?? undefined}
-            compact
-          />
+          <SessionSetup lang={lang} initialRevision={release.revision} activeSlot={slot} compact />
         </aside>
       </div>
     </StationFrame>

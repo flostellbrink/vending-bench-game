@@ -18,10 +18,11 @@ import "./benchmark-landing.css";
 interface Props {
   release: Release;
   setup: ReactElement;
+  slot?: string;
   lang: Locale;
 }
 
-function LandingDesk({ release, setup, lang }: Props) {
+function LandingDesk({ release, setup, lang, slot }: Props) {
   const options = { locale: lang };
   const money = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
   const leader = release.rivals
@@ -30,7 +31,12 @@ function LandingDesk({ release, setup, lang }: Props) {
   const source = "https://github.com/ProsusAI/vending-bench/tree/" + release.revision;
   const labels = { rules: msg.operator.rules, day: msg.operator.day, fee: msg.operator.fee };
   return (
-    <StationFrame lang={lang} revision={release.revision} label={msg.landing.human({}, options)}>
+    <StationFrame
+      lang={lang}
+      revision={release.revision}
+      slot={slot}
+      label={msg.landing.human({}, options)}
+    >
       <div className="desk landing-desk">
         <article className="shell landing-console">
           <div className="landing-intro">
@@ -80,7 +86,7 @@ function LandingDesk({ release, setup, lang }: Props) {
             </a>
           </div>
         </section>
-        <SaveLibrarySection release={release} lang={lang} embedded />
+        <SaveLibrarySection release={release} lang={lang} slot={slot} />
       </div>
       <footer className="landing-footer">
         <span>{msg.landing.local({}, options)}</span>
@@ -96,7 +102,7 @@ export default function BenchmarkLanding({ lang }: { lang: Locale }) {
   return (
     <SessionSetup
       lang={lang}
-      renderPage={(release, setup) => <LandingDesk {...{ release, setup, lang }} />}
+      renderPage={(release, setup, slot) => <LandingDesk {...{ release, setup, lang, slot }} />}
     />
   );
 }

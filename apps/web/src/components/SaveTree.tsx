@@ -38,7 +38,7 @@ const y = (row: number) => (row + 0.5) * rowHeight;
 const id = (node: Node) => node.source + ":" + node.day;
 const fresh: Node = { source: "new", day: 1, cash: null };
 
-function playerLanes(slots: RunSlot[]): Lane[] {
+function playerLanes(slots: RunSlot[], finishedColumn: number): Lane[] {
   const children = new Map<string, RunSlot[]>();
   for (const s of slots) {
     if (s.damaged) continue;
@@ -61,7 +61,7 @@ function playerLanes(slots: RunSlot[]): Lane[] {
     const nodes: Node[] = s.checkpoints
       .filter((p) => p.day > parent.day)
       .map((p) => ({ source: s.id, day: p.day, cash: p.cash }));
-    if (s.finished) nodes.push({ source: s.id, day: s.day, cash: s.cash, result: true });
+    if (s.finished) nodes.push({ source: s.id, day: finishedColumn, cash: s.cash, result: true });
     if (nodes.length) lanes.push({ source: s.id, parent, nodes });
     for (const child of (children.get(s.id) ?? []).toReversed()) pending.push(child);
   }
@@ -131,13 +131,13 @@ export default function SaveTree({
     script.push({ source: scriptedSlot, day: release.days + 1, cash: last, result: true });
   const lanes: Lane[] = [
     { source: scriptedSlot, nodes: [fresh, ...script] },
-    ...playerLanes(slots),
+    ...playerLanes(slots, release.days + 1),
   ];
   const rowFor = new Map(lanes.map((lane, i) => [lane.source, i]));
   rowFor.set(fresh.source, 0);
   const all = lanes.flatMap((l) => l.nodes);
   const local = slots.find((s) => s.id === activeSlot);
-  const requested = initialDay ?? local?.day;
+  const requested = initialDay ?? (local?.finished ? release.days + 1 : local?.day);
   let original = activeSlot;
   let ancestor = local;
   const seen = new Set<string>();

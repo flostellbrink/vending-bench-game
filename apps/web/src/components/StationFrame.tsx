@@ -9,7 +9,7 @@ interface Props {
   revision: string;
   label: string;
   children: ReactNode;
-  page?: "run" | "setup" | "saves";
+  page?: "run" | "setup";
   slot?: string;
   day?: number;
 }

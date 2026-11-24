@@ -25,13 +25,11 @@ import "./save-tree.css";
 export function SaveLibrarySection({
   release,
   lang,
-  embedded = false,
   slot,
   day,
 }: {
   release: Release;
   lang: Locale;
-  embedded?: boolean;
   slot?: string;
   day?: number;
 }) {
@@ -93,14 +91,10 @@ export function SaveLibrarySection({
     }
   }
   return (
-    <section className={embedded ? "save-console embedded" : "save-console"}>
+    <section className="save-console embedded">
       <header>
         <div>
-          {embedded ? (
-            <h2>{msg.session.saveTimeline({}, options)}</h2>
-          ) : (
-            <h1>{msg.session.saveTimeline({}, options)}</h1>
-          )}
+          <h2>{msg.session.saveTimeline({}, options)}</h2>
         </div>
         <small>
           {msg.session.version({}, options)} {release.id} · {msg.session.seed({}, options)}{" "}
@@ -125,18 +119,6 @@ export function SaveLibrarySection({
       )}
       {problem && <p role="alert">{msg.session.branchFailed({}, options)}</p>}
       <div className="save-console-actions">
-        {!embedded && (
-          <a
-            href={
-              "/" +
-              lang +
-              "/?" +
-              new URLSearchParams({ bench: release.revision, ...(slot ? { slot } : {}) })
-            }
-          >
-            {msg.session.back({}, options)}
-          </a>
-        )}
         <form id={newForm} action={"/" + lang + "/run/"} method="get">
           <input type="hidden" name="bench" value={release.revision} />
           <input type="hidden" name="slot" value="new" />

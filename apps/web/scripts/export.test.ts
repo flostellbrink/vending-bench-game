@@ -25,7 +25,6 @@ await test("each exported page ships only its own localized messages", async () 
     for (const [segment, landmarkId] of [
       ["", "SX000001"],
       ["run/", "VBBOOT03"],
-      ["saves/", "SLTR0014"],
     ] as const) {
       const route = new URL(locale + "/" + segment, directory);
       const html = await readFile(new URL("index.html", route), "utf8");
