@@ -30,9 +30,9 @@ Desktop Chrome on this integrated GPU and desktop viewport emulation have eviden
 
 The earlier 1440 × 900 headless sample with a short transcript also reached 60 callbacks/s. The longer runs above did not show a callback regression. They are not a reproduction or disproof of the player's CRT issue. Do not use these results to qualify CRT or declare physical phone performance.
 
-## Final scene and day-end receipt
+## Scene before the fixed thumbnail rail
 
-The opening lounge and its three site previews now contain 1,374 SVG elements, down from 6,586 at the same simulated time (79% fewer). The active room keeps its full drawing.
+The opening lounge and its three site previews contained 1,374 SVG elements, down from 6,586 at the same simulated time (79% fewer). This count predates the four fixed thumbnails.
 
 - **Same-size transition comparison:** Chrome recorded one day 2 close before and after the change at 1280 × 577 and 1×. Across each 3.4-second interval, renderer function calls fell from 644 to 132 ms, layout from 340 to 219 ms, and pre-paint from 159 to 79 ms. The frame callback p95 was 16.7 ms before and 16.8 ms after. Neither sample had an interval over 25 ms.
 - **5120 × 2880 rendered pixels:** the final day 1 close had a 16.7 ms callback p95 and no interval over 25 ms. The trace recorded 167 ms in renderer function calls and 253 ms in layout. First contentful paint took 100 ms on the first navigation in a new browser session; this is not simulator readiness.
@@ -54,3 +54,7 @@ This build removed CRT and reused the interpreter on reset. Its measurements pre
 ## AI House workstation
 
 At 1440 × 900 and 2× density on the same M4, 48 synthetic edits on day 25 reached the second animation frame in 35.0 ms at p95 (35.3 ms maximum). A snack-machine inspection from 12:45 to 13:10 produced 100 frame intervals: 16.7 ms at p95 and 16.8 ms maximum. During 1.2 seconds of idle time, no station subtree mutations or size changes occurred in the observed station, scene, room or prompt. The save contained 33 receipts, not a long transcript. This sample does not measure GPU time or physical display latency.
+
+## Reference checkpoint with a long transcript
+
+The day-30 reference checkpoint opened with 499 receipts. In headless Chrome 158 at 1440 × 900 and 1× density, 60 synthetic prompt edits reached the second animation frame in 33.3 ms at the median and 34.2 ms at p95. The next inspection produced receipt 500 in 29.5 ms. During that inspection, 108 frame intervals over 1.8 seconds measured 16.7 ms at p95 and 16.8 ms maximum. These are browser timings, not hardware input or display latency.
