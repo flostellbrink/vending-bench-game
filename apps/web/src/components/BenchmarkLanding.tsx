@@ -31,12 +31,7 @@ function LandingDesk({ release, setup, lang, slot }: Props) {
   const source = "https://github.com/ProsusAI/vending-bench/tree/" + release.revision;
   const labels = { rules: msg.operator.rules, day: msg.operator.day, fee: msg.operator.fee };
   return (
-    <StationFrame
-      lang={lang}
-      revision={release.revision}
-      slot={slot}
-      label={msg.landing.human({}, options)}
-    >
+    <StationFrame lang={lang} revision={release.revision} slot={slot}>
       <div className="desk landing-desk">
         <article className="shell landing-console">
           <div className="landing-intro">

@@ -98,7 +98,7 @@ export function Station({ release, slot, parentBalance, lang, changeLang, newRun
             : "Vending Bench / " + release.id + " · Seed " + release.seed}
         </span>
         <a href={"/" + lang + "/?" + new URLSearchParams({ bench: release.revision, slot })}>
-          {msg.session.exitMenu({}, { locale: lang })}
+          {msg.session.mainMenu({}, { locale: lang })}
         </a>
       </footer>
     </main>

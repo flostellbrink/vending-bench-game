@@ -35,13 +35,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
   const selected = reports.find((r) => r.id === receipt);
   const closing = reports.find((r) => r.day === day && r.endDay !== r.day);
   return (
-    <StationFrame
-      lang={lang}
-      revision={release.revision}
-      slot={slot}
-      label={t("standings")}
-      page="run"
-    >
+    <StationFrame lang={lang} revision={release.revision} slot={slot} page="run">
       <div className="dossier settlement-desks">
         <section className="bench-paper">
           <Scorecard

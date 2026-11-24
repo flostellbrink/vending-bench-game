@@ -1410,11 +1410,6 @@ session:
     ^en: "Saved runs"
     es: "Partidas guardadas"
     de: "Spielstände"
-  exitMenu:
-    .id: EXITMENU
-    ^en: "Exit to main menu"
-    es: "Salir al menú principal"
-    de: "Zurück zum Hauptmenü"
   mainMenu:
     .id: MAINMENU
     ^en: "Main menu"

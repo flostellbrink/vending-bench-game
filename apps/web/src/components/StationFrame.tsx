@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { msg } from "@/dictionary";
 import { locales, type Locale } from "@/dictionary/runtime";
 
 import "./station-frame.css";
@@ -7,21 +8,12 @@ import "./station-frame.css";
 interface Props {
   lang: Locale;
   revision: string;
-  label: string;
   children: ReactNode;
   page?: "run" | "setup";
   slot?: string;
   day?: number;
 }
-export function StationFrame({
-  lang,
-  revision,
-  label,
-  children,
-  page = "setup",
-  slot,
-  day,
-}: Props) {
+export function StationFrame({ lang, revision, children, page = "setup", slot, day }: Props) {
   const query = new URLSearchParams({ bench: revision });
   if (slot) query.set("slot", slot);
   if (day !== undefined) query.set("day", String(day));
@@ -32,7 +24,7 @@ export function StationFrame({
           <i className="brand-mark" aria-hidden />
           Vending Bench
         </a>
-        <span className="operator">{label}</span>
+        <span className="operator">{msg.landing.human({}, { locale: lang })}</span>
         <i className="vent" aria-hidden />
         <nav aria-label="Language / Idioma / Sprache">
           {locales.map((l) => (
