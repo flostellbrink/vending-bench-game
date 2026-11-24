@@ -30,6 +30,51 @@ const pins = v.parse(
   JSON.parse(await readFile(new URL("releases.json", root), "utf8")),
 );
 const retained = assertValue(pins.find((pin) => pin.revision !== "submodule")).revision;
+const git = (...args: string[]) =>
+  execFileSync("git", ["-C", "vendor/vending-bench", ...args], { cwd: root, encoding: "utf8" });
+
+await test("the published solo study contributes one final score per model, using the latest attempt", async () => {
+  const revision = "0d9e1a1e34f04091a315943b6ca74f800869bf5c";
+  const release = assertValue((await readReleases([{ revision }]))[0]);
+  const study = "results/two-agent-seed1/single-agent";
+  const trials = git(
+    "ls-tree",
+    "-r",
+    "--name-only",
+    revision,
+    "--",
+    study + "/30d",
+    study + "/30d-gpt-rerun",
+  )
+    .trim()
+    .split("\n")
+    .filter((path) => path.endsWith("/result.json"));
+  const resultSchema = v.object({
+    model_requested: v.string(),
+    timestamp_utc: v.string(),
+    days_operated: v.number(),
+    final_balance: v.number(),
+    reward: v.number(),
+  });
+  const latest = new Map<string, { path: string; trial: v.InferOutput<typeof resultSchema> }>();
+  for (const path of trials) {
+    const trial = v.parse(resultSchema, JSON.parse(git("show", revision + ":" + path)));
+    const previous = latest.get(trial.model_requested);
+    if (!previous || trial.timestamp_utc > previous.trial.timestamp_utc)
+      latest.set(trial.model_requested, { path, trial });
+  }
+  assert.equal(latest.size, 5);
+  assert.equal(trials.length, 6);
+  const models = release.rivals.filter((r) => r.kind === "model");
+  assert.equal(models.length, latest.size);
+  for (const { path, trial } of latest.values()) {
+    const model = assertValue(models.find((r) => r.sourcePath === path));
+    assert.equal(model.score, trial.reward);
+    assert.equal(model.endDay, trial.days_operated);
+    assert.equal(model.finalBalance, trial.final_balance);
+    assert.equal(model.values == null, true);
+  }
+});
 await test("quote defaults come from the published MCP signature, not a frontend constant", async () => {
   const python = await readSnapshot(retained);
   const path = v.parse(v.string(), python.runPython('str(SERVER / "server.py")'));
@@ -201,7 +246,7 @@ await test("different commits sharing one release version remain distinct; dupli
 });
 
 await test("model endpoints need matching source and conditions; only recorded closings become a trace", async () => {
-  const release = assertValue(catalog[0]);
+  const release = assertValue(catalog.find((entry) => entry.revision === retained));
   const python = await readSnapshot(release.revision);
   const batch = "/upstream/results/baselines/models-30d";
   const trial = batch + "/example";

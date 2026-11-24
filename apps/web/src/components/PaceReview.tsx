@@ -27,11 +27,13 @@ export function PaceReview({
   reviewDay,
 }: Props) {
   const [choice, choose] = useState("");
-  const opponents = rivals.map((r) => ({
-    key: r.source,
-    name: r.kind === "script" ? scriptName : (r.name ?? r.source),
-    values: r.values ?? [],
-  }));
+  const opponents = rivals
+    .filter((r) => r.values && r.values.length > 1)
+    .map((r) => ({
+      key: r.source,
+      name: r.kind === "script" ? scriptName : (r.name ?? r.source),
+      values: r.values ?? [],
+    }));
   if (best)
     opponents.push({ key: "personal", name: msg.operator.previousBest(), values: best.values });
   const rival = opponents.find((r) => r.key === choice) ?? opponents[0];

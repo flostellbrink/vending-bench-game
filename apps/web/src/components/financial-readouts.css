@@ -100,6 +100,24 @@
 .balance-scope .legend .dotted-key::before {
   border-top-style: dotted;
 }
+.balance-scope .endpoint-keys {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.12rem 0.9rem;
+}
+.balance-scope .endpoint-keys > small {
+  font-weight: bold;
+}
+.balance-scope .endpoint-key::before {
+  flex: none;
+  width: 0.42rem;
+  height: 0.42rem;
+  background: var(--ink);
+  border: 0;
+  border-radius: 50%;
+}
 .scorecard .score-ranking {
   width: 100%;
   margin: 0;

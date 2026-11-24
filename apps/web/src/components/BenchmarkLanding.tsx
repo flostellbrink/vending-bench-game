@@ -3,6 +3,7 @@ import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
 import { msg } from "@/dictionary";
+import { rankedModels } from "@/game/model-rivals";
 import { useCurrency } from "@/localization/formatters";
 import { clock } from "@/scene/clock";
 import Office from "@/scene/Office";
@@ -21,9 +22,7 @@ interface Props {
 
 function LandingDesk({ release, setup, slot }: Props) {
   const money = useCurrency(release.currency);
-  const leader = release.rivals
-    .filter((rival) => rival.kind === "model")
-    .toSorted((a, b) => b.score - a.score)[0];
+  const leader = rankedModels(release.rivals)[0];
   const source = "https://github.com/ProsusAI/vending-bench/tree/" + release.revision;
   return (
     <StationFrame revision={release.revision} slot={slot}>

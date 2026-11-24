@@ -211,6 +211,7 @@ export function WorkspaceReadout({
   if (tab === "scores")
     return (
       <Scorecard
+        seed={release.seed}
         embedded
         history={run.history}
         reviewDay={(day) => {

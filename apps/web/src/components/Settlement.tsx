@@ -37,6 +37,7 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
       <div className="dossier settlement-desks">
         <section className="bench-paper">
           <Scorecard
+            seed={release.seed}
             {...{ state, rivals, best, reports, money, history }}
             reviewDay={openDay}
             openReport={nav.setTab}

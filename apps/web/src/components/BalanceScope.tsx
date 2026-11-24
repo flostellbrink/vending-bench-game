@@ -9,7 +9,16 @@ import { msg } from "@/dictionary";
 import { useCurrency } from "@/localization/formatters";
 
 import "./financial-readouts.css";
-const ink = ["#bbeb9b", "#eac177", "#9dd4e6", "#d9bbd8"];
+const ink = [
+  "#bbeb9b",
+  "#eac177",
+  "#9dd4e6",
+  "#d9bbd8",
+  "#ffab87",
+  "#92d8b3",
+  "#d7d989",
+  "#a5bdff",
+];
 
 interface BalanceScopeProps {
   embedded?: boolean;
@@ -42,6 +51,10 @@ export function BalanceScope({
   showReceipts,
 }: BalanceScopeProps) {
   const day = Math.min(selected ?? Math.max(0, history.length - 1), release.days);
+  const endpoints = rivals.filter(
+    (r) => !r.values?.length && r.endDay != null && r.finalBalance != null,
+  );
+  const endpointDays = new Set(endpoints.map((r) => r.endDay));
   const series: Trace[] = [
     { name: msg.fields.player(), values: history },
     ...(best ? [{ name: msg.operator.previousBest(), values: best.values }] : []),
@@ -135,7 +148,12 @@ export function BalanceScope({
                   s.endDay >= points.length &&
                   s.finalBalance != null &&
                   Number.isFinite(s.finalBalance) && (
-                    <path d={`M${x(s.endDay) - 8} ${y(s.finalBalance)} h9`} strokeWidth="4" />
+                    <path
+                      d={`M${x(s.endDay)} ${y(s.finalBalance)} h0.01`}
+                      strokeWidth="5"
+                      strokeLinecap="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
                   )}
               </g>
             );
@@ -169,6 +187,7 @@ export function BalanceScope({
       </div>
       <div className="legend">
         {series.map((s, i) => {
+          if (!s.values?.length) return null;
           const style: CSSProperties & { "--ink": string } = {
             "--ink": s.color ?? assertValue(ink[i % ink.length]),
           };
@@ -183,6 +202,27 @@ export function BalanceScope({
             </span>
           );
         })}
+        {endpoints.length > 0 && (
+          <div className="endpoint-keys">
+            <small>
+              {msg.session.finalBalances()}
+              {endpointDays.size === 1 && " · " + msg.operator.day() + " " + endpoints[0]?.endDay}
+            </small>
+            {series.map((s, i) => {
+              if (s.values?.length || s.endDay == null || s.finalBalance == null) return null;
+              const style: CSSProperties & { "--ink": string } = {
+                "--ink": s.color ?? assertValue(ink[i % ink.length]),
+              };
+              return (
+                <span className="endpoint-key" key={s.name} style={style}>
+                  {s.name}
+                  {endpointDays.size > 1 && " · " + msg.operator.day() + " " + s.endDay}{" "}
+                  <b>{format.format(s.finalBalance)}</b>
+                </span>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

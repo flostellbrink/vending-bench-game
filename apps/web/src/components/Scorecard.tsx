@@ -1,6 +1,7 @@
 import type { Snapshot, Rival, PersonalBest, Report } from "games-common/benchmark";
 
 import { msg } from "@/dictionary";
+import { rankedModels } from "@/game/model-rivals";
 import { type Money } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
@@ -8,6 +9,7 @@ import { PaceReview } from "./PaceReview";
 import "./financial-readouts.css";
 interface Props {
   embedded?: boolean;
+  seed: number;
   state: Snapshot | null;
   rivals: Rival[];
   best: PersonalBest | null;
@@ -20,6 +22,7 @@ interface Props {
 }
 export function Scorecard({
   embedded,
+  seed,
   state,
   rivals,
   best,
@@ -30,6 +33,7 @@ export function Scorecard({
   reviewDay,
 }: Props) {
   const score = state?.final?.reward ?? null;
+  const models = rankedModels(rivals);
   return (
     <section className="sheet scorecard">
       {!embedded && (
@@ -75,7 +79,7 @@ export function Scorecard({
           </tr>
           {[
             ...(best ? [{ name: msg.operator.previousBest(), score: best.score }] : []),
-            ...rivals.map((r) => ({
+            ...[...models, ...rivals.filter((r) => r.kind === "script")].map((r) => ({
               name: r.kind === "script" ? msg.fields.bot() : r.name,
               score: r.score,
             })),
@@ -90,7 +94,7 @@ export function Scorecard({
       </table>
       <div className="score-notes">
         {score === null && <p>{msg.operator.unfinished()}</p>}
-        {!rivals.some((r) => r.kind === "model") && <p>{msg.operator.noRivals()}</p>}
+        <p>{models.length ? msg.session.soloSeed({ seed }) : msg.operator.noRivals()}</p>
       </div>
       <PaceReview
         {...{ history, rivals, best, money, reviewDay }}

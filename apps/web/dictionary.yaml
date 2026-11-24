@@ -1339,9 +1339,9 @@ landing:
     de: "{$model} hat einen Verkaufsautomaten betrieben. Jetzt bist du dran."
   fallback:
     .id: HN000002
-    ^en: "Claude Opus 5 ran a vending machine. Your shift."
-    es: "Claude Opus 5 gestionó una máquina expendedora. Te toca."
-    de: "Claude Opus 5 hat einen Verkaufsautomaten betrieben. Jetzt bist du dran."
+    ^en: "Can you beat the scripted vending operator?"
+    es: "¿Puedes superar al operador programado de máquinas expendedoras?"
+    de: "Schlägst du den Skriptbetreiber der Verkaufsautomaten?"
   context:
     .id: HN000016
     ^en: "This independent game lets you play Prosus Vending Bench, an open benchmark for AI agents. Your job is the same as theirs: find suppliers, buy stock, set prices and keep enough cash for tomorrow."
@@ -1599,6 +1599,18 @@ session:
     ^en: "No published AI score matches these conditions yet."
     es: "Aún no hay puntuaciones de IA publicadas para estas condiciones."
     de: "Für diese Bedingungen liegt noch keine veröffentlichte KI-Wertung vor."
+  soloSeed:
+    .id: SOLSEED1
+    .inputs:
+      - $seed :integer
+    ^en: "Model scores are individual solo runs on seed {$seed}, not averages."
+    es: "Las puntuaciones corresponden a partidas individuales con la semilla {$seed}, no a promedios."
+    de: "Die Modellwertungen stammen aus einzelnen Sololäufen mit Seed {$seed}, nicht aus Mittelwerten."
+  finalBalances:
+    .id: ENDBAL01
+    ^en: Final balances
+    es: Saldos finales
+    de: Endkontostände
   start:
     .id: SX000009
     ^en: "Start"

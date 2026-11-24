@@ -6,6 +6,7 @@ import { first } from "games-common/language";
 import { useState } from "react";
 
 import { msg } from "@/dictionary";
+import { rankedModels } from "@/game/model-rivals";
 import { releases } from "@/game/releases";
 import { readRecord, recordKey } from "@/game/runs";
 import { unavailable, useLocationSearch, useStoredText } from "@/hooks/useSessionStorage";
@@ -40,6 +41,7 @@ export default function SessionSetup({
     return best === null ? null : String(best.score);
   });
   const money = useCurrency(current.currency);
+  const models = rankedModels(current.rivals);
   const savedParams = new URLSearchParams({ bench: current.revision });
   const selectedSlot =
     current.revision === (initialRevision ?? urlRevision)
@@ -93,7 +95,7 @@ export default function SessionSetup({
       </dl>
       <h3>{msg.session.target()}</h3>
       <dl className="session-scores">
-        {current.rivals.map((r) => (
+        {[...models, ...current.rivals.filter((r) => r.kind === "script")].map((r) => (
           <div key={r.source}>
             <dt>
               <a href={r.source}>{r.kind === "script" ? msg.session.reference() : r.name}</a>
@@ -108,9 +110,9 @@ export default function SessionSetup({
           </div>
         )}
       </dl>
-      {!current.rivals.some((r) => r.kind === "model") && (
-        <p className="session-note">{msg.session.noAI()}</p>
-      )}
+      <p className="session-note">
+        {models.length ? msg.session.soloSeed({ seed: current.seed }) : msg.session.noAI()}
+      </p>
       {!renderPage && (
         <p className="save-library-link">
           <a href={"../?" + savedParams}>{msg.session.mainMenu()}</a>

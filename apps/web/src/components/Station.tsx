@@ -6,6 +6,7 @@ import type { ParentBalance } from "@/game/runs";
 
 import { msg } from "@/dictionary";
 import { locales } from "@/dictionary/runtime";
+import { rankedModels } from "@/game/model-rivals";
 import { useCommandLine } from "@/hooks/useCommandLine";
 import { useNavigation } from "@/hooks/useNavigation";
 import { useRun } from "@/hooks/useRun";
@@ -32,7 +33,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
   const money = (value: number) => currency.format(value);
   const shell = useCommandLine(run, nav, release);
   const { state, rivals, busy, history } = run;
-  const opponent = rivals.find((r) => r.kind === "model") ?? rivals[0],
+  const opponent = rankedModels(rivals)[0] ?? rivals[0],
     day = history.length - 1,
     closing = history[day],
     rivalClose = opponent?.values?.[day];
@@ -53,7 +54,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
             <span>{opponent.kind === "script" ? msg.fields.bot() : opponent.name}</span>
             <b>
               {gap === null
-                ? money(opponent.score)
+                ? msg.fields.score() + " · " + money(opponent.score)
                 : msg.operator.day() + " " + day + " · " + (gap > 0 ? "+" : "") + money(gap)}
             </b>
           </button>

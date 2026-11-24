@@ -55,20 +55,36 @@ export function git(...args: string[]) {
   return execFileSync("git", ["-C", upstream, ...args], { maxBuffer: 128 * 1024 * 1024 });
 }
 
+function evaluationFile(path: string) {
+  return (
+    (path.startsWith(engine + "/") && /\.(py|toml)$/.test(path)) ||
+    /^(scripts|tests)\/[^/]+\.py$/.test(path) ||
+    /^tasks\/vending-bench\/instruction[^/]*\.md$/.test(path)
+  );
+}
+
 function sourceFiles(revision: string) {
   const paths = git("ls-tree", "-r", "--name-only", "-z", revision).toString().split("\0");
   return paths.filter(
     (path) =>
-      (path.startsWith(engine + "/") && /\.(py|toml)$/.test(path)) ||
+      evaluationFile(path) ||
       [
-        "scripts/local_run.py",
-        "scripts/sync_config.py",
         "tasks/vending-bench/task.toml",
-        "tasks/vending-bench/instruction.md",
-        "tasks/vending-bench/instruction.template.md",
         "tasks/vending-bench/solution/reference_bot.py",
         "results/baselines/scripted-reference/results.json",
       ].includes(path) ||
+      (/^results\/[^/]+\/single-agent\/[^/]+\//.test(path) &&
+        [
+          "result.json",
+          "manifest.json",
+          "models.json",
+          "harness.json",
+          "tools.json",
+          "instruction.md",
+          "evaluation-source.sha256",
+          "conversation.jsonl",
+          "config.json",
+        ].includes(basename(path))) ||
       (path.startsWith("results/baselines/models-") &&
         [
           "aggregate.json",
@@ -87,6 +103,53 @@ export async function readSnapshot(revision: string) {
   const archive = git("archive", "--format=zip", revision, "--", ...sourceFiles(revision));
   python.unpackArchive(new Uint8Array(archive), "zip", { extractDir: "/upstream" });
   python.runPython(readFileSync(join(root, "reference.py"), "utf8"));
+  const needed = new Set(
+    v.parse(v.array(v.string()), pythonJSON(python, "json.dumps(study_fingerprints())")),
+  );
+  if (needed.size) {
+    const matching = new Set<string>();
+    const record = (base: string) => {
+      python.globals.set("fingerprint_root", base);
+      const digest = v.parse(
+        v.string(),
+        python.runPython("evaluation_fingerprint(Path(fingerprint_root))"),
+      );
+      if (needed.delete(digest)) matching.add(digest);
+    };
+    record("/upstream");
+    if (needed.size) {
+      // Team and reporting scripts participate in upstream's hash but do not run a solo game.
+      const candidates = git("log", "--format=%H", revision, "--", "scripts/*.py", "tests/*.py")
+        .toString()
+        .trim()
+        .split("\n")
+        .filter(Boolean);
+      for (const commit of candidates) {
+        if (commit === revision) continue;
+        if (
+          git(
+            "diff",
+            "--name-only",
+            revision,
+            commit,
+            "--",
+            engine,
+            "tasks/vending-bench/instruction*.md",
+            "scripts/run_openrouter.py",
+            "scripts/sync_config.py",
+          ).length
+        )
+          continue;
+        const files = sourceFiles(commit).filter(evaluationFile);
+        const evaluation = git("archive", "--format=zip", commit, "--", ...files);
+        const base = "/fingerprints/" + commit;
+        python.unpackArchive(new Uint8Array(evaluation), "zip", { extractDir: base });
+        record(base);
+        if (!needed.size) break;
+      }
+    }
+    python.globals.set("verified_study_sources", JSON.stringify([...matching]));
+  }
   return python;
 }
 

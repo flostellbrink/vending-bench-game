@@ -16,7 +16,7 @@ Open <http://localhost:5173> to read the operating brief and start or resume a r
 
 All cabinets share one depot and mailbox. Select **Depot** to inspect shared stock, or select a cabinet below it to service its slots. Select **Suppliers** to search; each supplier page holds its own orders. Selecting a room thumbnail opens a cabinet or the shared depot without spending time. No map clicks are necessary.
 
-Select the bank balance to review daily balances and their receipts. After day 30, the scorecard compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
+Select the bank balance to review daily balances and their receipts. After day 30, compare your score with the scripted operator and published solo model runs. A new run keeps the best completed trace for the same challenge in this browser.
 
 ## Saved runs
 
@@ -40,7 +40,7 @@ The full [Vending Bench repository](https://github.com/ProsusAI/vending-bench) i
 
 The build reads each selected Git snapshot, not local edits to the submodule. It generates the engine archive, challenge conditions, briefing and tool descriptions. It runs the upstream scripted operator to obtain daily balances and checks the result against the published calibration when one exists. A new major version needs a compatible browser adapter. No native Python installation is required.
 
-The playable challenge uses v3 and its scripted reference run. Model trials must match the engine, configuration, seed and horizon to count as rivals. Recorded daily balances form a trace; a final score alone gives only an endpoint.
+The v3 challenge includes the [solo runs from the two-agent study](https://github.com/ProsusAI/vending-bench/tree/0d9e1a1e/results/two-agent-seed1). Compare the latest solo attempt per model under matching conditions, not the best attempt. Exclude worker-assisted runs and other horizons. The study published final balances but not daily trajectories, so its entries appear as endpoints, not curves.
 
 ## Languages
 
