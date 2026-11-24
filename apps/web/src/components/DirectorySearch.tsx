@@ -28,10 +28,11 @@ export function DirectorySearch({ state, t, disabled, runCommand }: Props) {
         {t("searchSuppliers")}
         <input value={query} onChange={(e) => setQuery(e.currentTarget.value)} />
       </label>
-      <button type="submit" disabled={disabled || !query.trim()} data-clock-verb="find">
-        {t("execute")} · {timeLabel("find", state, t)}
-      </button>
-      <GuiToolInfo verb="find" />
+      <GuiToolInfo verb="find" cost={timeLabel("find", state, t)}>
+        <button type="submit" disabled={disabled || !query.trim()} data-clock-verb="find">
+          {t("execute")}
+        </button>
+      </GuiToolInfo>
     </form>
   );
 }

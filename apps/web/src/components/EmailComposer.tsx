@@ -120,14 +120,15 @@ export function EmailComposer({ to, subject, reports, state, t, disabled, send }
             <button type="button" onClick={() => dialog.current?.close()}>
               {t("cancelMail")}
             </button>
-            <button
-              type="submit"
-              data-clock-verb="mail"
-              disabled={disabled || !recipient.trim() || !body.trim()}
-            >
-              {t("sendLetter")} · {timeLabel("mail", state, t)}
-            </button>
-            <GuiToolInfo verb="mail" />
+            <GuiToolInfo verb="mail" cost={timeLabel("mail", state, t)}>
+              <button
+                type="submit"
+                data-clock-verb="mail"
+                disabled={disabled || !recipient.trim() || !body.trim()}
+              >
+                {t("sendLetter")}
+              </button>
+            </GuiToolInfo>
           </div>
         </form>
       </dialog>

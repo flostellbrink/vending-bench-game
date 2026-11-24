@@ -77,11 +77,7 @@ export function ReportGrid({
               </button>
             </th>
           ))}
-          {command && (
-            <th>
-              {t("read")} <GuiToolInfo verb={command} />
-            </th>
-          )}
+          {command && <th>{t("read")}</th>}
         </tr>
       </thead>
       <tbody>
@@ -116,13 +112,18 @@ export function ReportGrid({
                         #{cached} · {t("noCharge")}
                       </button>
                     ) : (
-                      <button
-                        data-clock-verb={command}
-                        disabled={disabled}
-                        onClick={() => runCommand(command + " " + r[0])}
+                      <GuiToolInfo
+                        verb={command}
+                        cost={assertValue(timing(command, state)).minutes + " min"}
                       >
-                        {t("read")} · {assertValue(timing(command, state)).minutes} min
-                      </button>
+                        <button
+                          data-clock-verb={command}
+                          disabled={disabled}
+                          onClick={() => runCommand(command + " " + r[0])}
+                        >
+                          {t("read")}
+                        </button>
+                      </GuiToolInfo>
                     )}
                   </td>
                 )}

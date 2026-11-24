@@ -19,7 +19,6 @@ import { clock } from "@/scene/clock";
 import { PlanEvidence } from "./PlanEvidence";
 import { Receipts } from "./Receipts";
 import { ShiftPlan } from "./ShiftPlan";
-import { ToolInfo } from "./ToolInfo";
 interface Props {
   release: Release;
   lang: Lang;
@@ -28,7 +27,7 @@ interface Props {
   money: Money;
   run: Run;
   shell: CommandLine;
-  setTab: (id: number) => void;
+  setTab: (id: number | "help") => void;
 }
 export function OperatorTerminal({ release, lang, t, screen, money, run, shell, setTab }: Props) {
   const { busy, boot, lines, error, saveIssue, reports, state } = run;
@@ -220,7 +219,9 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             ? screen("loading")
             : "Tab " + t("completeKey") + " · Enter " + t("execute") + " · ↑ " + t("history")}
         </small>
-        <ToolInfo release={release} lang={lang} verb={tool ? verb : undefined} />
+        <button type="button" className="terminal-manual-link" onClick={() => setTab("help")}>
+          {t("help")}
+        </button>
       </div>
     </aside>
   );

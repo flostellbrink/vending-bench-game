@@ -108,14 +108,15 @@ export default function ObservationView({
                 </div>
                 <EmailComposer {...letterProps} to={entry.email} />
               </div>
-              <button
-                data-clock-verb="quote"
-                disabled={disabled}
-                onClick={() => runCommand("quote " + entry.id)}
-              >
-                {t("reprice")} · {timeLabel("quote", state, t)}
-              </button>
-              <GuiToolInfo verb="quote" />
+              <GuiToolInfo verb="quote" cost={timeLabel("quote", state, t)}>
+                <button
+                  data-clock-verb="quote"
+                  disabled={disabled}
+                  onClick={() => runCommand("quote " + entry.id)}
+                >
+                  {t("reprice")}
+                </button>
+              </GuiToolInfo>
             </article>
           ))}
           {!action && contact && (

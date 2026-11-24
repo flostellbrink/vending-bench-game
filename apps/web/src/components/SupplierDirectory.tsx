@@ -14,12 +14,19 @@ export function SupplierDirectory({ suppliers, openObject, ...props }: Props) {
     <section className="sheet">
       <DirectorySearch {...props} />
       {suppliers.length > 0 && (
-        <ul className="desk-archive">
+        <ul className="supplier-directory">
           {suppliers.map((s) => (
             <li key={s.id}>
               <button type="button" onClick={() => openObject("supplier:" + s.id)}>
-                {s.name}
-                {s.name !== s.id && " · " + s.id}
+                <span>
+                  <b>{s.name}</b>
+                  {s.name !== s.id && <code>{s.id}</code>}
+                </span>
+                {s.orders.length > 0 && (
+                  <small>
+                    {props.t("orders")} · {s.orders.length}
+                  </small>
+                )}
               </button>
             </li>
           ))}

@@ -8,11 +8,13 @@ import type { WorkspaceProps } from "./Workspace";
 import { BalanceScope } from "./BalanceScope";
 import { Mailbox, SalesReports } from "./BusinessReports";
 import { CommandIndex } from "./CommandIndex";
+import { DepotStock } from "./DepotStock";
 import { EmailComposer } from "./EmailComposer";
 import { GuiToolInfo } from "./GuiToolInfo";
 import ObservationView from "./ObservationView";
 import { OperatorBrief } from "./OperatorBrief";
 import { OrderRegister } from "./OrderRegister";
+import { OrderSlip, QuoteRequest } from "./OrderSlip";
 import { ReportList } from "./ReportList";
 import { Scorecard } from "./Scorecard";
 import { SupplierDirectory } from "./SupplierDirectory";
@@ -82,17 +84,16 @@ export function WorkspaceReadout({
         : report;
     const verb = cmd.split(" ")[0] ?? "";
     const action = (
-      <>
+      <GuiToolInfo verb={verb} cost={timeLabel(verb, state, t)}>
         <button
           className="asset-check"
           disabled={disabled}
           data-clock-verb={verb}
           onClick={() => shell.runCommand(cmd, false, true)}
         >
-          {verb === "quote" ? t("reprice") : t("inspectNow")} · {timeLabel(verb, state, t)}
+          {verb === "quote" ? t("reprice") : t("inspectNow")}
         </button>
-        <GuiToolInfo verb={verb} />
-      </>
+      </GuiToolInfo>
     );
     const instrument = scoped ? (
       <ObservationView
@@ -105,20 +106,46 @@ export function WorkspaceReadout({
     ) : (
       <section className="sheet asset-actions">{action}</section>
     );
+    if (tab === "site:depot")
+      return (
+        <DepotStock report={report} action={action} openReport={setTab} {...{ t, lang, money }} />
+      );
     if (!tab.startsWith("supplier:")) return instrument;
     const supplier = tab.slice(9);
     const contact = suppliers.find((entry) => entry.id === supplier);
     const purchases = contact?.orders ?? [];
     return (
-      <>
-        {contact?.email && (
-          <header className="supplier-contact">
+      <article className="supplier-desk">
+        <header className="supplier-contact">
+          {contact?.quotable !== false &&
+            (report?.terms?.minimum !== undefined ? (
+              <QuoteRequest
+                report={report}
+                terms={report.terms}
+                state={state}
+                {...controls}
+                supplierView
+              />
+            ) : (
+              action
+            ))}
+          {contact?.email && (
             <EmailComposer
               to={contact.email}
               {...{ state, t, disabled, reports }}
               send={shell.runCommand}
             />
-          </header>
+          )}
+        </header>
+        {report?.terms?.minimum !== undefined && (
+          <OrderSlip
+            {...controls}
+            report={report}
+            terms={report.terms}
+            state={state}
+            openReport={setTab}
+            supplierView
+          />
         )}
         <section className="supplier-orders">
           <h3>
@@ -126,8 +153,7 @@ export function WorkspaceReadout({
           </h3>
           <OrderRegister {...{ t, money }} orders={purchases} open={setTab} />
         </section>
-        {contact?.quotable !== false && instrument}
-      </>
+      </article>
     );
   }
   if (state && tab === "mail") return <Mailbox {...controls} state={state} openReport={setTab} />;
@@ -148,10 +174,14 @@ export function WorkspaceReadout({
   if (cmd && state)
     return (
       <section className="sheet">
-        <button disabled={disabled} onClick={() => shell.runCommand(cmd)}>
-          {cmd} · {timeLabel(cmd.split(" ")[0] ?? "", state, t)}
-        </button>
-        <GuiToolInfo verb={cmd.split(" ")[0] ?? ""} />
+        <GuiToolInfo
+          verb={cmd.split(" ")[0] ?? ""}
+          cost={timeLabel(cmd.split(" ")[0] ?? "", state, t)}
+        >
+          <button disabled={disabled} onClick={() => shell.runCommand(cmd)}>
+            {cmd}
+          </button>
+        </GuiToolInfo>
       </section>
     );
   if (tab === "help")

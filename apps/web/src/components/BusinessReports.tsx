@@ -39,15 +39,16 @@ export function Mailbox(props: Props) {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          disabled={disabled}
-          data-clock-verb="inbox"
-          onClick={() => runCommand("inbox " + folder, false, true)}
-        >
-          {msg.operator.checkFolder({}, options)} · {timeLabel("inbox", state, t)}
-        </button>
-        <GuiToolInfo verb="inbox" />
+        <GuiToolInfo verb="inbox" cost={timeLabel("inbox", state, t)}>
+          <button
+            type="button"
+            disabled={disabled}
+            data-clock-verb="inbox"
+            onClick={() => runCommand("inbox " + folder, false, true)}
+          >
+            {msg.operator.checkFolder({}, options)}
+          </button>
+        </GuiToolInfo>
         <EmailComposer to="" {...{ state, t, disabled, reports }} send={runCommand} />
       </header>
       {report ? (
@@ -115,10 +116,11 @@ export function SalesReports(props: Props) {
           />
           {msg.operator.productBreakdown({}, options)}
         </label>
-        <button disabled={disabled} data-clock-verb="sales">
-          {t("execute")} · {timeLabel("sales", state, t)}
-        </button>
-        <GuiToolInfo verb="sales" />
+        <GuiToolInfo verb="sales" cost={timeLabel("sales", state, t)}>
+          <button disabled={disabled} data-clock-verb="sales">
+            {t("execute")}
+          </button>
+        </GuiToolInfo>
       </form>
       {report ? (
         <ObservationView {...props} report={report} />

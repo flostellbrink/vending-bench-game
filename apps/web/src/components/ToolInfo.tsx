@@ -1,39 +1,30 @@
 import type { Release } from "games-common/benchmark";
 
-import { useId, useRef, useState } from "react";
+import { useId, useRef } from "react";
 
 import type { Lang } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
-import { commandGroups, syntax, toolFor } from "@/game/commands";
+import { syntax, toolFor } from "@/game/commands";
 
 import "./tool-info.css";
 
 interface Props {
   release: Release;
   lang: Lang;
-  verb?: string;
+  verb: string;
 }
-
-const verbs = Object.values(commandGroups).flat();
 
 export function ToolInfo({ release, lang, verb }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const [choice, setChoice] = useState("");
-  const available = verb
-    ? []
-    : verbs.filter((alias) => {
-        const tool = toolFor(alias);
-        return tool && release.tools[tool] !== undefined;
-      });
-  const alias = verb?.toLowerCase() ?? (choice || available[0]);
-  const tool = alias && toolFor(alias);
+  const alias = verb.toLowerCase();
+  const tool = toolFor(alias);
   if (!tool || release.tools[tool] === undefined) return null;
   const options = { locale: lang };
   const heading = msg.operator.toolInformation({}, options);
-  const label = verb ? heading + ": " + alias : heading;
+  const label = heading + ": " + alias;
 
   function position() {
     const card = panel.current;
@@ -87,22 +78,6 @@ export function ToolInfo({ release, lang, verb }: Props) {
             ×
           </button>
         </div>
-        {!verb && (
-          <label className="tool-info-picker">
-            {msg.operator.toolCommand({}, options)}
-            <select
-              value={alias}
-              onChange={(event) => {
-                setChoice(event.currentTarget.value);
-                requestAnimationFrame(position);
-              }}
-            >
-              {available.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-        )}
         <code>{tool}</code>
         <samp>{syntax(alias)}</samp>
         <p lang="en">{release.tools[tool]}</p>

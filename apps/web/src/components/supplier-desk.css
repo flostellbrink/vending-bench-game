@@ -1,6 +1,8 @@
-.desk-archive {
+.supplier-directory {
   list-style: none;
   padding: 0;
+  margin: 0.55rem 0;
+  border-top: 1px solid #9eaa9c;
 }
 .sheet.asset-actions {
   display: flex;
@@ -9,18 +11,36 @@
   flex-wrap: wrap;
   border-bottom: 1px solid #9caa9c;
 }
-.desk-archive button {
+.supplier-directory button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   border: 0;
   background: transparent;
   color: inherit;
-  padding: 0.22em 0;
+  padding: 0.32rem 0.2rem;
   font: inherit;
   text-align: left;
-  text-decoration: underline;
-  text-underline-offset: 0.14em;
+  border-bottom: 1px solid #bfc9b9;
+}
+.supplier-directory button:hover {
+  background: #d5dfce;
+}
+.supplier-directory code {
+  display: block;
+  font-size: 0.85rem;
+  color: #4c5e50;
+}
+.supplier-search {
+  display: flex;
+  align-items: end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 .supplier-search label {
-  display: block;
+  display: grid;
+  gap: 0.16rem;
   font:
     700 0.8rem/1.25 Arial,
     sans-serif;
@@ -60,4 +80,78 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5em;
+}
+.supplier-desk,
+.depot-desk {
+  padding: 0.45rem 0.7rem;
+}
+.supplier-desk .supplier-contact,
+.depot-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.45rem;
+  padding: 0 0 0.45rem;
+  border-bottom: 1px solid #9caa9c;
+}
+.supplier-contact .quote-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.45rem;
+}
+.supplier-contact .quote-controls label {
+  display: grid;
+  gap: 0.16rem;
+  font-size: 0.85rem;
+}
+.supplier-contact .quote-controls input {
+  width: 6rem;
+  font: inherit;
+  padding: 0.18rem 0.3rem;
+}
+.supplier-contact .mail-compose-trigger {
+  margin-inline-start: auto;
+}
+.supplier-desk .supplier-orders {
+  padding: 0.7rem 0 0;
+}
+.supplier-desk .supplier-orders h3,
+.depot-desk h3 {
+  margin: 0.35rem 0;
+  font:
+    700 1rem/1.25 ui-monospace,
+    monospace;
+}
+.supplier-orders h3 small {
+  font-weight: normal;
+  color: #495b4e;
+}
+.supplier-orders .order-register {
+  margin: 0;
+}
+.depot-tools .receipt-link {
+  font-size: 0.85rem;
+}
+.depot-ledger {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.depot-ledger td {
+  vertical-align: top;
+}
+.depot-ledger td code,
+.depot-ledger th small {
+  display: block;
+  font-size: 0.82rem;
+}
+.depot-ledger td code {
+  color: #4a5c50;
+}
+.depot-ledger :is(th, td):nth-child(n + 3) {
+  text-align: right;
+}
+.depot-ledger td:first-child {
+  width: 49%;
 }

@@ -82,42 +82,43 @@ export const OfficeDisplay = memo(function OfficeDisplay({
         )}
         {estimate && <small className="clock-estimate">+{estimate.minutes} min</small>}
         <strong>{state ? clock(time) : "—"}</strong>
-        <button
-          className="clock-close"
-          type="button"
-          data-clock-verb="close"
-          data-armed={armed}
-          disabled={disabled || !state || state.over}
-          title={
-            state
-              ? (state.day === state.days ? t("endRun") : t("closeShift")) +
-                " · " +
-                (state.closes - state.minute) +
-                " min"
-              : undefined
-          }
-          onBlur={() => arm(null)}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault();
+        <GuiToolInfo verb="close">
+          <button
+            className="clock-close"
+            type="button"
+            data-clock-verb="close"
+            data-armed={armed}
+            disabled={disabled || !state || state.over}
+            title={
+              state
+                ? (state.day === state.days ? t("endRun") : t("closeShift")) +
+                  " · " +
+                  (state.closes - state.minute) +
+                  " min"
+                : undefined
+            }
+            onBlur={() => arm(null)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                arm(null);
+              }
+              if (event.repeat && (event.key === "Enter" || event.key === " "))
+                event.preventDefault();
+            }}
+            onClick={() => {
+              if (!armed) {
+                arm(targetTime);
+                return;
+              }
               arm(null);
-            }
-            if (event.repeat && (event.key === "Enter" || event.key === " "))
-              event.preventDefault();
-          }}
-          onClick={() => {
-            if (!armed) {
-              arm(targetTime);
-              return;
-            }
-            arm(null);
-            closeDay();
-          }}
-        >
-          <span aria-hidden={armed}>{t("closeShift")}</span>
-          <span aria-hidden={!armed}>{t("confirmClose")}</span>
-        </button>
-        <GuiToolInfo verb="close" />
+              closeDay();
+            }}
+          >
+            <span aria-hidden={armed}>{t("closeShift")}</span>
+            <span aria-hidden={!armed}>{t("confirmClose")}</span>
+          </button>
+        </GuiToolInfo>
       </div>
     </>
   );

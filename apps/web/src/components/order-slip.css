@@ -1,9 +1,34 @@
-.report .order-slip {
+.report .order-slip,
+.supplier-desk .order-slip {
   container-type: inline-size;
   color: #20322c;
   background: #eff0e8;
   border: 1px solid #7a8c80;
   padding: 0;
+}
+.supplier-desk .order-slip {
+  margin-top: 0.55rem;
+}
+.supplier-desk .slip-source {
+  font: inherit;
+  font-size: 0.84rem;
+  color: inherit;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+}
+.slip-expired {
+  color: #7f402e;
+}
+.supplier-desk .slip-controls .dispatch {
+  padding: 0;
+  border: 0;
+}
+.supplier-desk .slip-ledger {
+  max-height: 12rem;
+}
+.supplier-desk .order-slip[data-expired="true"] .slip-ledger {
+  max-height: 9rem;
 }
 .order-slip .slip-head {
   padding: 0.3rem 0.65rem;

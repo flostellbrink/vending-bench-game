@@ -1,9 +1,34 @@
-button.tool-info-trigger {
+:root {
+  --action-height: 1.85rem;
+}
+.tool-action-pair {
+  display: inline-flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 0;
+  max-inline-size: 100%;
+  vertical-align: middle;
+}
+.tool-action-pair > button:first-child:not(.tool-info-trigger) {
+  height: var(--action-height);
+  line-height: 1.15;
+  padding-block: 0;
+  min-width: 0;
+  margin: 0;
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+button.tool-info-trigger,
+.tool-action-pair > button.tool-info-trigger {
   display: inline-grid;
   place-items: center;
-  flex: none;
-  width: 1.55rem;
-  height: 1.55rem;
+  flex: 0 0 var(--action-height);
+  width: var(--action-height);
+  min-width: var(--action-height);
+  max-width: var(--action-height);
+  height: var(--action-height);
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
   color: #263e32;
@@ -15,6 +40,22 @@ button.tool-info-trigger {
     sans-serif;
   text-shadow: none;
   cursor: help;
+}
+.tool-action-pair > button + button.tool-info-trigger {
+  border-inline-start: 0;
+  border-radius: 0 2px 2px 0;
+}
+.timed-tool-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.55rem;
+  align-items: center;
+  max-width: 100%;
+}
+.timed-tool-action > small {
+  color: inherit;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
 }
 .tool-info-panel {
   position: fixed;
@@ -37,8 +78,7 @@ button.tool-info-trigger {
   letter-spacing: normal;
   text-shadow: none;
 }
-.tool-info-heading,
-.tool-info-picker {
+.tool-info-heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -72,4 +112,13 @@ button.tool-info-trigger {
   align-items: center;
   justify-content: space-between;
   gap: 0.4rem;
+}
+.terminal-manual-link {
+  border: 0;
+  padding: 0.1em 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }

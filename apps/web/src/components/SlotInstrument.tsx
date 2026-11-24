@@ -192,11 +192,12 @@ export function SlotInstrument({
           )}
         </div>
         <div className="slot-submit">
-          <button data-clock-verb={verb} disabled={disabled || !valid}>
-            {labels[verb]} <span aria-hidden="true">↵</span>
-          </button>
+          <GuiToolInfo verb={verb}>
+            <button data-clock-verb={verb} disabled={disabled || !valid}>
+              {labels[verb]} <span aria-hidden="true">↵</span>
+            </button>
+          </GuiToolInfo>
           <span>{timeLabel(verb, state, t)}</span>
-          <GuiToolInfo verb={verb} />
         </div>
       </form>
     </section>
