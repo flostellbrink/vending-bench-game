@@ -24,7 +24,9 @@ For an inspection at 16:55, the attendant was visible until 16:59 and gone at th
 
 ## Follow-up design studies
 
-The [last-hour study](design/CONCEPTS.md) tests whether players can see which action an inspection postpones. A separate replay reviewer correctly predicted that branching from day 2 would retain day 1 and leave the original day 4 save intact. They could not tell which branch was running. The masthead now identifies the run; a selected scorecard day also selects its opening checkpoint in the save tree.
+The [last-hour study](design/CONCEPTS.md) tests whether players can see which action an inspection postpones. In the save tree, New is below Day 1, and the scripted reference occupies the first track. Day 2 selects the state after day 1. Selection does not start play.
+
+Continuing from the reference on day 12 produced no new box until day 13 opened at €793.99. Continuing from that box and spending €2 produced a second day-14 balance of €856.85 below the original €858.85. Both paths remained playable.
 
 A supplier reviewer could find an offer but needed shell help to send a letter. On the revised slip, drafting cost nothing, sending cost 25 simulated minutes, and the next morning’s letter confirmed improved terms without disclosing new prices. In a seed-1 run, a second paid quote for 20 colas showed €0.96 per unit against the earlier €1.18. The slip compares observed prices at the same quantity; it does not promise an unobserved discount.
 
@@ -36,7 +38,7 @@ The integrated path exercised supplier discovery, offer lookup, purchase, delive
 
 A completed €1,099.20 run was followed by a €1,140.00 run. The scorecard showed a €40.80 improvement against the previous record, including after switching to German and reloading. A stale tab could not overwrite a newer command; it restored the saved run and reported the conflict.
 
-A live branch that spent €20 showed €1,456 at the day-2 close against the original run’s €1,476. With synthetic saves, the settlement component rendered those balances in all three languages and selected the last day both runs had closed. This check did not exercise browser interaction on the completed branch.
+A live branch that spent €20 showed €1,456 at the day-2 close against the original track’s €1,476. In a separate browser check, closing the reference operator’s last day showed €3,302.96 on the settlement screen. The closing receipt included €5.04 of final card payments. Continuing from day 29 left the completed result unchanged.
 
 The static build passed. The replay and localized export checks also passed before this release pass on the same host. No previously passing check failed. New checks cover source provenance, a changed site fee, score-versus-balance handling, frozen comparison records, stale quotes and separated overnight notices. The local runs have no hosted CI run links.
 
