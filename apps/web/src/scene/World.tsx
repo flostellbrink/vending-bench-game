@@ -152,16 +152,19 @@ export function World({ value, state, line, t, reports, selectedSite, onSiteSele
         </figcaption>
       </figure>
       <div className="remote-rooms">
-        {sites
-          .filter((site) => site !== active)
-          .map((site) => (
-            <figure key={site.id}>
-              <button type="button" className="room-selector" onClick={() => onSiteSelect(site.id)}>
-                <RoomPreview site={site.id} depotCases={depotCases} />
-                <span>{site.name}</span>
-              </button>
-            </figure>
-          ))}
+        {sites.map((site) => (
+          <figure key={site.id}>
+            <button
+              type="button"
+              className="room-selector"
+              aria-pressed={site.id === active.id}
+              onClick={() => onSiteSelect(site.id)}
+            >
+              <RoomPreview site={site.id} depotCases={depotCases} />
+              <span>{site.name}</span>
+            </button>
+          </figure>
+        ))}
       </div>
     </div>
   );
