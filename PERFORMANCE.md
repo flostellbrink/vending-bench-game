@@ -71,7 +71,7 @@ Before the worker lifecycle change, three visits to the same day-30 checkpoint l
 
 Browser Back restored receipt 500 and the 09:25 clock. An inspection produced receipt 501 at 09:50. Main-thread JS heap measured 35.2 MiB before leaving, 38.1 MiB after Back and 28.5 MiB after the inspection. This excludes memory allocated by the worker and its Python runtime.
 
-The detached-node check was inconclusive. After garbage collection, the landing page reported one document and 1,623 total DOM nodes. Chrome stopped responding to the detached-node query before the first game opened. Total nodes are not a count of retained scenes.
+Across eight room switches, a probe held only weak references to the active illustration’s SVG descendants. After two garbage collections separated by browser tasks, none of the 4,638 removed-node observations remained reachable. Another 1,424 stayed connected across switches. This checks scene replacement only. The separate browser-wide detached-node query did not complete.
 
 ## Development turnaround
 
