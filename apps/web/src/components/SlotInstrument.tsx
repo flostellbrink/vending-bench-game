@@ -1,10 +1,11 @@
+import type { Report } from "games-common/benchmark";
+
 import { useId, useState, type FormEvent } from "react";
 
 import type { CabinetSlot } from "@/game/cabinet-layout";
 
 import { quotedWord } from "@/game/command-words";
 import { slotChanges } from "@/game/slot-evidence";
-import { timeLabel } from "@/game/time-label";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
@@ -24,7 +25,6 @@ export function SlotInstrument({
   report,
   money,
   reports,
-  state,
   lang,
   t,
   runCommand,
@@ -143,10 +143,10 @@ export function SlotInstrument({
             </button>
           ))}
         </div>
-        <div className="slot-inputs">
+        <div className="control-row slot-inputs">
           {needsProduct && (
             <>
-              <label>
+              <label className="control-field">
                 {field("product_id")}
                 <input
                   value={product}
@@ -165,7 +165,7 @@ export function SlotInstrument({
                     </option>
                   ))}
               </datalist>
-              <label>
+              <label className="control-field">
                 {field("quantity")}
                 <input
                   type="number"
@@ -179,7 +179,7 @@ export function SlotInstrument({
             </>
           )}
           {verb === "price" && (
-            <label>
+            <label className="control-field">
               {field("price")}
               <input
                 type="number"
@@ -190,17 +190,15 @@ export function SlotInstrument({
               />
             </label>
           )}
-        </div>
-        <div className="slot-submit">
-          <GuiToolInfo verb={verb}>
-            <button data-clock-verb={verb} disabled={disabled || !valid}>
-              {labels[verb]} <span aria-hidden="true">↵</span>
-            </button>
-          </GuiToolInfo>
-          <span>{timeLabel(verb, state, t)}</span>
+          <span className="control-line slot-submit">
+            <GuiToolInfo verb={verb}>
+              <button data-clock-verb={verb} disabled={disabled || !valid}>
+                {labels[verb]}
+              </button>
+            </GuiToolInfo>
+          </span>
         </div>
       </form>
     </section>
   );
 }
-import type { Report } from "games-common/benchmark";

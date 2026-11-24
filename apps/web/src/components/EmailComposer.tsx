@@ -1,11 +1,10 @@
-import type { Report, Snapshot } from "games-common/benchmark";
+import type { Report } from "games-common/benchmark";
 
 import { useId, useRef, useState } from "react";
 
 import type { Translate } from "@/localization/messages";
 
 import { quotedWord } from "@/game/command-words";
-import { timeLabel } from "@/game/time-label";
 
 import { GuiToolInfo } from "./GuiToolInfo";
 import "./email-composer.css";
@@ -14,7 +13,6 @@ interface Props {
   to: string;
   subject?: string;
   reports: Report[];
-  state: Snapshot;
   t: Translate;
   disabled: boolean;
   send: (line: string) => void;
@@ -31,7 +29,7 @@ function observedSender(reports: Report[]) {
   return folder.args.folder === "sent" ? mail.mail.from : mail.mail.to;
 }
 
-export function EmailComposer({ to, subject, reports, state, t, disabled, send }: Props) {
+export function EmailComposer({ to, subject, reports, t, disabled, send }: Props) {
   const headingId = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -105,7 +103,7 @@ export function EmailComposer({ to, subject, reports, state, t, disabled, send }
               />
             </label>
           </div>
-          <label className="compose-message">
+          <label className="control-field compose-message">
             {t("letter")}
             <textarea
               ref={messageField}
@@ -116,11 +114,11 @@ export function EmailComposer({ to, subject, reports, state, t, disabled, send }
             />
           </label>
           <p>{t("supplierMailTerms")}</p>
-          <div className="compose-actions">
+          <div className="control-row compose-actions">
             <button type="button" onClick={() => dialog.current?.close()}>
               {t("cancelMail")}
             </button>
-            <GuiToolInfo verb="mail" cost={timeLabel("mail", state, t)}>
+            <GuiToolInfo verb="mail">
               <button
                 type="submit"
                 data-clock-verb="mail"

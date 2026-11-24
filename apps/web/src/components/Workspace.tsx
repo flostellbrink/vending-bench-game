@@ -30,7 +30,10 @@ export interface WorkspaceProps {
 
 export function Workspace(props: WorkspaceProps) {
   const { run, nav, shell, release, lang, t } = props;
-  const toolReference = useMemo(() => ({ release, lang }), [release, lang]);
+  const toolReference = useMemo(
+    () => ({ release, lang, state: run.state, t }),
+    [release, lang, run.state, t],
+  );
   const [preview, setPreview] = useState("");
   const context = useMemo(() => readoutContext(nav.tab, run.reports), [nav.tab, run.reports]);
   const suppliers = useMemo(() => observedSuppliers(run.reports), [run.reports]);

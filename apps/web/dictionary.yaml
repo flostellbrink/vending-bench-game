@@ -1,5 +1,32 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  lineTotalFor:
+    .id: SQDOC004
+    .inputs:
+      - $units :integer
+    ^en: "Total for {$units} units"
+    es: "Total por {$units} unidades"
+    de: "Gesamt für {$units} Stück"
+  supplierQuote:
+    .id: SQDOC001
+    ^en: Supplier quote
+    es: Oferta del proveedor
+    de: Lieferantenangebot
+  allQuotedItems:
+    .id: SQDOC002
+    ^en: All quoted items
+    es: Todos los productos cotizados
+    de: Alle angebotenen Artikel
+  selectOrderItems:
+    .id: SQDOC003
+    ^en: Select products to order.
+    es: Selecciona los productos del pedido.
+    de: Artikel für die Bestellung auswählen.
+  defaults:
+    .id: MCPDEF01
+    ^en: MCP defaults
+    es: Valores predeterminados de MCP
+    de: MCP-Standardwerte
   timeCost:
     .id: TMCST001
     ^en: Time cost

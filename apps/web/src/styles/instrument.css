@@ -873,7 +873,6 @@ footer button[aria-pressed="true"] {
   overflow-wrap: anywhere;
 }
 .slip-head,
-.quote-controls,
 .dispatch {
   display: flex;
   align-items: center;
@@ -893,17 +892,9 @@ footer button[aria-pressed="true"] {
   border-left: 4px solid #53695b;
   padding: 0.65rem;
 }
-.quote-controls input {
-  width: 5em;
-  font: inherit;
-  background: #f8f7ef;
-  border: 1px solid #839084;
-  color: inherit;
-}
 .report :is(button, input):focus-visible {
   outline: 2px solid #335f4a;
 }
-.quote-controls button,
 .dispatch button,
 .report td button {
   font: inherit;

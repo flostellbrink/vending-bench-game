@@ -1,0 +1,46 @@
+:root {
+  --action-height: 1.85rem;
+  --control-gap: 4px;
+  --field-gap: 3px;
+}
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: var(--control-gap);
+  min-width: 0;
+  margin: 0;
+}
+.control-field {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: var(--field-gap);
+  min-width: 0;
+  margin: 0;
+}
+.control-line,
+.control-field > :is(select, input:not([type="checkbox"])),
+.control-row > :is(button, select, input:not([type="checkbox"])) {
+  box-sizing: border-box;
+  height: var(--action-height);
+  margin-block: 0;
+}
+.control-line:not(input):not(select) {
+  display: inline-flex;
+  align-items: center;
+}
+.control-field > :is(select, input:not([type="checkbox"])),
+.control-row input.control-line {
+  border: 1px solid #85978a;
+  border-radius: 2px;
+  background: #fbfcf4;
+  padding-inline: 0.42rem;
+  color: #22362c;
+  font: inherit;
+}
+.control-field > small {
+  color: #4d5d52;
+  font-variant-numeric: tabular-nums;
+}

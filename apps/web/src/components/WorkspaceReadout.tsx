@@ -1,7 +1,6 @@
 import type { ObservedSupplier } from "@/game/suppliers";
 
 import { inspectionCommand, type ReadoutContext } from "@/game/readout-route";
-import { timeLabel } from "@/game/time-label";
 
 import type { WorkspaceProps } from "./Workspace";
 
@@ -71,7 +70,7 @@ export function WorkspaceReadout({
   if (
     state &&
     typeof tab === "string" &&
-    (tab.startsWith("machine:") || tab.startsWith("supplier:") || tab === "site:depot") &&
+    (tab.startsWith("machine:") || tab === "site:depot") &&
     cmd
   ) {
     const report = context.selected;
@@ -84,14 +83,14 @@ export function WorkspaceReadout({
         : report;
     const verb = cmd.split(" ")[0] ?? "";
     const action = (
-      <GuiToolInfo verb={verb} cost={timeLabel(verb, state, t)}>
+      <GuiToolInfo verb={verb}>
         <button
           className="asset-check"
           disabled={disabled}
           data-clock-verb={verb}
           onClick={() => shell.runCommand(cmd, false, true)}
         >
-          {verb === "quote" ? t("reprice") : t("inspectNow")}
+          {t("inspectNow")}
         </button>
       </GuiToolInfo>
     );
@@ -110,33 +109,37 @@ export function WorkspaceReadout({
       return (
         <DepotStock report={report} action={action} openReport={setTab} {...{ t, lang, money }} />
       );
-    if (!tab.startsWith("supplier:")) return instrument;
+    return instrument;
+  }
+  if (state && typeof tab === "string" && tab.startsWith("supplier:")) {
+    const report = context.selected;
     const supplier = tab.slice(9);
     const contact = suppliers.find((entry) => entry.id === supplier);
     const purchases = contact?.orders ?? [];
+    const compose = contact?.email && (
+      <EmailComposer
+        to={contact.email}
+        {...{ state, t, disabled, reports }}
+        send={shell.runCommand}
+      />
+    );
     return (
       <article className="supplier-desk">
-        <header className="supplier-contact">
-          {contact?.quotable !== false &&
-            (report?.terms?.minimum !== undefined ? (
-              <QuoteRequest
-                report={report}
-                terms={report.terms}
-                state={state}
-                {...controls}
-                supplierView
-              />
-            ) : (
-              action
-            ))}
-          {contact?.email && (
-            <EmailComposer
-              to={contact.email}
-              {...{ state, t, disabled, reports }}
-              send={shell.runCommand}
-            />
-          )}
-        </header>
+        {contact?.email && (
+          <div className="supplier-contact">
+            <span>{contact.email}</span>
+            {compose}
+          </div>
+        )}
+        {contact?.quotable !== false && (
+          <QuoteRequest
+            report={report?.terms?.minimum !== undefined ? report : undefined}
+            supplier={supplier}
+            state={state}
+            {...controls}
+            supplierView
+          />
+        )}
         {report?.terms?.minimum !== undefined && (
           <OrderSlip
             {...controls}
@@ -147,12 +150,14 @@ export function WorkspaceReadout({
             supplierView
           />
         )}
-        <section className="supplier-orders">
-          <h3>
-            {t("orders")} <small>{purchases.length}</small>
-          </h3>
-          <OrderRegister {...{ t, money }} orders={purchases} open={setTab} />
-        </section>
+        {purchases.length > 0 && (
+          <section className="supplier-orders">
+            <h3>
+              {t("orders")} <small>{purchases.length}</small>
+            </h3>
+            <OrderRegister {...{ t, money }} orders={purchases} open={setTab} />
+          </section>
+        )}
       </article>
     );
   }
@@ -174,10 +179,7 @@ export function WorkspaceReadout({
   if (cmd && state)
     return (
       <section className="sheet">
-        <GuiToolInfo
-          verb={cmd.split(" ")[0] ?? ""}
-          cost={timeLabel(cmd.split(" ")[0] ?? "", state, t)}
-        >
+        <GuiToolInfo verb={cmd.split(" ")[0] ?? ""}>
           <button disabled={disabled} onClick={() => shell.runCommand(cmd)}>
             {cmd}
           </button>

@@ -7,21 +7,24 @@ interface QuoteDraft {
 }
 
 const Drafts = createContext<{
-  values: Record<number, QuoteDraft>;
-  save: (receipt: number, draft: QuoteDraft) => void;
+  values: Record<string, QuoteDraft>;
+  save: (key: string | number, draft: QuoteDraft) => void;
 } | null>(null);
 
 export function QuoteDrafts({ children }: { children: ReactNode }) {
-  const [values, setValues] = useState<Record<number, QuoteDraft>>({});
-  function save(receipt: number, draft: QuoteDraft) {
-    setValues((previous) => ({ ...previous, [receipt]: draft }));
+  const [values, setValues] = useState<Record<string, QuoteDraft>>({});
+  function save(key: string | number, draft: QuoteDraft) {
+    setValues((previous) => ({ ...previous, [key]: draft }));
   }
   return <Drafts.Provider value={{ values, save }}>{children}</Drafts.Provider>;
 }
 
-export function useQuoteDraft(receipt: number, quantity: number) {
+export function useQuoteDraft(key: string | number, quantity: number | undefined) {
   const store = useContext(Drafts);
   if (!store) throw Error("Order slip requires a workstation");
-  const draft = store.values[receipt] ?? { selection: [], quantity: String(quantity) };
+  const draft = store.values[key] ?? {
+    selection: [],
+    quantity: quantity === undefined ? "" : String(quantity),
+  };
   return { draft, save: store.save };
 }

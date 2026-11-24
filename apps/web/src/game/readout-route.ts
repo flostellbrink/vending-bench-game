@@ -61,6 +61,5 @@ export function inspectionCommand(tab: View) {
   if (tab === "site:depot") return "depot";
   if (typeof tab !== "string") return undefined;
   if (tab.startsWith("machine:")) return "inspect " + address(tab.slice(8));
-  if (tab.startsWith("supplier:")) return "quote " + tab.slice(9);
   return undefined;
 }

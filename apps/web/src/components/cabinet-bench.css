@@ -154,8 +154,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  gap: 0.25rem;
-  margin: 0.32rem 0 0.4rem;
+  gap: 4px;
+  margin: 0.4rem 0 0.55rem;
 }
 .slot-operations button {
   border: 0;
@@ -174,21 +174,15 @@
   box-shadow: inset 0 -2px #4e6854;
   font-weight: 700;
 }
-.slot-inputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-}
-.slot-instrument label {
-  display: grid;
-  gap: 0.12rem;
+.slot-inputs .control-field {
   color: #273e2f;
   font-size: 0.88rem;
 }
 .slot-instrument input {
   box-sizing: border-box;
   min-width: 0;
-  width: 12rem;
+  width: 11rem;
+  height: var(--action-height);
   max-width: 100%;
   padding: 0.23rem 0.35rem;
   color: #1e3326;
@@ -198,18 +192,9 @@
   font: inherit;
 }
 .slot-instrument input[type="number"] {
-  width: 5.5rem;
+  width: 4.25rem;
 }
-.slot-submit {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-top: 0.4rem;
-  color: #3b4d42;
-  font-size: 0.88rem;
-}
-.slot-submit button {
+.slot-submit button[data-clock-verb] {
   padding: 0.3rem 0.65rem;
   background: #354e3d;
   color: #f4f3df;
@@ -217,13 +202,10 @@
   font: inherit;
   font-weight: bold;
 }
-.slot-submit button:disabled {
+.slot-submit button[data-clock-verb]:disabled {
   background: #d9decf;
   color: #667160;
   border-color: #9ea895;
-}
-.slot-submit button span {
-  margin-inline-start: 0.55rem;
 }
 @media (max-width: 540px) {
   .cabinet-bench {

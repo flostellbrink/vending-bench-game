@@ -3,4 +3,5 @@
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 @import "../styles/base.css";
 @import "../styles/instrument.css";
+@import "../styles/controls.css";
 @source "../components";

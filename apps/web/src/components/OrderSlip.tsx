@@ -1,15 +1,15 @@
 import type { QuoteTerms } from "games-common/benchmark";
 
 import { assertValue } from "games-common/language";
+import { useContext, useId } from "react";
 
 import { quotedWord } from "@/game/command-words";
-import { timeLabel } from "@/game/time-label";
 import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
 
-import { GuiToolInfo } from "./GuiToolInfo";
+import { GuiToolInfo, ToolReferenceContext } from "./GuiToolInfo";
 import { useQuoteDraft } from "./QuoteDrafts";
 import "./order-slip.css";
 interface Props extends ObservationProps {
@@ -19,41 +19,53 @@ interface Props extends ObservationProps {
 }
 export function QuoteRequest({
   report,
-  terms,
-  state,
+  supplier,
   t,
   runCommand,
   disabled,
   supplierView = false,
-}: Pick<Props, "report" | "terms" | "state" | "t" | "runCommand" | "disabled" | "supplierView">) {
-  const { draft, save } = useQuoteDraft(report.id, terms.quantity);
+}: Pick<Props, "state" | "t" | "runCommand" | "disabled" | "supplierView"> & {
+  supplier: string;
+  report?: Props["report"];
+}) {
+  const inputId = useId();
+  const context = useContext(ToolReferenceContext);
+  const draftKey = report?.id ?? "supplier:" + supplier;
+  const { draft, save } = useQuoteDraft(
+    draftKey,
+    report?.terms?.quantity ?? context?.release.toolDefaults.check_offers.quantity,
+  );
   const qty = draft.quantity;
   const valid = !disabled && Number.isSafeInteger(Number(qty)) && Number(qty) > 0;
   return (
     <form
-      className="quote-controls"
+      className="quote-request"
+      aria-labelledby={inputId + "-title"}
       onSubmit={(e) => {
         e.preventDefault();
-        if (valid) runCommand("quote " + report.args.supplier_id + " " + qty, false, supplierView);
+        if (valid) runCommand("quote " + supplier + " " + qty, false, supplierView);
       }}
     >
-      <label>
-        {t("nextQuoteQuantity")}
+      <h3 id={inputId + "-title"}>{t("supplierQuote")}</h3>
+      <div className="control-row">
+        <label htmlFor={inputId}>{t("bundle")}</label>
         <input
+          className="control-line"
+          id={inputId}
           type="number"
           min="1"
           required
           value={qty}
           onChange={(e) =>
-            save(report.id, { selection: draft.selection, quantity: e.currentTarget.value })
+            save(draftKey, { selection: draft.selection, quantity: e.currentTarget.value })
           }
         />
-      </label>
-      <GuiToolInfo verb="quote" cost={timeLabel("quote", state, t)}>
-        <button type="submit" disabled={!valid} data-clock-verb="quote">
-          {t("reprice")}
-        </button>
-      </GuiToolInfo>
+        <GuiToolInfo verb="quote">
+          <button type="submit" disabled={!valid} data-clock-verb="quote">
+            {t("reprice")}
+          </button>
+        </GuiToolInfo>
+      </div>
     </form>
   );
 }
@@ -115,6 +127,8 @@ export function OrderSlip({
       0,
     ) / 100;
   const expired = state.day > terms.until;
+  const maximum =
+    rows.reduce((cents, row) => cents + Math.round(row.price * 100) * terms.quantity, 0) / 100;
   const invalid = editingQuote
     ? "useNewQuote"
     : expired
@@ -135,16 +149,7 @@ export function OrderSlip({
   }
   return (
     <div className="order-slip" data-expired={expired}>
-      <div className="slip-head">
-        <h3>{t("compose")}</h3>
-        {supplierView ? (
-          <button className="slip-source" onClick={() => openReport(report.id)}>
-            {t("seen")} · {t("day")} {report.day} / {clock(report.minute)} · #{report.id}
-          </button>
-        ) : (
-          <b>{supplier}</b>
-        )}
-      </div>
+      {!supplierView && <QuoteRequest {...{ report, supplier, state, t, runCommand, disabled }} />}
       <div className="slip-layout">
         <div className="slip-catalog">
           <div className="slip-terms">
@@ -155,6 +160,11 @@ export function OrderSlip({
             <span>
               {t("minimum")} <b>{money(terms.minimum)}</b>
             </span>
+            {supplierView && (
+              <button className="slip-source" onClick={() => openReport(report.id)}>
+                {t("source")} #{report.id} · {t("day")} {report.day} / {clock(report.minute)}
+              </button>
+            )}
           </div>
           {previous && (
             <p className="quote-comparison">
@@ -166,26 +176,28 @@ export function OrderSlip({
             <table>
               <thead>
                 <tr>
-                  <th>{t("include")}</th>
-                  <th>{t("product")}</th>
+                  <th scope="col">{t("product")}</th>
                   <th>{msg.fields.price({}, { locale: lang })}</th>
-                  <th>{t("bundle")}</th>
-                  <th>{t("total")}</th>
+                  <th scope="col">
+                    {msg.lineTotalFor({ units: terms.quantity }, { locale: lang })}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(({ product: id, price, discount }) => (
                   <tr key={id}>
                     <td>
-                      <input
-                        type="checkbox"
-                        checked={selection.includes(id)}
-                        disabled={disabled || editingQuote}
-                        aria-label={t("include") + " " + id}
-                        onChange={() => toggle(id)}
-                      />
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={selection.includes(id)}
+                          disabled={disabled || editingQuote}
+                          aria-label={t("include") + " " + id}
+                          onChange={() => toggle(id)}
+                        />
+                        <span>{id}</span>
+                      </label>
                     </td>
-                    <td>{id}</td>
                     <td>
                       {money(price)}
                       {discount !== "0%" && <small> (−{discount})</small>}
@@ -196,7 +208,6 @@ export function OrderSlip({
                         </small>
                       )}
                     </td>
-                    <td>{terms.quantity}</td>
                     <td>{money(price * terms.quantity)}</td>
                   </tr>
                 ))}
@@ -205,7 +216,6 @@ export function OrderSlip({
           </div>
         </div>
         <div className="slip-controls">
-          {!supplierView && <QuoteRequest {...{ report, terms, state, t, runCommand, disabled }} />}
           <div className="dispatch">
             {submitted?.terms?.order ? (
               <div role="status">
@@ -228,13 +238,28 @@ export function OrderSlip({
               </div>
             ) : (
               <>
-                <div>
-                  <b>
-                    {t("quoted")} <output>{money(total)}</output>
-                  </b>
-                  <small>
-                    {t("afterOrder")}: {money(state.cash - total)}
-                  </small>
+                <div className="basket-reading" aria-live="polite">
+                  {selection.length > 0 && (
+                    <>
+                      <b>
+                        {t("quoted")} <output>{money(total)}</output>
+                      </b>
+                      <small>
+                        {t("afterOrder")}: {money(state.cash - total)}
+                      </small>
+                    </>
+                  )}
+                  {!selection.length &&
+                    !expired &&
+                    !editingQuote &&
+                    (maximum < terms.minimum ? (
+                      <span>
+                        {t("allQuotedItems")}: <b>{money(maximum)}</b> · {t("shortBy")}:{" "}
+                        <b>{money(terms.minimum - maximum)}</b>
+                      </span>
+                    ) : (
+                      <span>{t("selectOrderItems")}</span>
+                    ))}
                   {invalid &&
                     invalid !== "expiredQuote" &&
                     (selection.length > 0 || editingQuote) && (
@@ -270,30 +295,36 @@ export function OrderSlip({
                     {t("newerQuote")} #{newer.id} · {t("noCharge")}
                   </button>
                 ) : (
-                  <GuiToolInfo verb="order" cost={timeLabel("order", state, t)}>
-                    <button
-                      data-clock-verb="order"
-                      disabled={disabled || !selection.length || Boolean(invalid)}
-                      onClick={() => {
-                        save(report.id, { ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
-                        runCommand(
-                          [
-                            "order",
-                            supplier,
-                            ...selection.flatMap((id) => [quotedWord(id), terms.quantity]),
-                          ].join(" "),
-                        );
-                      }}
-                    >
-                      {t("sendOrder")}
-                    </button>
-                  </GuiToolInfo>
+                  <div className="control-field">
+                    <div className="control-row">
+                      <GuiToolInfo verb="order">
+                        <button
+                          data-clock-verb="order"
+                          disabled={disabled || !selection.length || Boolean(invalid)}
+                          onClick={() => {
+                            save(report.id, {
+                              ...draft,
+                              submittedId: (reports.at(-1)?.id ?? 0) + 1,
+                            });
+                            runCommand(
+                              [
+                                "order",
+                                supplier,
+                                ...selection.flatMap((id) => [quotedWord(id), terms.quantity]),
+                              ].join(" "),
+                            );
+                          }}
+                        >
+                          {t("sendOrder")}
+                        </button>
+                      </GuiToolInfo>
+                    </div>
+                  </div>
                 )}
                 {submitted && <p role="status">{submitted.display}</p>}
               </>
             )}
           </div>
-          <small>{t("latestQuote")}</small>
         </div>
       </div>
     </div>

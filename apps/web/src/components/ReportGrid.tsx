@@ -1,7 +1,5 @@
-import { assertValue } from "games-common/language";
 import { Fragment, useState, useMemo } from "react";
 
-import { timing } from "@/game/commands";
 import { displayCell } from "@/game/reports";
 import { fieldLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
@@ -20,7 +18,6 @@ export function ReportGrid({
   t,
   lang,
   money,
-  state,
   runCommand,
   disabled,
   openReport,
@@ -112,10 +109,7 @@ export function ReportGrid({
                         #{cached} · {t("noCharge")}
                       </button>
                     ) : (
-                      <GuiToolInfo
-                        verb={command}
-                        cost={assertValue(timing(command, state)).minutes + " min"}
-                      >
+                      <GuiToolInfo verb={command}>
                         <button
                           data-clock-verb={command}
                           disabled={disabled}

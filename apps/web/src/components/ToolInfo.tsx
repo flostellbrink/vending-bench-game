@@ -6,6 +6,7 @@ import type { Lang } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
 import { syntax, toolFor } from "@/game/commands";
+import { toolDefaults } from "@/game/tool-defaults";
 
 import "./tool-info.css";
 
@@ -13,9 +14,10 @@ interface Props {
   release: Release;
   lang: Lang;
   verb: string;
+  prediction?: string;
 }
 
-export function ToolInfo({ release, lang, verb }: Props) {
+export function ToolInfo({ release, lang, verb, prediction }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
@@ -25,6 +27,7 @@ export function ToolInfo({ release, lang, verb }: Props) {
   const options = { locale: lang };
   const heading = msg.operator.toolInformation({}, options);
   const label = heading + ": " + alias;
+  const defaults = toolDefaults(release, tool);
 
   function position() {
     const card = panel.current;
@@ -80,6 +83,12 @@ export function ToolInfo({ release, lang, verb }: Props) {
         </div>
         <code>{tool}</code>
         <samp>{syntax(alias)}</samp>
+        {prediction && <small className="tool-prediction">{prediction}</small>}
+        {defaults && (
+          <small>
+            {msg.operator.defaults({}, options)}: <code>{defaults}</code>
+          </small>
+        )}
         <p lang="en">{release.tools[tool]}</p>
       </div>
     </>

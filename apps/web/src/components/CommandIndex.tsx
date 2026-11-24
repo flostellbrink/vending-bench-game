@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { commandGroups, local, syntax, toolFor } from "@/game/commands";
 import { timeLabel } from "@/game/time-label";
+import { toolDefaults } from "@/game/tool-defaults";
 import { commandLabel, type Lang, type Translate } from "@/localization/messages";
 
 import "./command-manual.css";
@@ -39,6 +40,7 @@ export function CommandIndex({ actions, release, state, lang, t, openBrief }: Pr
   const aliasTool = toolFor(selected);
   const tool = aliasTool ?? (other.includes(selected) ? selected : undefined);
   const description = tool ? release.tools[tool] : undefined;
+  const defaults = toolDefaults(release, tool);
   const localLabels: Record<string, string> = {
     help: t("help"),
     brief: t("rules"),
@@ -92,6 +94,11 @@ export function CommandIndex({ actions, release, state, lang, t, openBrief }: Pr
             </div>
           )}
         </dl>
+        {defaults && (
+          <small>
+            {t("defaults")}: <code>{defaults}</code>
+          </small>
+        )}
         {description && <p lang="en">{description}</p>}
         {selected === "brief" && (
           <button className="receipt-link" onClick={openBrief}>

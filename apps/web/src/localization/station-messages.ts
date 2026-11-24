@@ -1,7 +1,12 @@
 import { msg } from "@/dictionary";
 
 export const stationMessages = {
+  lineTotalFor: msg.operator.lineTotalFor,
   operator: {
+    supplierQuote: msg.operator.supplierQuote,
+    allQuotedItems: msg.operator.allQuotedItems,
+    selectOrderItems: msg.operator.selectOrderItems,
+    defaults: msg.operator.defaults,
     scoreOperator: msg.operator.scoreOperator,
     timeCost: msg.operator.timeCost,
     toolInformation: msg.operator.toolInformation,

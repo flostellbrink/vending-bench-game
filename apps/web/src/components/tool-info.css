@@ -1,6 +1,3 @@
-:root {
-  --action-height: 1.85rem;
-}
 .tool-action-pair {
   display: inline-flex;
   align-items: stretch;
@@ -10,14 +7,29 @@
   max-inline-size: 100%;
   vertical-align: middle;
 }
-.tool-action-pair > button:first-child:not(.tool-info-trigger) {
+.tool-action-pair > button:first-child:not(.tool-info-trigger),
+.station button.mail-compose-trigger {
   height: var(--action-height);
   line-height: 1.15;
   padding-block: 0;
   min-width: 0;
   margin: 0;
+  padding-inline: 0.55rem;
+  border: 1px solid #758a7a;
+  border-radius: 2px;
+  background: #dfe7da;
+  color: #23392b;
+  font-family: inherit;
+  font-weight: 600;
+  box-shadow: none;
+}
+.tool-action-pair > button:first-child:not(.tool-info-trigger) {
   border-start-end-radius: 0;
   border-end-end-radius: 0;
+}
+.tool-action-pair > button.clock-close[data-armed="true"]:first-child {
+  background: #f3d383;
+  color: #342b1d;
 }
 button.tool-info-trigger,
 .tool-action-pair > button.tool-info-trigger {
@@ -32,8 +44,8 @@ button.tool-info-trigger,
   margin: 0;
   padding: 0;
   color: #263e32;
-  background: #dfe8d8;
-  border: 1px solid #8a998a;
+  background: #dfe7da;
+  border: 1px solid #758a7a;
   border-radius: 2px;
   font:
     bold 1rem/1 system-ui,
@@ -45,17 +57,20 @@ button.tool-info-trigger,
   border-inline-start: 0;
   border-radius: 0 2px 2px 0;
 }
-.timed-tool-action {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 0.55rem;
-  align-items: center;
-  max-width: 100%;
-}
-.timed-tool-action > small {
+.tool-action-pair .action-duration,
+.tool-info-panel .tool-prediction {
   color: inherit;
-  font-size: 0.82rem;
+  font-size: 0.85em;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+.tool-action-pair .action-duration {
+  display: inline;
+  font-weight: normal;
+}
+.tool-info-panel .tool-prediction {
+  display: block;
+  margin-block: 0.25rem;
 }
 .tool-info-panel {
   position: fixed;

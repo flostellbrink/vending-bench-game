@@ -14,6 +14,7 @@ import {
 } from "@/game/commands";
 import { remainingPlan, type PlannedCommand } from "@/game/shift-plan";
 import { timeLabel } from "@/game/time-label";
+import { toolDefaults } from "@/game/tool-defaults";
 import {
   commandLabel,
   type Lang,
@@ -133,13 +134,15 @@ export function useCommandLine(
         }
         const topicTool = topic ? toolFor(topic) : undefined;
         const description = topicTool ? release.tools[topicTool] : undefined;
+        const defaults = toolDefaults(release, topicTool);
         const label = topicTool ? commandLabel(topicTool, lang) : undefined;
         const text = topic
           ? syntax(topic) +
             (label ? " — " + label : "") +
             " · " +
             timeLabel(topic, state, t) +
-            (description ? "\n" + topicTool + "\n" + description : "")
+            (description ? "\n" + topicTool + "\n" + description : "") +
+            (defaults ? "\n" + t("defaults") + ": " + defaults : "")
           : entries(commandGroups)
               .map(
                 ([group, names]) =>

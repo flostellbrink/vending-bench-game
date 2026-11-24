@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 
 import { operatorText, priceOrder } from "@/game/commands";
 import { purchaseSupplier as supplierForPurchase } from "@/game/suppliers";
-import { timeLabel } from "@/game/time-label";
 import { clock, receiptEnd } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
@@ -10,9 +9,8 @@ import type { ObservationProps } from "./panel-props";
 import CabinetBench from "./CabinetBench";
 import { DayStatement } from "./DayStatement";
 import { EmailComposer } from "./EmailComposer";
-import { GuiToolInfo } from "./GuiToolInfo";
 import { Metrics } from "./Metrics";
-import { OrderSlip } from "./OrderSlip";
+import { OrderSlip, QuoteRequest } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
 function ReceiptHeading({
   report,
@@ -58,7 +56,7 @@ export default function ObservationView({
       )
     : null;
   const purchaseSupplier = supplierForPurchase(report, reports);
-  const letterProps = { state, reports, t, disabled, send: runCommand };
+  const letterProps = { reports, t, disabled, send: runCommand };
   const contact =
     report.terms?.minimum === undefined
       ? undefined
@@ -104,23 +102,27 @@ export default function ObservationView({
                 <small>{entry.id}</small>
                 <p>{entry.description}</p>
                 <div>
-                  {t("minimum")}: <b>{entry.minimum}</b> · {entry.email}
+                  {t("minimum")}: <b>{entry.minimum}</b>
                 </div>
-                <EmailComposer {...letterProps} to={entry.email} />
+                <div className="supplier-contact">
+                  <span>{entry.email}</span>
+                  <EmailComposer {...letterProps} to={entry.email} />
+                </div>
               </div>
-              <GuiToolInfo verb="quote" cost={timeLabel("quote", state, t)}>
-                <button
-                  data-clock-verb="quote"
-                  disabled={disabled}
-                  onClick={() => runCommand("quote " + entry.id)}
-                >
-                  {t("reprice")}
-                </button>
-              </GuiToolInfo>
+              <QuoteRequest
+                supplier={entry.id}
+                report={reports.findLast(
+                  (r) => r.args.supplier_id === entry.id && r.terms?.minimum !== undefined,
+                )}
+                {...{ state, t, disabled, runCommand }}
+              />
             </article>
           ))}
           {!action && contact && (
-            <EmailComposer key={contact.email} {...letterProps} to={contact.email} />
+            <div className="supplier-contact">
+              <span>{contact.email}</span>
+              <EmailComposer key={contact.email} {...letterProps} to={contact.email} />
+            </div>
           )}
           {report.terms?.minimum !== undefined ? (
             <OrderSlip
