@@ -30,6 +30,20 @@
   line-height: 1.45;
   color: #c6d1c5;
 }
+.landing-intro .landing-repo {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid #bbeb9b;
+  border-radius: 999px;
+  color: #bbeb9b;
+  font-weight: bold;
+  text-decoration: none;
+}
+.landing-intro .landing-repo:hover,
+.landing-intro .landing-repo:focus-visible {
+  color: #14211c;
+  background: #bbeb9b;
+}
 .landing-console .session-setup {
   width: 100%;
   padding: 0;

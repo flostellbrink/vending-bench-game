@@ -1406,9 +1406,9 @@ landing:
     de: "Der originale Python-Simulator läuft in deinem Browser. Kein Konto, kein API-Schlüssel, keine Simulation auf einem Server. Der Spielstand bleibt auf diesem Gerät."
   gameSource:
     .id: HN000017
-    ^en: "Game source"
-    es: "Código del juego"
-    de: "Quellcode des Spiels"
+    ^en: "Open source on GitHub"
+    es: "Código abierto en GitHub"
+    de: "Open Source auf GitHub"
   publication:
     .id: HN000013
     ^en: "Published results"

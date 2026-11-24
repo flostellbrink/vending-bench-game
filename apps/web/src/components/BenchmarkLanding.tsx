@@ -33,6 +33,9 @@ function LandingDesk({ release, setup, slot }: Props) {
               {leader?.name ? msg.landing.lead({ model: leader.name }) : msg.landing.fallback()}
             </h1>
             <p>{msg.landing.context()}</p>
+            <a className="landing-repo" href="https://github.com/flostellbrink/vending-bench-game">
+              {msg.landing.gameSource()}
+            </a>
           </div>
           {setup}
         </article>
@@ -78,7 +81,6 @@ function LandingDesk({ release, setup, slot }: Props) {
         <a href={source}>
           {release.version} @ {release.revision.slice(0, 7)}
         </a>
-        <a href="https://github.com/flostellbrink/vending-bench-game">{msg.landing.gameSource()}</a>
       </footer>
     </StationFrame>
   );
