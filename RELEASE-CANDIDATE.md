@@ -22,7 +22,7 @@ Two reviewers started at New in the day-selection tree. One put 18 chocolate bar
 
 With the receipt and caption hidden, a reviewer identified the cabinet the attendant approached. The spiral shelves distinguished the snack machine from the bottle machine. The walking motion alone did not distinguish inspection from refill. In reduced-motion mode, the clock went straight to the receipt time and the selected cabinet stayed lit.
 
-At 1280×720 without labels, a reviewer identified the break room from its sofa and bookshelf, the workspace from its desks and monitors, and the depot from its pallet truck and loading door. The glass-walled Main Lounge was least distinct: its benches also suggested a corridor. During a three-cola refill, only the right-hand drinks cabinet opened. The clock advanced from 09:00 to 09:45 without moving the selected slot or changing the terminal draft.
+At 1280×720 without labels, a reviewer identified the break room from its sofa and bookshelf, the workspace from its desks and monitors, and the depot from its pallet truck and loading door. The Main Lounge’s repeated benches also suggested a corridor; the revised room has facing seats around a table with a pendant light. During a three-cola refill, only the right-hand drinks cabinet opened. The clock advanced from 09:00 to 09:45 without moving the selected slot or changing the terminal draft.
 
 For an inspection at 16:55, the attendant was visible until 16:59 and gone at the 17:00 close. The scene then passed through night and reached 09:00 in 3.07 seconds from dispatch. With reduced motion on, a second inspection at 16:55 reached morning within 194 ms without a visible overnight sequence.
 
@@ -43,6 +43,8 @@ The integrated path exercised supplier discovery, offer lookup, purchase, delive
 A completed €1,099.20 run was followed by a €1,140.00 run. The scorecard showed a €40.80 improvement against the previous record, including after switching to German and reloading. A stale tab could not overwrite a newer command; it restored the saved run and reported the conflict.
 
 A live branch that spent €20 showed €1,456 at the day-2 close against the original track’s €1,476. In a separate browser check, closing the reference operator’s last day showed €3,302.96 on the settlement screen. The closing receipt included €5.04 of final card payments. Continuing from day 29 left the completed result unchanged.
+
+On day 20, a reviewer requested Main Lounge’s sales report and opened its day-18 row. The €202.89 in sales appeared beside links to the two relevant refill receipts. Opening a receipt did not advance the clock. The report does not attribute individual sales to either refill.
 
 The static build passed. The replay and localized export checks also passed before this release pass on the same host. No previously passing check failed. New checks cover source provenance, a changed site fee, score-versus-balance handling, frozen comparison records, stale quotes and separated overnight notices. The local runs have no hosted CI run links.
 
