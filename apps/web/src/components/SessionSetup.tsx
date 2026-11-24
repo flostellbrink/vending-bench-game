@@ -62,14 +62,36 @@ export default function SessionSetup({
     .filter((s) => !s.damaged && !s.finished)
     .toSorted((a, b) => (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0))[0];
 
+  const launch = (
+    <form id={startForm} className="session-actions" method="get" action={"/" + lang + "/run/"}>
+      <input name="slot" type="hidden" value="new" />
+      <button type="submit">
+        {slots.length ? msg.session.again({}, options) : msg.session.start({}, options)}
+      </button>
+      {!compact && latest && (
+        <a
+          href={
+            "/" +
+            lang +
+            "/run/?" +
+            new URLSearchParams({ bench: current.revision, slot: latest.id })
+          }
+        >
+          {msg.session.resume({}, options)}
+        </a>
+      )}
+    </form>
+  );
+  const setupTitle = compact
+    ? msg.session.next({}, options)
+    : releases.length === 1
+      ? msg.session.setup({}, options)
+      : msg.session.choose({}, options);
   const setup = (
-    <section className="session-setup" aria-label={msg.session.choose({}, options)}>
+    <section className="session-setup" aria-label={setupTitle}>
+      {renderPage && launch}
       <header>
-        {compact ? (
-          <h2>{msg.session.next({}, options)}</h2>
-        ) : (
-          <h2>{msg.session.choose({}, options)}</h2>
-        )}
+        <h2>{setupTitle}</h2>
       </header>
       {releases.length === 1 ? (
         <div className="session-version">
@@ -131,24 +153,7 @@ export default function SessionSetup({
       {!current.rivals.some((r) => r.kind === "model") && (
         <p className="session-note">{msg.session.noAI({}, options)}</p>
       )}
-      <form id={startForm} className="session-actions" method="get" action={"/" + lang + "/run/"}>
-        <input name="slot" type="hidden" value="new" />
-        <button type="submit">
-          {slots.length ? msg.session.again({}, options) : msg.session.start({}, options)}
-        </button>
-        {!compact && latest && (
-          <a
-            href={
-              "/" +
-              lang +
-              "/run/?" +
-              new URLSearchParams({ bench: current.revision, slot: latest.id })
-            }
-          >
-            {msg.session.resume({}, options)}
-          </a>
-        )}
-      </form>
+      {!renderPage && launch}
       {slots.length > 0 && (
         <p className="save-library-link">
           <a href={"/" + lang + "/saves/?" + savedParams}>

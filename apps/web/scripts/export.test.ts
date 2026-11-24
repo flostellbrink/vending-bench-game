@@ -56,7 +56,7 @@ await test("each exported page ships only its own localized messages", async () 
       const messages = assertValue(dictionary[locale]);
       const landmark = assertValue(messages[landmarkId]);
       assert.equal("VBBOOT03" in messages, segment === "run/", "Wrong boot-hint scope");
-      assert.equal("SLTR0014" in messages, segment === "saves/", "Wrong save-library scope");
+      assert.equal("SLTR0014" in messages, segment !== "run/", "Wrong save-library scope");
       assert.equal(
         "HN000001" in messages,
         segment === "",

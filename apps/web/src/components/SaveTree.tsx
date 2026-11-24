@@ -15,6 +15,7 @@ interface Selection {
 interface Props {
   release: Release;
   slots: RunSlot[];
+  closings: number[];
   lang: Locale;
   activeSlot?: string;
   initialDay?: number;
@@ -98,6 +99,7 @@ function inheritedMorning(slot: RunSlot, day: number | undefined, byId: Map<stri
 export default function SaveTree({
   release,
   slots,
+  closings,
   lang,
   activeSlot,
   initialDay,
@@ -134,14 +136,15 @@ export default function SaveTree({
     if (y + rowHeight + 40 > box.scrollTop + box.clientHeight)
       box.scrollTop = y + rowHeight + 40 - box.clientHeight;
   }, [col, row]);
-  if (!selected) return null;
+  if (!selected && !closings.length) return null;
   const options = { locale: lang };
   const currency = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
   const name = (s: RunSlot) => msg.session.runNumber({ index: runNumber.get(s.id) ?? 1 }, options);
   const dayLabel = (day: number) => msg.session.dayNumber({ day }, options);
-  const width = labelWidth + Math.max(...slots.map((s) => tipDay(s, release.days))) * column;
-  const chartHeight = rows.length * rowHeight;
-  const parent = selected.parent && byId.get(selected.parent.slot);
+  const width =
+    labelWidth + Math.max(closings.length, ...slots.map((s) => tipDay(s, release.days))) * column;
+  const chartHeight = rows.length * rowHeight + (closings.length ? 52 : 0);
+  const parent = selected?.parent && byId.get(selected.parent.slot);
   const comparison = selectedPoint && parent?.checkpoints.find((p) => p.day === selectedPoint.day);
   const change =
     selectedPoint && comparison
@@ -175,7 +178,7 @@ export default function SaveTree({
                   x = center(day);
                 const p = s.parent ? rowIndex.get(s.parent.slot) : undefined;
                 return (
-                  <g key={s.id} className={s.id === selected.id ? "current" : undefined}>
+                  <g key={s.id} className={s.id === selected?.id ? "current" : undefined}>
                     {p !== undefined && (
                       <path d={`M${center(first)} ${p * rowHeight + morningY} V${y}`} />
                     )}
@@ -187,7 +190,7 @@ export default function SaveTree({
               })}
             </svg>
             {rows.map((s, i) => {
-              const isHead = s.id === selected.id && !selectedPoint;
+              const isHead = s.id === selected?.id && !selectedPoint;
               const tip = tipDay(s, release.days);
               const tipLabel = s.finished
                 ? msg.session.reopen({}, options)
@@ -197,7 +200,7 @@ export default function SaveTree({
                 <div className="save-map-row" key={s.id} style={{ height: rowHeight }}>
                   <div className="save-lane-name">{name(s)}</div>
                   {visibleMornings(s).map((c) => {
-                    const active = s.id === selected.id && c.day === selectedPoint?.day;
+                    const active = s.id === selected?.id && c.day === selectedPoint?.day;
                     return (
                       <button
                         type="button"
@@ -270,34 +273,51 @@ export default function SaveTree({
                 </div>
               );
             })}
+            {closings.length > 0 && (
+              <div className="save-map-row reference">
+                <div className="save-lane-name">{msg.session.scriptReference({}, options)}</div>
+                {closings.map((cash, i) => (
+                  <span
+                    className="save-card reference"
+                    key={i}
+                    style={{ left: center(i + 1), top: morningY, width: cardWidth }}
+                  >
+                    <small>{msg.session.closeLabel({}, options)}</small>
+                    <b>{currency.format(cash)}</b>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <div className="save-focus-note" aria-live="polite">
-        <b>{name(selected)}</b>
-        {parent && selected.parent && (
-          <span>
-            {msg.session.from(
-              { run: runNumber.get(parent.id) ?? 1, day: selected.parent.day },
-              options,
-            )}
-          </span>
-        )}
-        {change !== undefined && parent && (
-          <span>
-            {msg.session.parentDifference(
-              {
-                run: runNumber.get(parent.id) ?? 1,
-                difference: (change > 0 ? "+" : "") + currency.format(change),
-              },
-              options,
-            )}
-          </span>
-        )}
-        {!selected.damaged && selected.cash === null && selected.moves > 0 && (
-          <span>{msg.session.recoverDays({}, options)}</span>
-        )}
-      </div>
+      {selected && (
+        <div className="save-focus-note" aria-live="polite">
+          <b>{name(selected)}</b>
+          {parent && selected.parent && (
+            <span>
+              {msg.session.from(
+                { run: runNumber.get(parent.id) ?? 1, day: selected.parent.day },
+                options,
+              )}
+            </span>
+          )}
+          {change !== undefined && parent && (
+            <span>
+              {msg.session.parentDifference(
+                {
+                  run: runNumber.get(parent.id) ?? 1,
+                  difference: (change > 0 ? "+" : "") + currency.format(change),
+                },
+                options,
+              )}
+            </span>
+          )}
+          {!selected.damaged && selected.cash === null && selected.moves > 0 && (
+            <span>{msg.session.recoverDays({}, options)}</span>
+          )}
+        </div>
+      )}
     </section>
   );
 }

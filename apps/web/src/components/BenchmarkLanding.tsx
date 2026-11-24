@@ -1,4 +1,5 @@
 "use client";
+
 import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
@@ -6,153 +7,96 @@ import type { Locale } from "@/dictionary/runtime";
 
 import { msg } from "@/dictionary";
 import { clock } from "@/scene/clock";
+import Office from "@/scene/Office";
 
+import { OperatorBrief } from "./OperatorBrief";
+import { SaveLibrarySection } from "./SaveLibrarySection";
 import SessionSetup from "./SessionSetup";
 import { StationFrame } from "./StationFrame";
+import "./benchmark-landing.css";
 
-interface Cohort {
-  version: string;
-  seed: number;
-  days: number;
-  source: string;
-  scores: ReadonlyArray<readonly [string, number]>;
-}
-function cohorts(r: Release): Cohort[] {
-  const models = r.rivals.filter((x) => x.kind === "model");
-  return models[0]
-    ? [
-        {
-          version: r.version,
-          days: r.days,
-          seed: r.seed,
-          source: models[0].source,
-          scores: models.map((m) => [m.name ?? "AI", m.score] as const),
-        },
-      ]
-    : [];
-}
-function Dossier({
-  release: r,
-  setup,
-  lang,
-}: {
+interface Props {
   release: Release;
   setup: ReactElement;
   lang: Locale;
-}) {
-  const opts = { locale: lang };
-  const formatter = new Intl.NumberFormat(lang, { style: "currency", currency: r.currency });
-  const money = (value: number) => formatter.format(value);
-  const batches = cohorts(r);
-  const featured = batches[0],
-    leader = featured?.scores.toSorted((a, b) => b[1] - a[1])[0];
-  const repository = "https://github.com/ProsusAI/vending-bench";
-  const source = repository + "/tree/" + r.revision;
+}
+
+function LandingDesk({ release, setup, lang }: Props) {
+  const options = { locale: lang };
+  const money = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
+  const leader = release.rivals
+    .filter((rival) => rival.kind === "model")
+    .toSorted((a, b) => b.score - a.score)[0];
+  const source = "https://github.com/ProsusAI/vending-bench/tree/" + release.revision;
+  const labels = { rules: msg.operator.rules, day: msg.operator.day, fee: msg.operator.fee };
   return (
-    <StationFrame lang={lang} revision={r.revision} label={msg.landing.human({}, opts)}>
-      <div className="dossier">
-        <article className="bench-paper">
-          <header className="bench-intro">
+    <StationFrame lang={lang} revision={release.revision} label={msg.landing.human({}, options)}>
+      <div className="desk landing-desk">
+        <article className="shell landing-console">
+          <div className="landing-intro">
             <h1>
-              {leader
-                ? msg.landing.lead({ model: leader[0] }, opts)
-                : msg.landing.fallback({}, opts)}
+              {leader?.name
+                ? msg.landing.lead({ model: leader.name }, options)
+                : msg.landing.fallback({}, options)}
             </h1>
-            <p>{msg.landing.context({}, opts)}</p>
-          </header>
-          {batches.length > 0 && (
-            <section className="bench-results">
-              <h2>{msg.landing.results({}, opts)}</h2>
-              {featured && leader && (
-                <p>
-                  {msg.landing.best(
-                    { model: leader[0], score: money(leader[1]), version: featured.version },
-                    opts,
-                  )}
-                </p>
-              )}
-              {batches.map((batch) => (
-                <section key={batch.source + batch.seed + batch.days}>
-                  <header>
-                    <b>
-                      {msg.landing.conditions(
-                        { version: batch.version, days: batch.days, seed: batch.seed },
-                        opts,
-                      )}
-                    </b>
-                    <a href={batch.source}>{msg.landing.publication({}, opts)}</a>
-                  </header>
-                  <ol className="score-ladder" aria-label={msg.landing.score({}, opts)}>
-                    {batch.scores
-                      .toSorted((a, b) => b[1] - a[1])
-                      .map(([name, score], i) => (
-                        <li key={name}>
-                          <span className="ladder-rank">{String(i + 1).padStart(2, "0")}</span>
-                          <span>{name}</span>
-                          <span className="score-track" aria-hidden>
-                            <i
-                              style={{
-                                width:
-                                  (100 * score) / Math.max(1, ...batch.scores.map((s) => s[1])) +
-                                  "%",
-                              }}
-                            />
-                          </span>
-                          <b>{money(score)}</b>
-                        </li>
-                      ))}
-                  </ol>
-                </section>
-              ))}
-            </section>
-          )}
-          <section className="bench-method">
-            <h2>{msg.landing.method({}, opts)}</h2>
-            <p>
-              {msg.landing.rules(
-                {
-                  machines: r.network.machines,
-                  sites: r.network.sites,
-                  days: r.days,
-                  fee: money(r.network.fee),
-                },
-                opts,
-              )}
-            </p>
-            <p>
-              {msg.landing.clock(
-                {
-                  opens: clock(r.network.opens),
-                  closes: clock(r.network.closes),
-                  minutes: r.network.refill,
-                },
-                opts,
-              )}
-            </p>
-            <a href={source + "/tasks/vending-bench/instruction.md"}>
-              {msg.landing.source({}, opts)}
-            </a>
-          </section>
-        </article>
-        <aside className="launch-bay">
+            <p>{msg.landing.context({}, options)}</p>
+          </div>
           {setup}
-          <div className="runtime-note">
-            <code>Python / WebAssembly</code>
-            <p>{msg.landing.local({}, opts)}</p>
-            <a href={source}>
-              {r.version} @ {r.revision.slice(0, 7)}
+        </article>
+        <section className="workspace landing-workspace">
+          <div className="surface landing-room">
+            <Office
+              site="lounge"
+              phase={release.network.opens / 1440}
+              light={0.8}
+              slots={release.network.slots}
+              depotCases={null}
+              stock={null}
+              focus={null}
+              visit={null}
+              service={null}
+            />
+          </div>
+          <div className="transport landing-conditions">
+            <b>
+              {msg.session.term({}, options)}: {release.days}
+            </b>
+            <span>
+              {clock(release.network.opens)}–{clock(release.network.closes)}
+            </span>
+            <span>
+              {msg.operator.fee({}, options)}: {money.format(release.network.fee)}
+            </span>
+          </div>
+          <div className="readout landing-readout" tabIndex={0}>
+            <OperatorBrief
+              release={release}
+              state={null}
+              t={(key) => labels[key]({}, options)}
+              money={(value) => money.format(value)}
+            />
+            <a href={source + "/tasks/vending-bench/instruction.md"}>
+              {msg.landing.source({}, options)}
             </a>
           </div>
-        </aside>
+        </section>
+        <SaveLibrarySection release={release} lang={lang} embedded />
       </div>
+      <footer className="landing-footer">
+        <span>{msg.landing.local({}, options)}</span>
+        <a href={source}>
+          {release.version} @ {release.revision.slice(0, 7)}
+        </a>
+      </footer>
     </StationFrame>
   );
 }
+
 export default function BenchmarkLanding({ lang }: { lang: Locale }) {
   return (
     <SessionSetup
       lang={lang}
-      renderPage={(release, setup) => <Dossier {...{ release, setup, lang }} />}
+      renderPage={(release, setup) => <LandingDesk {...{ release, setup, lang }} />}
     />
   );
 }

@@ -38,6 +38,7 @@ export const releaseSchema = v.object({
   currency: v.string(),
   brief: v.string(),
   network: v.object({
+    slots: v.array(v.string()),
     sites: v.number(),
     machines: v.number(),
     fee: v.number(),

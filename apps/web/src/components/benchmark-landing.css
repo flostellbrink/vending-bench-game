@@ -1,0 +1,119 @@
+.desk.landing-desk {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.82fr) minmax(0, 1.4fr);
+  gap: 8px;
+  max-width: 100rem;
+  height: auto;
+  margin: 8px auto;
+  align-items: stretch;
+}
+.landing-desk > :nth-child(3) {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.landing-desk .landing-console {
+  display: block;
+  container-type: normal;
+  height: auto;
+  padding: clamp(1rem, 1.7vw, 2rem);
+}
+.landing-intro h1 {
+  margin: 0 0 0.6rem;
+  max-width: 22ch;
+  font-size: clamp(1.65rem, 2.45vw, 2.8rem);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  color: #e0efd5;
+  font-family: Arial, sans-serif;
+}
+.landing-intro p {
+  line-height: 1.45;
+  color: #c6d1c5;
+}
+.landing-console .session-setup {
+  width: 100%;
+  padding: 0;
+  margin-top: 1.25rem;
+  border: 0;
+  color: inherit;
+  background: transparent;
+}
+.landing-console .session-setup header {
+  padding: 0.4rem 0;
+  background: none;
+  color: inherit;
+  border: 0;
+  border-block: 1px solid #617364;
+  text-shadow: none;
+}
+.landing-console .session-setup h2 {
+  font-size: 1rem;
+}
+.landing-console .session-note {
+  color: #b6c4b7;
+}
+.landing-console .session-actions button {
+  color: #152719;
+  background: #c3e4ad;
+  font-weight: bold;
+}
+.landing-console .session-actions {
+  justify-content: flex-start;
+  margin: 0 0 1rem;
+}
+.landing-desk .landing-workspace {
+  display: grid;
+  grid-template-rows: minmax(12rem, 1.25fr) auto minmax(10rem, 1fr);
+  height: auto;
+  min-width: 0;
+}
+@media (min-width: 761px) {
+  .landing-desk .landing-workspace {
+    contain: size;
+  }
+}
+.landing-room {
+  position: relative;
+  background: #dfe1d9;
+}
+.landing-room .office-drawing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.landing-conditions {
+  gap: 0.8rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.landing-readout {
+  padding: 0.45rem;
+}
+.landing-readout > a {
+  display: inline-block;
+  margin: 0.4rem 0.75rem;
+  color: #315443;
+}
+.landing-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  max-width: 100rem;
+  margin: auto;
+  padding: 0.5rem 0.7rem;
+  color: #e0e8df;
+  background: #26312c;
+}
+.landing-footer a {
+  color: inherit;
+}
+@media (max-width: 760px) {
+  .desk.landing-desk {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landing-desk .landing-workspace {
+    grid-template-rows: clamp(12rem, 56vw, 20rem) auto minmax(12rem, 16rem);
+  }
+}

@@ -28,7 +28,14 @@
   padding-bottom: 0.75rem;
   border-bottom: 1px solid #7f9585;
 }
-.save-console h1 {
+.save-console.embedded {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.save-console.embedded .save-console-actions {
+  padding: 0;
+}
+.save-console :is(h1, h2) {
   font:
     600 1.45rem/1.15 ui-monospace,
     Menlo,
@@ -170,7 +177,21 @@
 .save-card[aria-current="true"] small {
   color: #304b38;
 }
-.save-card:hover {
+.save-map-row.reference {
+  height: 52px;
+  border-top: 1px dotted #566a5c;
+}
+.save-map-row.reference .save-lane-name {
+  display: grid;
+  align-content: center;
+  padding-top: 0;
+}
+.save-card.reference {
+  background: transparent;
+  border: 0;
+  border-left: 1px solid #566a5c;
+}
+.save-card:not(.reference):hover {
   border-color: white;
   color: white;
   background: #35483a;

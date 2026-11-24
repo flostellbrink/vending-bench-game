@@ -14,10 +14,10 @@ import {
 } from "games-common/benchmark";
 import { errorToString } from "games-common/language";
 import { useCallback, useEffect, useRef, useState } from "react";
-import * as v from "valibot";
 
 import { opensInstrument } from "@/game/receipt-routing";
 import { observation } from "@/game/reports";
+import { loadRival } from "@/game/rival-balances";
 import {
   recordKey,
   runKey,
@@ -74,17 +74,6 @@ function initialView(): RunView {
 
 function post(worker: Worker, request: WorkerRequest) {
   worker.postMessage(request);
-}
-
-async function loadRivals(release: Release, signal: AbortSignal): Promise<Rival[]> {
-  return Promise.all(
-    release.rivals.map(async (rival) => {
-      if (!rival.balances) return rival;
-      const response = await fetch("/" + rival.balances, { signal });
-      if (!response.ok) throw Error("Reference data unavailable");
-      return { ...rival, values: v.parse(v.array(v.number()), await response.json()) };
-    }),
-  );
 }
 
 async function recordScore(key: string, state: Snapshot, values: number[]) {
@@ -297,7 +286,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
 
   useEffect(() => {
     const abort = new AbortController();
-    loadRivals(release, abort.signal)
+    Promise.all(release.rivals.map((rival) => loadRival(rival, abort.signal)))
       .then((data) => {
         if (!abort.signal.aborted) setRivals({ revision: release.revision, rivals: data });
       })

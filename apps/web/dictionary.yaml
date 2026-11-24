@@ -1163,6 +1163,21 @@ landing:
     es: "Modelo"
     de: "Modell"
 session:
+  setup:
+    .id: SX000021
+    ^en: "Run setup"
+    es: "Configuración de la partida"
+    de: "Spieleinstellungen"
+  scriptReference:
+    .id: SLTR0018
+    ^en: "Scripted reference"
+    es: "Referencia programada"
+    de: "Skriptreferenz"
+  closeLabel:
+    .id: SLTR0019
+    ^en: "Day close"
+    es: "Cierre"
+    de: "Tagesschluss"
   newSlot:
     .id: SLTR0017
     ^en: "New run"

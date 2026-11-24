@@ -12,7 +12,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open <http://localhost:5173>, select the benchmark version, then start or resume a run. Type `help` or press Tab at the empty prompt. `brief` opens the operating rules. Use `find snacks` to search for suppliers, or open the depot and use its supplier directory. A supplier’s quote doubles as an order slip. Its price applies to the quoted quantity; placing the order pays immediately. The map follows the address you type; no map clicks are necessary.
+Open <http://localhost:5173> to read the operating brief and start or resume a run. A new run opens with the same brief. Type `brief` to return to it, or press Tab at the empty prompt to browse commands. Use `find snacks` to search for suppliers, or open the depot and use its supplier directory. A supplier’s quote doubles as an order slip. Its price applies to the quoted quantity; placing the order pays immediately. The map follows the address you type; no map clicks are necessary.
 
 Use `balance` to review daily balances, `tabs` to list receipts, or `view <result>` to reopen one. The office remains visible above the report. After day 30, `scores` compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
 
