@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  otherCash:
+    .id: VN000001
+    ^en: Other cash movements
+    es: Otros movimientos de efectivo
+    de: Sonstige Kontobewegungen
   newerQuote:
     .id: MQ000002
     ^en: Open newer quote

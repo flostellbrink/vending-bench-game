@@ -148,9 +148,6 @@ export default function ObservationView({
                 ))}
             </>
           )}
-          {report.tool === "wait_for_next_day" && (
-            <DayStatement {...{ report, state, t, lang, money }} />
-          )}
           {report.channels && (
             <>
               <h3>{t("traffic")}</h3>
@@ -177,6 +174,9 @@ export default function ObservationView({
             </details>
           )}
         </>
+      )}
+      {report.endDay !== report.day && (
+        <DayStatement {...{ report, reports, state, t, money, openReport }} />
       )}
       {report.notices?.length > 0 && (
         <div className="overnight-notices">

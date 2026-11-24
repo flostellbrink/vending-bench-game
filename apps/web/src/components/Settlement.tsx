@@ -9,6 +9,7 @@ import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/mes
 import { clock } from "@/scene/clock";
 
 import { BalanceScope } from "./BalanceScope";
+import { DayStatement } from "./DayStatement";
 import { Scorecard } from "./Scorecard";
 import SessionSetup from "./SessionSetup";
 import { StationFrame } from "./StationFrame";
@@ -29,6 +30,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
     [receipt, setReceipt] = useState<number | null>(null);
   const { state, rivals, best, reports, history } = run;
   const selected = reports.find((r) => r.id === receipt);
+  const closing = reports.find((r) => r.day === day && r.endDay !== r.day);
   return (
     <StationFrame
       lang={lang}
@@ -51,22 +53,30 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
               setDay(reports.find((r) => r.id === id)?.day ?? null);
             }}
           />
-          {parentBalance && (
-            <BalanceScope
-              {...{ history, rivals, best, parentBalance, release, lang, t }}
-              selected={balanceDay ?? Math.min(parentBalance.values.length, history.length) - 1}
-              setSelected={setBalanceDay}
-              showReceipts={(closingDay) => {
-                setDay(closingDay);
-                setReceipt(null);
-              }}
-            />
-          )}
+          <BalanceScope
+            {...{ history, rivals, best, parentBalance, release, lang, t }}
+            selected={
+              balanceDay ??
+              (parentBalance ? Math.min(parentBalance.values.length, history.length) - 1 : null)
+            }
+            setSelected={setBalanceDay}
+            showReceipts={(closingDay) => {
+              setDay(closingDay);
+              setReceipt(null);
+            }}
+          />
           {day !== null && (
             <section className="finish-evidence">
               <h2>
                 {t("day")} {day} · {t("results")}
               </h2>
+              {closing && state && (
+                <DayStatement
+                  report={closing}
+                  {...{ reports, state, t, money }}
+                  openReport={setReceipt}
+                />
+              )}
               {reports
                 .filter((r) => r.day === day)
                 .map((r) => (
