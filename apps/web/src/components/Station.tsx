@@ -16,6 +16,7 @@ import { OperatorTerminal } from "./OperatorTerminal";
 import { Settlement } from "./Settlement";
 import { Workspace } from "./Workspace";
 interface Props {
+  newRun: boolean;
   release: Release;
   slot: string;
   runNumber: number;
@@ -23,8 +24,16 @@ interface Props {
   lang: Lang;
   changeLang: (locale: Lang) => void;
 }
-export function Station({ release, slot, runNumber, parentBalance, lang, changeLang }: Props) {
-  const nav = useNavigation(),
+export function Station({
+  release,
+  slot,
+  runNumber,
+  parentBalance,
+  lang,
+  changeLang,
+  newRun,
+}: Props) {
+  const nav = useNavigation(newRun ? "brief" : "desk"),
     run = useRun(release, slot, nav.setTab);
   const t = useMemo(() => operatorLabels(lang), [lang]),
     screen = useMemo(() => screenLabels(lang), [lang]);

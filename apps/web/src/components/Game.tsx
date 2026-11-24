@@ -92,6 +92,7 @@ function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot:
       release={release}
       slot={slot}
       runNumber={index + 1}
+      newRun={slots[index]?.moves === 0 && !parentId}
       parentBalance={
         parent && !parent.damaged && parent.cash !== null
           ? { run: parentIndex + 1, values: recordedClosings(parent) }

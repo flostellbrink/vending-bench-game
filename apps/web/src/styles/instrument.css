@@ -716,9 +716,16 @@ footer button[aria-pressed="true"] {
   border-bottom: 1px dotted var(--rule);
   padding: 0.4rem 0;
 }
-.brief p {
+.brief p,
+.brief ul {
   max-width: 76ch;
-  white-space: pre-line;
+}
+.brief ul {
+  list-style: square;
+  padding-inline-start: 2ch;
+}
+.brief li + li {
+  margin-block-start: 0.35em;
 }
 .receipt-heading {
   display: flex;

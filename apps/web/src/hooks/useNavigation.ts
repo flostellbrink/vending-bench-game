@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 export type View = string | number;
-export function useNavigation() {
-  const [tab, setView] = useState<View>("desk");
-  const current = useRef<View>("desk"),
+export function useNavigation(initialView: View) {
+  const [tab, setView] = useState<View>(initialView);
+  const current = useRef<View>(initialView),
     history = useRef<View[]>([]);
   const [site, setSite] = useState<string | null>(null);
   const [balanceDay, setBalanceDay] = useState<number | null>(null);
