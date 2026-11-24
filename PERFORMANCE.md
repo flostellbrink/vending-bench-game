@@ -26,6 +26,8 @@ Five successive restarts each cleared the transcript, returned to day 1 and prod
 
 ## Coverage and release decision
 
+At native Chrome tab zoom of 200%, a 1,200-pixel CSS viewport narrowed to 600 pixels. On day 1, the prompt accepted a command and its receipt, bank balance and save tree were reachable. On day 29, a site sales report could be requested and read without horizontal page overflow. This was desktop tab zoom, not a physical phone test.
+
 Desktop Chrome on this integrated GPU and desktop viewport emulation have evidence. Physical iOS and mid-range Android devices, an open mobile keyboard, desktop Safari, desktop Firefox, hardware keyboard-to-display latency and isolated GPU presentation timing remain untested. One host was online in the Apple device list; one device was offline. The Android SDK's `adb devices -l` listed no attached device. The available browser CLI has no desktop Safari or Firefox engine; its iOS provider requires Appium, which was not installed.
 
 The earlier 1440 × 900 headless sample with a short transcript also reached 60 callbacks/s. The longer runs above did not show a callback regression. They are not a reproduction or disproof of the player's CRT issue. Do not use these results to qualify CRT or declare physical phone performance.
@@ -60,6 +62,8 @@ At 1440 × 900 and 2× density on the same M4, 48 synthetic edits on day 25 reac
 The day-30 reference checkpoint opened with 499 receipts. In headless Chrome 158 at 1440 × 900 and 1× density, 60 synthetic prompt edits reached the second animation frame in 33.3 ms at the median and 34.2 ms at p95. The next inspection produced receipt 500 in 29.5 ms. During that inspection, 108 frame intervals over 1.8 seconds measured 16.7 ms at p95 and 16.8 ms maximum. These are browser timings, not hardware input or display latency.
 
 ## Startup and save-tree navigation
+
+From a cold landing page to a playable new game, the local server returned 14,905,329 response-body bytes (14.21 MiB). The landing page used 807,924 bytes. The run page and worker bootstrap added 196,540; seven requests from the worker added 13,900,865. The Python WASM file alone was 10,105,545 bytes. Chrome reported identical encoded and decoded body sizes: there was no HTTP content compression. Archive sizes represent downloaded ZIPs, not extracted files. These figures exclude wire headers, TLS and CDN behavior.
 
 On the loopback export, Start to a ready simulator prompt took 819 ms. Enter to the first depot receipt took another 31 ms. Before removing the second document load, the same probes measured 835 ms and 36 ms. Each build had one cold browser sample; the difference does not establish a speedup.
 

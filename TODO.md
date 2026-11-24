@@ -3,7 +3,6 @@
 ## Before publication
 
 - Review the first shift with a human player. Can they put a product on sale and explain which action cost them time?
-- Check native browser zoom. The first shift and a day-29 takeover have been checked at equivalent viewport sizes, not with the browser zoom control.
 - Add v3 model results only when runs with matching conditions are available. Keep the scripted reference separate.
 
 ## Reference checks
