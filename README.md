@@ -14,7 +14,7 @@ pnpm dev
 
 Open <http://localhost:5173> to read the operating brief and start or resume a run. Type `brief` to reopen the rules, or press Tab at the empty prompt to browse commands. Use **Search the web** or `find <query>` to query the benchmark. A supplier’s quote doubles as an order slip. Its price applies to the quoted quantity; placing the order pays immediately.
 
-All cabinets share one depot and mailbox. Select **Network** to inspect shared stock, or select a cabinet below it to service its slots. Select **Suppliers** to search; each supplier page holds its own orders. Selecting a room thumbnail opens a cabinet or the shared depot without spending time. No map clicks are necessary.
+All cabinets share one depot and mailbox. Select **Depot** to inspect shared stock, or select a cabinet below it to service its slots. Select **Suppliers** to search; each supplier page holds its own orders. Selecting a room thumbnail opens a cabinet or the shared depot without spending time. No map clicks are necessary.
 
 Use `balance` to review daily balances, `tabs` to list receipts, or `view <result>` to reopen one. The office remains visible above the report. After day 30, `scores` compares your score with the reference operator. A new run keeps the best completed trace for the same challenge in this browser.
 

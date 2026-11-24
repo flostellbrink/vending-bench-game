@@ -53,7 +53,7 @@ export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
     { id: "scores", label: t("standings") },
     {
       id: "site:depot",
-      label: t("network"),
+      label: t("depot"),
       children: state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? [],
     },
     {
