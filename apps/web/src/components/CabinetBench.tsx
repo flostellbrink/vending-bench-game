@@ -70,6 +70,9 @@ export default function CabinetBench(props: Omit<ObservationProps, "money">) {
                     {s.quantity}
                     <small>/{s.capacity}</small>
                   </span>
+                  <i className="slot-level" aria-hidden="true">
+                    <i style={{ width: (s.quantity / Math.max(1, s.capacity)) * 100 + "%" }} />
+                  </i>
                 </button>
               ))}
             </div>

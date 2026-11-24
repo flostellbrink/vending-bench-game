@@ -53,27 +53,70 @@ export function SlotInstrument({
     if (canDispatch(action)) runCommand(commandLine.trim(), true);
   }
 
+  const stock = (
+    <section className="slot-depot">
+      <header>
+        <b>{t("depotStock")}</b>
+        {depot && (
+          <small>
+            #{depot.id} · {t("day")} {depot.day} · {clock(depot.minute)}
+          </small>
+        )}
+      </header>
+      {depot && depot.rows.length > 0 && (
+        <small>{sizeMatches?.length ? t("sizeMatches") : t("noSizeMatches")}</small>
+      )}
+      <div className="stock-picks">
+        {sizeMatches?.map(([id, name, , count]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => stageCommand("refill " + slot.id + " " + id + " ")}
+          >
+            <span>{name}</span> <b>×{count}</b>
+            {depot && <StorageBatches report={depot} product={String(id)} lang={lang} />}
+          </button>
+        ))}
+      </div>
+      {depot && !depot.rows.length && <p>{depot.display}</p>}
+      {depot && sizeMatches?.length === 0 && (
+        <DirectorySearch {...{ state, t, disabled, commandLine, stageCommand, runCommand }} />
+      )}
+      <button
+        disabled={disabled}
+        data-clock-verb="depot"
+        onClick={() => runCommand("depot", false, true)}
+      >
+        {t("checkDepot")} · {timeLabel("depot", state, t)}
+      </button>
+    </section>
+  );
   return (
     <section className="slot-instrument">
       <header>
         <h3>
-          {slot.code} · {slot.product}
+          <b>{slot.code}</b> {slot.product}
         </h3>
         <small>
           {t("seen")} · {t("day")} {report.day} / {clock(report.minute)}
         </small>
       </header>
-      <div className="slot-reading">
-        <span>
-          {t("size")}: {slot.size}
-        </span>
-        <span>
-          {field("quantity")}: {slot.quantity}/{slot.capacity}
-        </span>
-        <span>
-          {field("price")}: {slot.price}
-        </span>
-      </div>
+      <dl className="slot-reading">
+        <div>
+          <dt>{t("size")}</dt>
+          <dd>{slot.size}</dd>
+        </div>
+        <div>
+          <dt>{field("quantity")}</dt>
+          <dd>
+            {slot.quantity}/{slot.capacity}
+          </dd>
+        </div>
+        <div>
+          <dt>{field("price")}</dt>
+          <dd>{slot.price}</dd>
+        </div>
+      </dl>
       {changes.length > 0 && (
         <div className="slot-amendment">
           <b>{t("laterObservations")}</b>
@@ -93,40 +136,6 @@ export function SlotInstrument({
           ))}
         </div>
       )}
-      <section className="slot-depot">
-        <header>
-          <b>{t("depotStock")}</b>
-          {depot && (
-            <small>
-              #{depot.id} · {t("day")} {depot.day} · {clock(depot.minute)}
-            </small>
-          )}
-        </header>
-        {depot && depot.rows.length > 0 && (
-          <small>{sizeMatches?.length ? t("sizeMatches") : t("noSizeMatches")}</small>
-        )}
-        {sizeMatches?.map(([id, name, size, count]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => stageCommand("refill " + slot.id + " " + id + " ")}
-          >
-            {name} · {size} × {count}
-            {depot && <StorageBatches report={depot} product={String(id)} lang={lang} />}
-          </button>
-        ))}
-        {depot && !depot.rows.length && <p>{depot.display}</p>}
-        {depot && sizeMatches?.length === 0 && (
-          <DirectorySearch {...{ state, t, disabled, commandLine, stageCommand, runCommand }} />
-        )}
-        <button
-          disabled={disabled}
-          data-clock-verb="depot"
-          onClick={() => runCommand("depot", false, true)}
-        >
-          {t("checkDepot")} · {timeLabel("depot", state, t)}
-        </button>
-      </section>
       <form onSubmit={(event) => submit(event, "refill")}>
         <label>
           {field("product_id")}
@@ -182,6 +191,7 @@ export function SlotInstrument({
           {t("setPrice")} · {timeLabel("price", state, t)}
         </button>
       </form>
+      {stock}
     </section>
   );
 }
