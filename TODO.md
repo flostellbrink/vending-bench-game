@@ -1,13 +1,10 @@
 # Player experience queue
 
-## Working pass: correspondence and replay
+## Before publication
 
-- [x] Select a scorecard day and branch directly from that morning. Show the active run number in the workstation.
-- [x] Keep the original run unchanged. A fresh playtest branched from day 2 of a day 4 run and resumed at 09:00.
-- [x] Put a letter composer beside an observed supplier or quote. Make it share its draft and time cost with the terminal.
-- [x] Remove the landing page’s dependency on save-list hydration for starting a new slot.
-- [x] Check a fresh supplier inquiry through its overnight response and compare the next paid quote at the same quantity.
-- [x] A fresh reviewer inspected A1 in the AI Lounge and reached an empty Product ID field. The slot gave no way to check depot stock. Test the cabinet-to-depot lookup at this point.
+- Review the first shift with a human player. Can they put a product on sale and explain which action cost them time?
+- Check native browser zoom. The first shift and a day-29 takeover have been checked at equivalent viewport sizes, not with the browser zoom control.
+- Add v3 model results only when runs with matching conditions are available. Keep the scripted reference separate.
 
 ## Reference checks
 

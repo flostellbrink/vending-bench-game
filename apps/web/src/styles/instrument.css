@@ -970,6 +970,14 @@ footer button[aria-pressed="true"] {
     grid-template-rows: minmax(0, 1fr);
   }
 }
+@media (max-height: 400px) and (orientation: landscape) {
+  .world.office-survey {
+    grid-template-columns: minmax(0, 1fr) minmax(9rem, 36%);
+  }
+  .remote-rooms {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .work-surface {
   min-height: 0;
   display: grid;
