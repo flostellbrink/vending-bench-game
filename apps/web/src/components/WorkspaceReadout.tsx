@@ -34,7 +34,7 @@ export function WorkspaceReadout({
   const { state, reports } = run;
   const { tab, setTab } = nav;
   const orders = useMemo(() => knownOrders(reports), [reports]);
-  const disabled = run.busy || !state || state.over;
+  const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
   const controls = {
     t,
     lang,

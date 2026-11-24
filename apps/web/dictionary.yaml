@@ -1,5 +1,10 @@
 $schema: ../../packages/localize/dictionary.schema.json
 operator:
+  resumeSavedRun:
+    .id: VR000001
+    ^en: Reload saved run
+    es: Volver a cargar la partida guardada
+    de: Gespeicherten Lauf neu laden
   otherCash:
     .id: VN000001
     ^en: Other cash movements

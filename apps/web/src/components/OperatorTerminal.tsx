@@ -185,6 +185,12 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
           </div>
         )}
         {error && <p role="alert">{error}</p>}
+        {run.runtimeError && (
+          <div role="alert">
+            <p>{run.runtimeError}</p>
+            <button onClick={() => location.reload()}>{t("resumeSavedRun")}</button>
+          </div>
+        )}
         {saveIssue && <p role="alert">{t(saveIssue)}</p>}
         <div className="command-line">
           <span aria-hidden="true">›</span>
@@ -192,6 +198,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             autoFocus
             rows={1}
             id="prompt"
+            disabled={Boolean(run.runtimeError)}
             ref={prompt}
             value={line}
             aria-label={t("query")}

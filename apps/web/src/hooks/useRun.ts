@@ -115,6 +115,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   const [rivalResult, setRivals] = useState<{ revision: string; rivals: Rival[] } | null>(null);
   const rivals = rivalResult?.revision === release.revision ? rivalResult.rivals : [];
   const [saveIssue, setSaveIssue] = useState<SaveIssue>("");
+  const [runtimeError, setRuntimeError] = useState("");
   const [epoch, retry] = useState(0);
   const worker = useRef<Worker | null>(null);
   const pending = useRef<{ entry: Entry; keepInstrument: boolean } | null>(null);
@@ -124,9 +125,19 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   const clearSaveIssue = useCallback(() => setSaveIssue(""), []);
 
   useEffect(() => {
-    const current = new Worker("/worker.js");
-    worker.current = current;
     const abort = new AbortController();
+    let current: Worker;
+    try {
+      current = new Worker("/worker.js");
+    } catch (error) {
+      queueMicrotask(() => {
+        if (abort.signal.aborted) return;
+        setRuntimeError(errorToString(error));
+        setView({ ...initialView(), revision: release.revision, busy: false });
+      });
+      return () => abort.abort();
+    }
+    worker.current = current;
     let serialized: string | null = null,
       opponent: PersonalBest | null = null,
       balances: number[] = [];
@@ -137,12 +148,16 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
 
     const fail = (error: unknown) => {
       if (abort.signal.aborted) return;
+      abort.abort();
+      current.terminate();
+      worker.current = null;
       pending.current = null;
+      setRuntimeError(errorToString(error));
       setView((old) => ({
         ...(old.revision === release.revision ? old : initialView()),
         revision: release.revision,
         busy: false,
-        error: errorToString(error),
+        error: "",
       }));
     };
 
@@ -320,5 +335,15 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           },
     );
   }
-  return { ...view, rivals, saveIssue, epoch, submit, appendLocal, setError, clearSaveIssue };
+  return {
+    ...view,
+    rivals,
+    saveIssue,
+    runtimeError,
+    epoch,
+    submit,
+    appendLocal,
+    setError,
+    clearSaveIssue,
+  };
 }
