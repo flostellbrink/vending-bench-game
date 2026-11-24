@@ -3,8 +3,9 @@ import type { FormEvent, ReactNode } from "react";
 
 import { useId, useState } from "react";
 
+import { msg } from "@/dictionary";
 import { commandForMove, type ToolName } from "@/game/commands";
-import { commandLabel, fieldLabel } from "@/localization/messages";
+import { commandLabel } from "@/localization/messages";
 
 import type { ObservationProps } from "./panel-props";
 
@@ -26,7 +27,7 @@ function value(data: FormData, key: string) {
 }
 
 export function OperationsDesk(props: Props) {
-  const { desk, lang, t, release, state, reports, disabled, runCommand } = props;
+  const { desk, release, state, reports, disabled, runCommand } = props;
   const defaultKey = release.toolDefaults.read_notes?.key;
   const defaultDays = release.toolDefaults.set_reminder?.in_days;
   const [noteKey, setNoteKey] = useState(typeof defaultKey === "string" ? defaultKey : "");
@@ -55,7 +56,7 @@ export function OperationsDesk(props: Props) {
           data-clock-verb={tool}
           onClick={options.onClick}
         >
-          {options.label ?? commandLabel(tool, lang)}
+          {options.label ?? commandLabel(tool)}
         </button>
       </GuiToolInfo>
     );
@@ -63,7 +64,6 @@ export function OperationsDesk(props: Props) {
   function inspect(tool: ToolName) {
     return button(tool, { onClick: () => dispatch(tool) });
   }
-  const field = (key: string) => fieldLabel(key, lang);
   let forms: ReactNode;
   let tools: ToolName[];
   switch (desk) {
@@ -82,13 +82,13 @@ export function OperationsDesk(props: Props) {
           }))}
         >
           <ControlRow>
-            <Field label={field("recipient")}>
+            <Field label={msg.fields.recipient()}>
               <ControlInput name="recipient" required />
             </Field>
-            <Field label={field("amount")}>
+            <Field label={msg.fields.amount()}>
               <ControlInput name="amount" type="number" step="any" required />
             </Field>
-            <Field label={field("reference")}>
+            <Field label={msg.fields.reference()}>
               <ControlInput name="reference" required />
             </Field>
             {button("send_payment")}
@@ -112,7 +112,7 @@ export function OperationsDesk(props: Props) {
             }))}
           >
             <ControlRow>
-              <Field label={field("location")}>
+              <Field label={msg.fields.location()}>
                 <ControlInput name="location" list={locationList} required />
               </Field>
               <datalist id={locationList}>
@@ -122,7 +122,7 @@ export function OperationsDesk(props: Props) {
                   </option>
                 ))}
               </datalist>
-              <Field label={field("channel")}>
+              <Field label={msg.fields.channel()}>
                 <ControlInput name="channel" list={channelList} required />
               </Field>
               <datalist id={channelList}>
@@ -131,7 +131,7 @@ export function OperationsDesk(props: Props) {
                 ))}
               </datalist>
             </ControlRow>
-            <Field label={field("message")}>
+            <Field label={msg.fields.message()}>
               <ControlTextarea rows={2} name="message" required />
             </Field>
             {button("run_marketing")}
@@ -150,7 +150,7 @@ export function OperationsDesk(props: Props) {
       forms = (
         <form onSubmit={submit("read_notes", () => ({ key: noteKey }))}>
           <ControlRow>
-            <Field label={field("key")}>
+            <Field label={msg.fields.key()}>
               <ControlInput
                 value={noteKey}
                 list={keyList}
@@ -164,7 +164,7 @@ export function OperationsDesk(props: Props) {
             </datalist>
             {button("read_notes")}
           </ControlRow>
-          <Field label={field("text")}>
+          <Field label={msg.fields.text()}>
             <ControlTextarea
               rows={2}
               value={noteText}
@@ -173,7 +173,7 @@ export function OperationsDesk(props: Props) {
           </Field>
           {button("write_note", {
             inactive: !noteKey.trim(),
-            label: !noteText && noteKey.trim() ? t("deleteNote") : undefined,
+            label: !noteText && noteKey.trim() ? msg.operator.deleteNote() : undefined,
             onClick: () => dispatch("write_note", { key: noteKey, text: noteText }),
           })}
         </form>
@@ -191,11 +191,11 @@ export function OperationsDesk(props: Props) {
               in_days: Number(value(data, "in_days")),
             }))}
           >
-            <Field label={field("text")}>
+            <Field label={msg.fields.text()}>
               <ControlTextarea rows={2} name="text" />
             </Field>
             <ControlRow>
-              <Field label={field("in_days")}>
+              <Field label={msg.fields.in_days()}>
                 <ControlInput
                   type="number"
                   step="1"

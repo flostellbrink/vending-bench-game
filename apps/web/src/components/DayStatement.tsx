@@ -1,10 +1,12 @@
+import { msg } from "@/dictionary";
+
 import type { ObservationProps } from "./panel-props";
 
 import "./financial-readouts.css";
-type Props = Pick<ObservationProps, "report" | "reports" | "state" | "t" | "money"> & {
+type Props = Pick<ObservationProps, "report" | "reports" | "state" | "money"> & {
   openReport: (id: number) => void;
 };
-export function DayStatement({ report, reports, state, t, money, openReport }: Props) {
+export function DayStatement({ report, reports, state, money, openReport }: Props) {
   const earlier = reports.filter((r) => r.day === report.day && r.id < report.id);
   const opening = earlier[0]?.openingCash ?? report.openingCash;
   const fee = report.notices.some((notice) => notice.includes("could not pay")) ? 0 : state.fee;
@@ -18,14 +20,14 @@ export function DayStatement({ report, reports, state, t, money, openReport }: P
   return (
     <section className="day-statement">
       <header>
-        <h3>{t("statement")}</h3>
+        <h3>{msg.operator.statement()}</h3>
         <span>
-          {t("day")} {report.day}
+          {msg.operator.day()} {report.day}
         </span>
       </header>
       <dl>
         <div>
-          <dt>{t("opening")}</dt>
+          <dt>{msg.operator.opening()}</dt>
           <dd>{money(opening)}</dd>
         </div>
         {earlier
@@ -48,13 +50,21 @@ export function DayStatement({ report, reports, state, t, money, openReport }: P
         )}
         {(
           [
-            [report.tool === "wait_for_next_day" ? "netReceipts" : "otherCash", other],
-            ["fee", 0 - fee],
-            ["closing", report.closingCash],
+            [
+              report.tool === "wait_for_next_day"
+                ? msg.operator.netReceipts
+                : msg.operator.otherCash,
+              other,
+            ],
+            [msg.operator.fee, 0 - fee],
+            [msg.operator.closing, report.closingCash],
           ] as const
-        ).map(([key, value]) => (
-          <div key={key} className={key === "closing" ? "statement-total" : undefined}>
-            <dt>{t(key)}</dt>
+        ).map(([label, value]) => (
+          <div
+            key={label()}
+            className={label === msg.operator.closing ? "statement-total" : undefined}
+          >
+            <dt>{label()}</dt>
             <dd>{money(value)}</dd>
           </div>
         ))}

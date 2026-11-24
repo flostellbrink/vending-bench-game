@@ -4,19 +4,18 @@ import { useId, useRef, useState } from "react";
 
 import { msg } from "@/dictionary";
 import { displayCell } from "@/game/reports";
-import { fieldLabel, type Lang, type Money, type Translate } from "@/localization/messages";
+import { fieldLabel, type Money } from "@/localization/messages";
 
 import { ActionButton } from "./FormControls";
 
 interface Props {
   orders: KnownOrder[];
-  t: Translate;
+
   money: Money;
   reports: Report[];
   supplier: string;
-  lang: Lang;
 }
-export function OrderRegister({ orders, t, money, reports, supplier, lang }: Props) {
+export function OrderRegister({ orders, money, reports, supplier }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useId();
   const [selected, select] = useState<KnownOrder | null>(null);
@@ -26,18 +25,18 @@ export function OrderRegister({ orders, t, money, reports, supplier, lang }: Pro
     dialog.current?.showModal();
   }
   return (
-    <section className="sheet" aria-label={t("orders")}>
-      {orders.length === 0 && <p>{t("empty")}</p>}
+    <section className="sheet" aria-label={msg.operator.orders()}>
+      {orders.length === 0 && <p>{msg.operator.empty()}</p>}
       {orders.length > 0 && (
         <table className="observation-grid order-register">
           <thead>
             <tr>
-              <th scope="col">{t("order")}</th>
+              <th scope="col">{msg.operator.order()}</th>
               <th scope="col" data-field="price">
-                {t("amountPaid")}
+                {msg.operator.amountPaid()}
               </th>
-              <th scope="col">{t("expectedClose")}</th>
-              <th scope="col">{t("arrived")}</th>
+              <th scope="col">{msg.operator.expectedClose()}</th>
+              <th scope="col">{msg.operator.arrived()}</th>
             </tr>
           </thead>
           <tbody>
@@ -54,24 +53,24 @@ export function OrderRegister({ orders, t, money, reports, supplier, lang }: Pro
                 </td>
                 <td data-field="price">
                   <small className="order-cell-label" aria-hidden="true">
-                    {t("amountPaid")}
+                    {msg.operator.amountPaid()}
                   </small>
                   {money(order.paid)}
                 </td>
                 <td>
                   <small className="order-cell-label" aria-hidden="true">
-                    {t("expectedClose")}
+                    {msg.operator.expectedClose()}
                   </small>
-                  {t("day")} {order.eta}
+                  {msg.operator.day()} {order.eta}
                 </td>
                 <td>
                   <small className="order-cell-label" aria-hidden="true">
-                    {t("arrived")}
+                    {msg.operator.arrived()}
                   </small>
                   {order.arrival ? (
                     <span>
-                      {t("day")} {order.arrival.day}
-                      {order.arrival.short && " · " + t("incompleteOrder")}
+                      {msg.operator.day()} {order.arrival.day}
+                      {order.arrival.short && " · " + msg.operator.incompleteOrder()}
                     </span>
                   ) : (
                     "—"
@@ -86,20 +85,20 @@ export function OrderRegister({ orders, t, money, reports, supplier, lang }: Pro
         <form method="dialog">
           <header>
             <h2 id={heading}>
-              {t("order")} {selected?.order}
+              {msg.operator.order()} {selected?.order}
             </h2>
           </header>
           {selected && receipt && (
             <>
               <p>
-                {supplier} · {t("day")} {receipt.day}
+                {supplier} · {msg.operator.day()} {receipt.day}
               </p>
               <table className="observation-grid">
                 <thead>
                   <tr>
                     {receipt.columns.map((column) => (
                       <th key={column} scope="col">
-                        {fieldLabel(column, lang)}
+                        {fieldLabel(column)}
                       </th>
                     ))}
                   </tr>
@@ -117,26 +116,24 @@ export function OrderRegister({ orders, t, money, reports, supplier, lang }: Pro
                 </tbody>
               </table>
               <strong>
-                {t("amountPaid")}: {money(selected.paid)}
+                {msg.operator.amountPaid()}: {money(selected.paid)}
               </strong>
               <p>
-                {t("expectedClose")}: {t("day")} {selected.eta}
+                {msg.operator.expectedClose()}: {msg.operator.day()} {selected.eta}
               </p>
               <p>
-                {t("arrived")}:{" "}
+                {msg.operator.arrived()}:{" "}
                 {selected.arrival
-                  ? t("day") +
+                  ? msg.operator.day() +
                     " " +
                     selected.arrival.day +
-                    (selected.arrival.short ? " · " + t("incompleteOrder") : "")
+                    (selected.arrival.short ? " · " + msg.operator.incompleteOrder() : "")
                   : "—"}
               </p>
             </>
           )}
           <div className="compose-actions">
-            <ActionButton type="submit">
-              {msg.operator.closeDialog({}, { locale: lang })}
-            </ActionButton>
+            <ActionButton type="submit">{msg.operator.closeDialog()}</ActionButton>
           </div>
         </form>
       </dialog>

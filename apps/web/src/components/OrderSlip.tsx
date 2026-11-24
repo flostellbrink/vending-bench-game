@@ -2,9 +2,10 @@ import type { Report } from "games-common/benchmark";
 
 import { useContext } from "react";
 
+import { msg } from "@/dictionary";
 import { commandForMove, priceOrder } from "@/game/commands";
 import { orderEntry, type OrderLine } from "@/game/order-entry";
-import { stationMessages as msg } from "@/localization/station-messages";
+import { orderStatus } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
@@ -15,13 +16,13 @@ import { ProductInput } from "./ProductInput";
 import { useOrderDraft, useQuoteQuantity } from "./QuoteDrafts";
 import "./order-slip.css";
 
-type Shared = Pick<ObservationProps, "state" | "t" | "runCommand" | "disabled"> & {
+type Shared = Pick<ObservationProps, "state" | "runCommand" | "disabled"> & {
   report?: Report;
   supplier: string;
   supplierView?: boolean;
 };
 
-export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView = false }: Shared) {
+export function QuoteRequest({ supplier, runCommand, disabled, supplierView = false }: Shared) {
   const context = useContext(ToolReferenceContext);
   const { qty, change } = useQuoteQuantity(
     supplier,
@@ -41,9 +42,9 @@ export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView =
           );
       }}
     >
-      <h3>{t("supplierQuote")}</h3>
+      <h3>{msg.operator.supplierQuote()}</h3>
       <ControlRow>
-        <Field inline label={t("bundle")}>
+        <Field inline label={msg.operator.bundle()}>
           <QuantityInput required value={qty} onChange={(e) => change(e.currentTarget.value)} />
         </Field>
         <GuiToolInfo verb="check_offers">
@@ -55,14 +56,12 @@ export function QuoteRequest({ supplier, t, runCommand, disabled, supplierView =
 }
 
 type Props = Shared &
-  Pick<ObservationProps, "lang" | "reports" | "money"> & { openReport: (id: number) => void };
+  Pick<ObservationProps, "reports" | "money"> & { openReport: (id: number) => void };
 
 export function OrderSlip({
   report,
   reports,
   state,
-  lang,
-  t,
   money,
   runCommand,
   disabled,
@@ -98,7 +97,6 @@ export function OrderSlip({
   const command = entry.command;
   const estimate = command ? priceOrder(command, state, reports) : null;
   const evidence = estimate?.cost !== undefined ? estimate : null;
-  const langOptions = { locale: lang };
   const manualLines = draft.lines.filter((line) => line.manual || !offered.has(line.product));
   const amend = (line: OrderLine) => {
     const exists = draft.lines.some((item) => item.key === line.key);
@@ -115,18 +113,18 @@ export function OrderSlip({
         { key: crypto.randomUUID(), product: "", quantity: "", manual: true },
       ],
     });
-  const quantityLabel = msg.fields.quantity({}, langOptions);
-  const idLabel = msg.fields.product_id({}, langOptions);
+  const quantityLabel = msg.fields.quantity();
+  const idLabel = msg.fields.product_id();
   const locked = disabled || Boolean(submitted?.terms?.order);
   const invalid =
     entry.error === "duplicate"
-      ? t("duplicateOrderProduct")
+      ? msg.operator.duplicateOrderProduct()
       : entry.error === "incomplete"
-        ? t("incompleteOrderLine")
+        ? msg.operator.incompleteOrderLine()
         : null;
   return (
     <>
-      {!supplierView && <QuoteRequest {...{ report, supplier, state, t, runCommand, disabled }} />}
+      {!supplierView && <QuoteRequest {...{ report, supplier, state, runCommand, disabled }} />}
       <form
         className="order-slip"
         data-reference={rows.length > 0}
@@ -138,26 +136,27 @@ export function OrderSlip({
         }}
       >
         <div className="slip-head">
-          <h3>{t("compose")}</h3>
+          <h3>{msg.operator.compose()}</h3>
           {!supplierView && <b>{supplier}</b>}
         </div>
         {report && terms?.minimum !== undefined && (
           <div className="slip-terms">
             <span>
-              {t("quotedAtQuantity")}: <b>{terms.quantity}</b>
+              {msg.operator.quotedAtQuantity()}: <b>{terms.quantity}</b>
             </span>
             <span>
-              {t("expires")} <b>{terms.until}</b>
+              {msg.operator.expires()} <b>{terms.until}</b>
               {state.day > terms.until && (
-                <strong className="slip-expired"> · {t("expiredOrderReference")}</strong>
+                <strong className="slip-expired"> · {msg.operator.expiredOrderReference()}</strong>
               )}
             </span>
             <span>
-              {t("minimum")} <b>{money(terms.minimum)}</b>
+              {msg.operator.minimum()} <b>{money(terms.minimum)}</b>
             </span>
             {supplierView && (
               <button type="button" className="slip-source" onClick={() => openReport(report.id)}>
-                {t("source")} #{report.id} · {t("day")} {report.day} / {clock(report.minute)}
+                {msg.operator.source()} #{report.id} · {msg.operator.day()} {report.day} /{" "}
+                {clock(report.minute)}
               </button>
             )}
           </div>
@@ -170,22 +169,22 @@ export function OrderSlip({
                 className="receipt-link"
                 onClick={() => openReport(previous.id)}
               >
-                {t("versusQuote")} #{previous.id} · {t("day")} {previous.day}
+                {msg.operator.versusQuote()} #{previous.id} · {msg.operator.day()} {previous.day}
               </button>
             )}
             {newer && (
               <button type="button" className="receipt-link" onClick={() => openReport(newer.id)}>
-                {t("newerQuote")} #{newer.id} · {t("noCharge")}
+                {msg.operator.newerQuote()} #{newer.id} · {msg.operator.noCharge()}
               </button>
             )}
           </div>
         )}
-        <div className="slip-ledger" role="region" aria-label={t("product")} tabIndex={0}>
+        <div className="slip-ledger" role="region" aria-label={msg.operator.product()} tabIndex={0}>
           <table>
             <thead>
               <tr>
                 <th scope="col">{idLabel}</th>
-                {rows.length > 0 && <th scope="col">{t("quotedUnitPrice")}</th>}
+                {rows.length > 0 && <th scope="col">{msg.operator.quotedUnitPrice()}</th>}
                 <th scope="col">{quantityLabel}</th>
               </tr>
             </thead>
@@ -225,7 +224,7 @@ export function OrderSlip({
                   <td>
                     <ProductInput
                       reports={reports}
-                      t={t}
+
                       label={idLabel}
                       value={line.product}
                       readOnly={!line.manual}
@@ -249,7 +248,7 @@ export function OrderSlip({
         </div>
         <div className="order-write">
           <button type="button" className="receipt-link" disabled={locked} onClick={addLine}>
-            {t("addOrderProduct")}
+            {msg.operator.addOrderProduct()}
           </button>
           {submitted?.terms?.order ? (
             <ControlRow>
@@ -261,7 +260,7 @@ export function OrderSlip({
                 {submitted.terms.order} · {money(submitted.terms.paid)}
               </button>
               <span>
-                {t("expectedClose")} {submitted.terms.eta}
+                {msg.operator.expectedClose()} {submitted.terms.eta}
               </span>
               <button
                 type="button"
@@ -269,7 +268,7 @@ export function OrderSlip({
                   save({ lines: [{ key: "manual", manual: true, product: "", quantity: "" }] })
                 }
               >
-                {t("newOrder")}
+                {msg.operator.newOrder()}
               </button>
             </ControlRow>
           ) : (
@@ -278,14 +277,14 @@ export function OrderSlip({
                 <div className="basket-reading" role="status">
                   {evidence ? (
                     <>
-                      {t("quoted")}: <output>{money(evidence.cost)}</output> · {t("afterOrder")}:{" "}
-                      {money(evidence.remaining)}
+                      {msg.operator.quoted()}: <output>{money(evidence.cost)}</output> ·{" "}
+                      {msg.operator.afterOrder()}: {money(evidence.remaining)}
                       {evidence.status === "belowMinimum" || evidence.status === "lowCash" ? (
-                        <small>{t(evidence.status)}</small>
+                        <small>{orderStatus[evidence.status]()}</small>
                       ) : null}
                     </>
                   ) : (
-                    t("orderPriceUnknown")
+                    msg.operator.orderPriceUnknown()
                   )}
                 </div>
               )}

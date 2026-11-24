@@ -38,7 +38,14 @@ await test("each exported page ships only its own localized messages", async () 
         assert.ok(assertValue(nodes[1]).includes('data-checkpoint="scripted-reference:2"'));
         const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]
           .map(([form]) => form)
-          .filter((form) => form.includes('action="/' + locale + '/run/"'));
+          .filter((form) => {
+            const action = form.match(/\baction="([^"]+)"/)?.[1];
+            return (
+              action &&
+              new URL(action, "https://example.test/" + locale + "/").pathname ===
+                "/" + locale + "/run/"
+            );
+          });
         assert.equal(forms.length, 1, "Only the timeline starts a new game");
         const form = assertValue(forms[0]);
         const id = assertValue(form.match(/\bid="([^"]+)"/)?.[1]);

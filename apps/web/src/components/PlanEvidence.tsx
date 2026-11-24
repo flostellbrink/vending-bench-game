@@ -1,7 +1,6 @@
 import type { Report, Snapshot } from "games-common/benchmark";
 
-import type { Translate } from "@/localization/messages";
-
+import { msg } from "@/dictionary";
 import { commandArguments } from "@/game/commands";
 import { clock } from "@/scene/clock";
 
@@ -10,11 +9,10 @@ interface Props {
   reports: Report[];
   state: Snapshot | null;
   openReport: (id: number) => void;
-  t: Translate;
 }
 
 /** Link a proposed service call to the observations that can support it. */
-export function PlanEvidence({ line, reports, state, openReport, t }: Props) {
+export function PlanEvidence({ line, reports, state, openReport }: Props) {
   if (!state) return null;
   let args;
   try {
@@ -38,21 +36,21 @@ export function PlanEvidence({ line, reports, state, openReport, t }: Props) {
   if (!observation && !depotRow) return null;
   return (
     <div className="plan-evidence">
-      <small>{t("seen")}</small>
+      <small>{msg.operator.seen()}</small>
       {observation && (
         <button onClick={() => openReport(observation.id)}>
           {target}
           {observedSlot ? " · " + observedSlot.qty + "/" + (observedSlot.capacity ?? "—") : ""}
           <small>
-            {t("day")} {observation.day} · {clock(observation.minute)}
+            {msg.operator.day()} {observation.day} · {clock(observation.minute)}
           </small>
         </button>
       )}
       {depot && depotRow && (
         <button onClick={() => openReport(depot.id)}>
-          {t("depot")} · {depotRow[3]} × {product}
+          {msg.operator.depot()} · {depotRow[3]} × {product}
           <small>
-            {t("day")} {depot.day} · {clock(depot.minute)}
+            {msg.operator.day()} {depot.day} · {clock(depot.minute)}
           </small>
         </button>
       )}

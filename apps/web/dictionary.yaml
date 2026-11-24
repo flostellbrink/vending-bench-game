@@ -510,11 +510,6 @@ operator:
     ^en: "Refill"
     es: "Reponer"
     de: "Auffüllen"
-  setPrice:
-    .id: SI000006
-    ^en: "Set price"
-    es: "Fijar precio"
-    de: "Preis setzen"
   compose:
     .id: VP000000
     ^en: "Order slip"

@@ -3,6 +3,7 @@ import type { Report } from "games-common/benchmark";
 import { assertValue, first as firstValue } from "games-common/language";
 import { useMemo, useState } from "react";
 
+import { msg } from "@/dictionary";
 import { cabinetLayout } from "@/game/cabinet-layout";
 import { address } from "@/game/commands";
 import { slotChanges } from "@/game/slot-evidence";
@@ -17,7 +18,7 @@ interface Props extends ObservationProps {
   openReport: (id: number) => void;
 }
 export default function CabinetBench(props: Props) {
-  const { report, reports, live, t } = props;
+  const { report, reports, live } = props;
   const readings = useMemo(() => {
     const layout = cabinetLayout(report.rows);
     const stockSources = new Map<string, Report>();
@@ -63,7 +64,7 @@ export default function CabinetBench(props: Props) {
             <b>{slot.machine}</b>
           ) : (
             <ControlSelect
-              aria-label={t("machines")}
+              aria-label={msg.operator.machines()}
               value={slot.machine}
               onChange={(e) => {
                 const firstShelf = assertValue(machines.get(e.target.value)?.values().next().value);

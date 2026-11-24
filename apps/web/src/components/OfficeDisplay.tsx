@@ -2,9 +2,9 @@ import type { Release, Report, Snapshot } from "games-common/benchmark";
 
 import { memo, useState } from "react";
 
-import type { Lang, Translate } from "@/localization/messages";
-
+import { msg } from "@/dictionary";
 import { timing } from "@/game/commands";
+import { useFormatters } from "@/localization/formatters";
 import { commandLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 import { useClock } from "@/scene/useClock";
@@ -14,9 +14,9 @@ import { GuiToolInfo } from "./GuiToolInfo";
 interface Props {
   state: Snapshot | null;
   release: Release;
-  lang: Lang;
+
   reports: Report[];
-  t: Translate;
+
   sceneObject: string | null;
   onOpen: (id: string) => void;
   previewVerb: string;
@@ -26,15 +26,14 @@ interface Props {
 export const OfficeDisplay = memo(function OfficeDisplay({
   state,
   release,
-  lang,
   reports,
-  t,
   sceneObject,
   onOpen,
   previewVerb,
   disabled,
   closeDay,
 }: Props) {
+  const { date: dateFormat } = useFormatters();
   const [armedAt, arm] = useState<number | null>(null);
   const targetTime = state ? state.day * 1440 + state.minute : null;
   const armed = armedAt !== null && armedAt === targetTime;
@@ -46,10 +45,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
   const time = useClock(state, visitEnd);
   const day = Math.floor(time / 1440);
   const date =
-    state?.startDate &&
-    new Intl.DateTimeFormat(lang, { day: "numeric", month: "short", timeZone: "UTC" }).format(
-      Date.parse(state.startDate + "T00:00Z") + day * 86400000,
-    );
+    state?.startDate && dateFormat.format(Date.parse(state.startDate + "T00:00Z") + day * 86400000);
   const estimate = timing(armed ? "wait_for_next_day" : previewVerb, state);
   const shift = state ? state.closes - state.opens : 1;
   const spent = state ? Math.max(0, Math.min(1, ((time % 1440) - state.opens) / shift)) : 0;
@@ -60,7 +56,7 @@ export const OfficeDisplay = memo(function OfficeDisplay({
         <World
           value={time}
           state={state}
-          t={t}
+
           reports={reports}
           sceneObject={sceneObject}
           onOpen={onOpen}
@@ -68,7 +64,9 @@ export const OfficeDisplay = memo(function OfficeDisplay({
       </div>
       <div className="transport">
         <b>
-          {state ? t("day") + " " + Math.min(release.days, day + 1) + " / " + release.days : "—"}
+          {state
+            ? msg.operator.day() + " " + Math.min(release.days, day + 1) + " / " + release.days
+            : "—"}
         </b>
         <span>{date}</span>
         {state && (
@@ -92,8 +90,8 @@ export const OfficeDisplay = memo(function OfficeDisplay({
             title={
               state
                 ? (state.day === state.days
-                    ? t("endRun")
-                    : commandLabel("wait_for_next_day", lang)) +
+                    ? msg.operator.endRun()
+                    : commandLabel("wait_for_next_day")) +
                   " · " +
                   (state.closes - state.minute) +
                   " min"
@@ -118,8 +116,8 @@ export const OfficeDisplay = memo(function OfficeDisplay({
             }}
           >
             <span className="clock-label">
-              <span aria-hidden={armed}>{commandLabel("wait_for_next_day", lang)}</span>
-              <span aria-hidden={!armed}>{t("confirmClose")}</span>
+              <span aria-hidden={armed}>{commandLabel("wait_for_next_day")}</span>
+              <span aria-hidden={!armed}>{msg.operator.confirmClose()}</span>
             </span>
           </button>
         </GuiToolInfo>

@@ -1,7 +1,9 @@
 import { Fragment, useState, useMemo } from "react";
 
+import { msg } from "@/dictionary";
 import { commandForMove } from "@/game/commands";
 import { displayCell } from "@/game/reports";
+import { useFormatters } from "@/localization/formatters";
 import { fieldLabel } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
@@ -11,18 +13,10 @@ import { GuiToolInfo } from "./GuiToolInfo";
 import { StorageBatches } from "./StorageBatches";
 type Props = Pick<
   ObservationProps,
-  "report" | "reports" | "t" | "lang" | "money" | "state" | "runCommand" | "disabled"
+  "report" | "reports" | "money" | "state" | "runCommand" | "disabled"
 > & { openReport: (id: number) => void };
-export function ReportGrid({
-  report,
-  reports,
-  t,
-  lang,
-  money,
-  runCommand,
-  disabled,
-  openReport,
-}: Props) {
+export function ReportGrid({ report, reports, money, runCommand, disabled, openReport }: Props) {
+  const { collator } = useFormatters();
   const [sort, setSort] = useState<{ index: number; dir: number } | null>(null);
   const command = report.tool === "list_emails" ? "read_email" : null;
   const dailySales = report.tool === "get_sales_report" && report.columns[0] === "day";
@@ -55,10 +49,10 @@ export function ReportGrid({
       const difference =
         typeof first === "number" && typeof second === "number"
           ? first - second
-          : String(first).localeCompare(String(second), lang, { numeric: true });
+          : collator.compare(String(first), String(second));
       return difference * sort.dir;
     });
-  }, [report, sort, lang]);
+  }, [report, sort, collator]);
   return (
     <table className="observation-grid" data-report={report.tool}>
       <thead>
@@ -71,11 +65,11 @@ export function ReportGrid({
               aria-sort={sort?.index === i ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
             >
               <button onClick={() => setSort({ index: i, dir: sort?.index === i ? -sort.dir : 1 })}>
-                {fieldLabel(c, lang)} {sort?.index === i && (sort.dir === 1 ? "↑" : "↓")}
+                {fieldLabel(c)} {sort?.index === i && (sort.dir === 1 ? "↑" : "↓")}
               </button>
             </th>
           ))}
-          {command && <th>{t("read")}</th>}
+          {command && <th>{msg.operator.read()}</th>}
         </tr>
       </thead>
       <tbody>
@@ -90,7 +84,9 @@ export function ReportGrid({
                       <button
                         className="receipt-link"
                         aria-expanded={evidenceDay === Number(c)}
-                        aria-label={t("serviceReceipts") + " · " + t("day") + " " + c}
+                        aria-label={
+                          msg.operator.serviceReceipts() + " · " + msg.operator.day() + " " + c
+                        }
                         onClick={() => setEvidenceDay(evidenceDay === Number(c) ? null : Number(c))}
                       >
                         {c}
@@ -99,7 +95,7 @@ export function ReportGrid({
                       displayCell(c, report.columns[j], money)
                     )}
                     {j === 1 && report.batches && (
-                      <StorageBatches report={report} product={String(r[0])} lang={lang} />
+                      <StorageBatches report={report} product={String(r[0])} />
                     )}
                   </td>
                 ))}
@@ -107,7 +103,7 @@ export function ReportGrid({
                   <td>
                     {cached !== undefined ? (
                       <button className="receipt-link" onClick={() => openReport(cached)}>
-                        #{cached} · {t("noCharge")}
+                        #{cached} · {msg.operator.noCharge()}
                       </button>
                     ) : (
                       <GuiToolInfo verb={command}>
@@ -126,7 +122,7 @@ export function ReportGrid({
               {dailySales && evidenceDay === Number(r[0]) && (
                 <tr className="sales-evidence">
                   <td colSpan={report.columns.length}>
-                    <strong>{t("serviceReceipts")}</strong>
+                    <strong>{msg.operator.serviceReceipts()}</strong>
                     {service.length ? (
                       service.map((entry) => (
                         <button
@@ -138,7 +134,7 @@ export function ReportGrid({
                         </button>
                       ))
                     ) : (
-                      <span>{t("empty")}</span>
+                      <span>{msg.operator.empty()}</span>
                     )}
                   </td>
                 </tr>

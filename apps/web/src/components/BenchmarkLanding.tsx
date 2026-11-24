@@ -1,11 +1,9 @@
 "use client";
-
 import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
-import type { Locale } from "@/dictionary/runtime";
-
 import { msg } from "@/dictionary";
+import { useCurrency } from "@/localization/formatters";
 import { clock } from "@/scene/clock";
 import Office from "@/scene/Office";
 
@@ -19,28 +17,23 @@ interface Props {
   release: Release;
   setup: ReactElement;
   slot?: string;
-  lang: Locale;
 }
 
-function LandingDesk({ release, setup, lang, slot }: Props) {
-  const options = { locale: lang };
-  const money = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
+function LandingDesk({ release, setup, slot }: Props) {
+  const money = useCurrency(release.currency);
   const leader = release.rivals
     .filter((rival) => rival.kind === "model")
     .toSorted((a, b) => b.score - a.score)[0];
   const source = "https://github.com/ProsusAI/vending-bench/tree/" + release.revision;
-  const labels = { rules: msg.operator.rules, day: msg.operator.day, fee: msg.operator.fee };
   return (
-    <StationFrame lang={lang} revision={release.revision} slot={slot}>
+    <StationFrame revision={release.revision} slot={slot}>
       <div className="desk landing-desk">
         <article className="shell landing-console">
           <div className="landing-intro">
             <h1>
-              {leader?.name
-                ? msg.landing.lead({ model: leader.name }, options)
-                : msg.landing.fallback({}, options)}
+              {leader?.name ? msg.landing.lead({ model: leader.name }) : msg.landing.fallback()}
             </h1>
-            <p>{msg.landing.context({}, options)}</p>
+            <p>{msg.landing.context()}</p>
           </div>
           {setup}
         </article>
@@ -60,31 +53,29 @@ function LandingDesk({ release, setup, lang, slot }: Props) {
           </div>
           <div className="transport landing-conditions">
             <b>
-              {msg.session.term({}, options)}: {release.days}
+              {msg.session.term()}: {release.days}
             </b>
             <span>
               {clock(release.network.opens)}–{clock(release.network.closes)}
             </span>
             <span>
-              {msg.operator.fee({}, options)}: {money.format(release.network.fee)}
+              {msg.operator.fee()}: {money.format(release.network.fee)}
             </span>
           </div>
           <div className="readout landing-readout" tabIndex={0}>
             <OperatorBrief
               release={release}
               state={null}
-              t={(key) => labels[key]({}, options)}
+
               money={(value) => money.format(value)}
             />
-            <a href={source + "/tasks/vending-bench/instruction.md"}>
-              {msg.landing.source({}, options)}
-            </a>
+            <a href={source + "/tasks/vending-bench/instruction.md"}>{msg.landing.source()}</a>
           </div>
         </section>
-        <SaveLibrarySection release={release} lang={lang} slot={slot} />
+        <SaveLibrarySection release={release} slot={slot} />
       </div>
       <footer className="landing-footer">
-        <span>{msg.landing.local({}, options)}</span>
+        <span>{msg.landing.local()}</span>
         <a href={source}>
           {release.version} @ {release.revision.slice(0, 7)}
         </a>
@@ -93,11 +84,10 @@ function LandingDesk({ release, setup, lang, slot }: Props) {
   );
 }
 
-export default function BenchmarkLanding({ lang }: { lang: Locale }) {
+export default function BenchmarkLanding() {
   return (
     <SessionSetup
-      lang={lang}
-      renderPage={(release, setup, slot) => <LandingDesk {...{ release, setup, lang, slot }} />}
+      renderPage={(release, setup, slot) => <LandingDesk {...{ release, setup, slot }} />}
     />
   );
 }

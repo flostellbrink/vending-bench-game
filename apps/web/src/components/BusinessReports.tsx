@@ -2,8 +2,8 @@ import type { Release } from "games-common/benchmark";
 
 import { useId, useState } from "react";
 
+import { msg } from "@/dictionary";
 import { commandForMove } from "@/game/commands";
-import { stationMessages as msg } from "@/localization/station-messages";
 
 import type { ObservationProps } from "./panel-props";
 
@@ -19,7 +19,7 @@ type Props = Omit<ObservationProps, "report"> & {
 };
 
 export function Mailbox(props: Props) {
-  const { reports, t, lang, runCommand, disabled } = props;
+  const { reports, runCommand, disabled } = props;
   const defaults = props.release.toolDefaults.list_emails;
   const [folder, setFolder] = useState<string>(defaults.folder);
   const folders = useId();
@@ -28,7 +28,6 @@ export function Mailbox(props: Props) {
   const [limit, setLimit] = useState(String(defaults.limit));
   const [unread, setUnread] = useState(defaults.unread_only);
   const valid = limit !== "" && Number.isSafeInteger(Number(limit));
-  const options = { locale: lang };
   const report = reports.findLast(
     (r) =>
       r.tool === "list_emails" &&
@@ -54,18 +53,18 @@ export function Mailbox(props: Props) {
           }}
         >
           <ControlRow>
-            <Field label={msg.fields.folder({}, options)}>
+            <Field label={msg.fields.folder()}>
               <ControlInput
                 value={folder}
                 list={folders}
                 onChange={(e) => setFolder(e.currentTarget.value)}
               />
               <datalist id={folders}>
-                <option value="inbox">{msg.operator.incomingMail({}, options)}</option>
-                <option value="sent">{msg.operator.sentMail({}, options)}</option>
+                <option value="inbox">{msg.operator.incomingMail()}</option>
+                <option value="sent">{msg.operator.sentMail()}</option>
               </datalist>
             </Field>
-            <Field label={msg.fields.limit({}, options)}>
+            <Field label={msg.fields.limit()}>
               <ControlInput
                 type="number"
                 step="1"
@@ -74,7 +73,7 @@ export function Mailbox(props: Props) {
                 onChange={(e) => setLimit(e.currentTarget.value)}
               />
             </Field>
-            <Field inline className="report-breakdown" label={msg.fields.unread_only({}, options)}>
+            <Field inline className="report-breakdown" label={msg.fields.unread_only()}>
               <ControlInput
                 type="checkbox"
                 checked={unread}
@@ -94,7 +93,7 @@ export function Mailbox(props: Props) {
           }}
         >
           <ControlRow>
-            <Field label={msg.fields.email_id({}, options)}>
+            <Field label={msg.fields.email_id()}>
               <ControlInput
                 required
                 list={emailIds}
@@ -118,20 +117,19 @@ export function Mailbox(props: Props) {
             </GuiToolInfo>
           </ControlRow>
         </form>
-        <EmailComposer to="" {...{ t, disabled, reports }} send={runCommand} />
+        <EmailComposer to="" {...{ disabled, reports }} send={runCommand} />
       </div>
       {report ? (
         <ObservationView {...props} report={report} />
       ) : (
-        <p>{msg.operator.folderNotChecked({}, options)}</p>
+        <p>{msg.operator.folderNotChecked()}</p>
       )}
     </section>
   );
 }
 
 export function SalesReports(props: Props) {
-  const { state, lang, reports, runCommand, disabled } = props;
-  const options = { locale: lang };
+  const { state, reports, runCommand, disabled } = props;
   const defaults = props.release.toolDefaults.get_sales_report;
   const siteList = useId();
   const [site, setSite] = useState(defaults.location);
@@ -163,11 +161,11 @@ export function SalesReports(props: Props) {
         }}
       >
         <ControlRow>
-          <Field label={msg.fields.location({}, options)}>
+          <Field label={msg.fields.location()}>
             <ControlInput
               list={siteList}
               value={site}
-              placeholder={msg.operator.allSites({}, options)}
+              placeholder={msg.operator.allSites()}
               onChange={(e) => setSite(e.currentTarget.value)}
             />
             <datalist id={siteList}>
@@ -178,7 +176,7 @@ export function SalesReports(props: Props) {
               ))}
             </datalist>
           </Field>
-          <Field label={msg.fields.days({}, options)}>
+          <Field label={msg.fields.days()}>
             <ControlInput
               type="number"
               step="1"
@@ -187,11 +185,7 @@ export function SalesReports(props: Props) {
               onChange={(e) => setDays(e.currentTarget.value)}
             />
           </Field>
-          <Field
-            inline
-            className="report-breakdown"
-            label={msg.operator.productBreakdown({}, options)}
-          >
+          <Field inline className="report-breakdown" label={msg.operator.productBreakdown()}>
             <ControlInput
               type="checkbox"
               checked={byProduct}
@@ -206,7 +200,7 @@ export function SalesReports(props: Props) {
       {report ? (
         <ObservationView {...props} report={report} />
       ) : (
-        <p>{msg.operator.noSalesObservation({}, options)}</p>
+        <p>{msg.operator.noSalesObservation()}</p>
       )}
     </section>
   );

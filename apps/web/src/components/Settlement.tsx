@@ -4,8 +4,9 @@ import { useState } from "react";
 
 import type { ParentBalance } from "@/game/runs";
 import type { Run } from "@/hooks/useCommandLine";
-import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
+import type { Money } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { displayCell } from "@/game/reports";
 import { fieldLabel } from "@/localization/messages";
 import { clock, receiptEnd } from "@/scene/clock";
@@ -22,12 +23,10 @@ interface Props {
   slot: string;
   run: Run;
   release: Release;
-  lang: Lang;
-  t: Translate;
-  screen: ScreenTranslate;
+
   money: Money;
 }
-export function Settlement({ run, release, slot, lang, t, screen, money, parentBalance }: Props) {
+export function Settlement({ run, release, slot, money, parentBalance }: Props) {
   const [day, setDay] = useState<number | null>(null),
     [balanceDay, setBalanceDay] = useState<number | null>(null),
     [receipt, setReceipt] = useState<number | null>(null);
@@ -35,11 +34,11 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
   const selected = reports.find((r) => r.id === receipt);
   const closing = reports.find((r) => r.day === day && r.endDay !== r.day);
   return (
-    <StationFrame lang={lang} revision={release.revision} slot={slot} page="run">
+    <StationFrame revision={release.revision} slot={slot} page="run">
       <div className="dossier settlement-desks">
         <section className="bench-paper">
           <Scorecard
-            {...{ state, rivals, best, lang, t, screen, reports, money, history }}
+            {...{ state, rivals, best, reports, money, history }}
             reviewDay={(d) => {
               setDay(d);
               setReceipt(null);
@@ -50,7 +49,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
             }}
           />
           <BalanceScope
-            {...{ history, rivals, best, parentBalance, release, lang, t }}
+            {...{ history, rivals, best, parentBalance, release }}
             selected={
               balanceDay ??
               (parentBalance ? Math.min(parentBalance.values.length, history.length) - 1 : null)
@@ -64,12 +63,12 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
           {day !== null && (
             <section className="finish-evidence">
               <h2>
-                {t("day")} {day} · {t("results")}
+                {msg.operator.day()} {day} · {msg.operator.results()}
               </h2>
               {closing && state && (
                 <DayStatement
                   report={closing}
-                  {...{ reports, state, t, money }}
+                  {...{ reports, state, money }}
                   openReport={setReceipt}
                 />
               )}
@@ -88,15 +87,15 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
                 #{selected.id} · {selected.line}
               </h2>
               <p>
-                {t("day")} {selected.day} · {clock(selected.minute)} →{" "}
-                {receiptEnd(selected, t("day"))} · {selected.minutes} min
+                {msg.operator.day()} {selected.day} · {clock(selected.minute)} →{" "}
+                {receiptEnd(selected, msg.operator.day())} · {selected.minutes} min
               </p>
               <p>
-                {t("bank")}: {money(selected.openingCash)} → {money(selected.closingCash)}
+                {msg.operator.bank()}: {money(selected.openingCash)} → {money(selected.closingCash)}
               </p>
               {selected.terms?.order && (
                 <p>
-                  {selected.terms.order} · {t("expectedClose")} {selected.terms.eta}
+                  {selected.terms.order} · {msg.operator.expectedClose()} {selected.terms.eta}
                 </p>
               )}
               {selected.rows.length > 0 && (
@@ -105,7 +104,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
                     <tr>
                       {selected.columns.map((column) => (
                         <th scope="col" key={column}>
-                          {fieldLabel(column, lang)}
+                          {fieldLabel(column)}
                         </th>
                       ))}
                     </tr>
@@ -117,11 +116,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
                           <td key={j}>
                             {displayCell(cell, selected.columns[j], money)}
                             {j === 1 && selected.batches && (
-                              <StorageBatches
-                                report={selected}
-                                product={String(row[0])}
-                                lang={lang}
-                              />
+                              <StorageBatches report={selected} product={String(row[0])} />
                             )}
                           </td>
                         ))}
@@ -138,7 +133,7 @@ export function Settlement({ run, release, slot, lang, t, screen, money, parentB
           )}
         </section>
         <aside className="launch-bay">
-          <SessionSetup lang={lang} initialRevision={release.revision} activeSlot={slot} compact />
+          <SessionSetup initialRevision={release.revision} activeSlot={slot} compact />
         </aside>
       </div>
     </StationFrame>

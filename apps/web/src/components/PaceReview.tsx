@@ -2,8 +2,9 @@ import type { PersonalBest, Rival } from "games-common/benchmark";
 
 import { useState } from "react";
 
-import type { Money, Translate } from "@/localization/messages";
+import type { Money } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { largestPaceLoss } from "@/game/pace";
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
   best: PersonalBest | null;
   playerName: string;
   scriptName: string;
-  t: Translate;
+
   money: Money;
   reviewDay: (day: number) => void;
 }
@@ -22,7 +23,6 @@ export function PaceReview({
   best,
   playerName,
   scriptName,
-  t,
   money,
   reviewDay,
 }: Props) {
@@ -32,7 +32,8 @@ export function PaceReview({
     name: r.kind === "script" ? scriptName : (r.name ?? r.source),
     values: r.values ?? [],
   }));
-  if (best) opponents.push({ key: "personal", name: t("previousBest"), values: best.values });
+  if (best)
+    opponents.push({ key: "personal", name: msg.operator.previousBest(), values: best.values });
   const rival = opponents.find((r) => r.key === choice) ?? opponents[0];
   if (!rival || history.length < 2) return null;
   const loss = largestPaceLoss(history, rival.values);
@@ -43,10 +44,10 @@ export function PaceReview({
   return (
     <section className="pace-review">
       <header>
-        <h3>{t("paceReview")}</h3>
+        <h3>{msg.operator.paceReview()}</h3>
         {opponents.length > 1 ? (
           <select
-            aria-label={t("opponent")}
+            aria-label={msg.operator.opponent()}
             value={rival.key}
             onChange={(e) => choose(e.currentTarget.value)}
           >
@@ -63,7 +64,7 @@ export function PaceReview({
       {day > 0 && playerClose !== undefined && rivalClose !== undefined && (
         <div className="pace-checkpoint">
           <span>
-            {t("closing")} · {t("day")} {day}
+            {msg.operator.closing()} · {msg.operator.day()} {day}
           </span>
           <dl>
             <div>
@@ -75,7 +76,7 @@ export function PaceReview({
               <dd>{money(rivalClose)}</dd>
             </div>
             <div>
-              <dt>{t("difference")}</dt>
+              <dt>{msg.operator.difference()}</dt>
               <dd>{signed(playerClose - rivalClose)}</dd>
             </div>
           </dl>
@@ -85,9 +86,9 @@ export function PaceReview({
         <>
           <p>
             <b>
-              {t("day")} {loss.day}
+              {msg.operator.day()} {loss.day}
             </b>{" "}
-            · {t("largestPaceLoss")}: <strong>{money(-loss.difference)}</strong>
+            · {msg.operator.largestPaceLoss()}: <strong>{money(-loss.difference)}</strong>
           </p>
           <div className="pace-pair">
             {[
@@ -101,11 +102,13 @@ export function PaceReview({
             ))}
           </div>
           <button className="receipt-link" onClick={() => reviewDay(loss.day)}>
-            {t("reviewThisDay")}
+            {msg.operator.reviewThisDay()}
           </button>
         </>
       ) : (
-        <p>{t(rival.values.length < 2 ? "noDailyComparison" : "noPaceLoss")}</p>
+        <p>
+          {(rival.values.length < 2 ? msg.operator.noDailyComparison : msg.operator.noPaceLoss)()}
+        </p>
       )}
     </section>
   );

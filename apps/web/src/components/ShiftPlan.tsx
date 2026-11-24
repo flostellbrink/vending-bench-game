@@ -1,8 +1,8 @@
 import type { Snapshot } from "games-common/benchmark";
 
 import type { CommandLine } from "@/hooks/useCommandLine";
-import type { Translate } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { projectPlan } from "@/game/shift-plan";
 import { clock } from "@/scene/clock";
 
@@ -12,10 +12,9 @@ interface Props {
   state: Snapshot;
   shell: CommandLine;
   busy: boolean;
-  t: Translate;
 }
 
-export function ShiftPlan({ state, shell, busy, t }: Props) {
+export function ShiftPlan({ state, shell, busy }: Props) {
   const { steps, editing, dispatchFirst, editStep, removeStep, moveStep } = shell;
   const projected = projectPlan(steps, state);
   const first = projected[0]?.span;
@@ -25,16 +24,16 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
   const last = today.at(-1)?.span;
   const remaining = last && !last.rolls ? state.closes - last.to : 0;
   return (
-    <section className="shift-plan" aria-label={t("shiftPlan")}>
+    <section className="shift-plan" aria-label={msg.operator.shiftPlan()}>
       <header>
-        <b>{t("shiftPlan")}</b>
+        <b>{msg.operator.shiftPlan()}</b>
         <button disabled={busy || state.over || editing !== null} onClick={dispatchFirst}>
-          {t("dispatchNext")}
+          {msg.operator.dispatchNext()}
           {first && " · " + first.minutes + " min"}
         </button>
       </header>
       {available > 0 && (
-        <div className="plan-ruler" aria-label={t("remaining")}>
+        <div className="plan-ruler" aria-label={msg.operator.remaining()}>
           <small>{clock(state.minute)}</small>
           <div className="plan-segments">
             {today.map(({ step, span }, i) => {
@@ -56,11 +55,11 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
       )}
       {tomorrow?.span ? (
         <p className="plan-limit">
-          {t("next")} · {clock(tomorrow.span.from)} <b>{tomorrow.step.verb}</b>
+          {msg.operator.next()} · {clock(tomorrow.span.from)} <b>{tomorrow.step.verb}</b>
         </p>
       ) : (
         <p className="plan-limit">
-          {t("remaining")} · {remaining} min
+          {msg.operator.remaining()} · {remaining} min
         </p>
       )}
       <ol>
@@ -72,27 +71,27 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
                 className="planned-command"
                 onClick={() => editStep(step)}
                 disabled={busy}
-                aria-label={t("editPlan") + ": " + step.line}
+                aria-label={msg.operator.editPlan() + ": " + step.line}
               >
                 {step.line}
               </button>
               <button
                 disabled={busy || index === 0}
-                aria-label={t("planEarlier") + ": " + step.line}
+                aria-label={msg.operator.planEarlier() + ": " + step.line}
                 onClick={() => moveStep(step.id, -1)}
               >
                 ↑
               </button>
               <button
                 disabled={busy || index === steps.length - 1}
-                aria-label={t("planLater") + ": " + step.line}
+                aria-label={msg.operator.planLater() + ": " + step.line}
                 onClick={() => moveStep(step.id, 1)}
               >
                 ↓
               </button>
               <button
                 disabled={busy}
-                aria-label={t("removePlan") + ": " + step.line}
+                aria-label={msg.operator.removePlan() + ": " + step.line}
                 onClick={() => removeStep(step.id)}
               >
                 ×
@@ -100,7 +99,7 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
             </div>
             <small className={span?.rolls ? "plan-boundary" : "plan-time"}>
               {span
-                ? t("day") +
+                ? msg.operator.day() +
                   " " +
                   span.day +
                   " · " +
@@ -108,18 +107,18 @@ export function ShiftPlan({ state, shell, busy, t }: Props) {
                   " → " +
                   (span.rolls
                     ? span.final
-                      ? t("endRun")
-                      : t("day") + " " + (span.day + 1) + " · " + clock(span.to)
+                      ? msg.operator.endRun()
+                      : msg.operator.day() + " " + (span.day + 1) + " · " + clock(span.to)
                     : clock(span.to)) +
                   " · " +
                   span.minutes +
                   " min"
-                : t("afterFinal")}
+                : msg.operator.afterFinal()}
             </small>
             {span?.rolls && (
               <div className="shift-cut">
                 <span>
-                  {clock(state.closes)} · {t("shiftEnds")}
+                  {clock(state.closes)} · {msg.operator.shiftEnds()}
                 </span>
               </div>
             )}

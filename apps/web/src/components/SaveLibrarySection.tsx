@@ -3,8 +3,6 @@ import type { Release, Rival } from "games-common/benchmark";
 
 import { useEffect, useId, useState } from "react";
 
-import type { Locale } from "@/dictionary/runtime";
-
 import { msg } from "@/dictionary";
 import { loadRival } from "@/game/rival-balances";
 import {
@@ -24,12 +22,11 @@ import "./save-tree.css";
 
 export function SaveLibrarySection({
   release,
-  lang,
   slot,
   day,
 }: {
   release: Release;
-  lang: Locale;
+
   slot?: string;
   day?: number;
 }) {
@@ -54,10 +51,9 @@ export function SaveLibrarySection({
   const runs = typeof snapshot === "string" ? readSlotSnapshot(snapshot) : [];
   const [problem, setProblem] = useState(false),
     [sending, setSending] = useState(false);
-  const options = { locale: lang };
   const newForm = useId();
   const resume = (id: string) =>
-    "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot: id });
+    "run/?" + new URLSearchParams({ bench: release.revision, slot: id });
   async function branch(id: string, startDay: number) {
     if (sending || typeof snapshot !== "string") return;
     setSending(true);
@@ -94,22 +90,21 @@ export function SaveLibrarySection({
     <section className="save-console embedded">
       <header>
         <div>
-          <h2>{msg.session.saveTimeline({}, options)}</h2>
+          <h2>{msg.session.saveTimeline()}</h2>
         </div>
         <small>
-          {msg.session.version({}, options)} {release.id} · {msg.session.seed({}, options)}{" "}
-          {release.seed}
+          {msg.session.version()} {release.id} · {msg.session.seed()} {release.seed}
         </small>
       </header>
       {snapshot === unavailable ? (
-        <p role="alert">{msg.session.unavailable({}, options)}</p>
+        <p role="alert">{msg.session.unavailable()}</p>
       ) : (
         <SaveTree
           key={release.revision + ":" + (slot ?? "latest") + ":" + (day ?? "tip")}
           release={release}
           slots={runs}
           closings={closings}
-          lang={lang}
+
           activeSlot={slot}
           initialDay={day}
           newForm={newForm}
@@ -117,9 +112,9 @@ export function SaveLibrarySection({
           branch={branch}
         />
       )}
-      {problem && <p role="alert">{msg.session.branchFailed({}, options)}</p>}
+      {problem && <p role="alert">{msg.session.branchFailed()}</p>}
       <div className="save-console-actions">
-        <form id={newForm} action={"/" + lang + "/run/"} method="get">
+        <form id={newForm} action="run/" method="get">
           <input type="hidden" name="bench" value={release.revision} />
           <input type="hidden" name="slot" value="new" />
         </form>

@@ -2,18 +2,18 @@ import type { Release } from "games-common/benchmark";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
-import type { Locale } from "@/dictionary/runtime";
 import type { RunSlot } from "@/game/runs";
 
 import { msg } from "@/dictionary";
 import { scriptedSlot } from "@/game/runs";
+import { useCurrency } from "@/localization/formatters";
 import { clock } from "@/scene/clock";
 
 interface Props {
   release: Release;
   slots: RunSlot[];
   closings: number[];
-  lang: Locale;
+
   activeSlot?: string;
   initialDay?: number;
   disabled: boolean;
@@ -113,7 +113,6 @@ export default function SaveTree({
   release,
   slots,
   closings,
-  lang,
   activeSlot,
   initialDay,
   disabled,
@@ -122,7 +121,6 @@ export default function SaveTree({
 }: Props) {
   const [choice, setChoice] = useState<string>();
   const box = useRef<HTMLDivElement>(null);
-  const options = { locale: lang };
   const script: Node[] = closings
     .slice(0, release.days - 1)
     .map((cash, i) => ({ source: scriptedSlot, day: i + 2, cash }));
@@ -171,26 +169,25 @@ export default function SaveTree({
   const days = Math.max(1, ...all.map((n) => n.day));
   const width = days * column,
     height = lanes.length * rowHeight;
-  const money = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
-  const dayLabel = (d: number) => msg.session.dayNumber({ day: d }, options);
+  const money = useCurrency(release.currency);
   const title = (node: Node) =>
     node === fresh
-      ? msg.session.newSlot({}, options)
+      ? msg.session.newSlot()
       : [
-          node.source === scriptedSlot && msg.session.scriptReference({}, options),
-          node.result ? msg.session.finished({}, options) : dayLabel(node.day),
+          node.source === scriptedSlot && msg.session.scriptReference(),
+          node.result ? msg.session.finished() : msg.session.dayNumber({ day: node.day }),
           node.cash !== null && money.format(node.cash),
         ]
           .filter(Boolean)
           .join(" · ");
   return (
-    <section className="save-library" aria-label={msg.session.library({}, options)}>
+    <section className="save-library" aria-label={msg.session.library()}>
       <div className="save-scroll" ref={box} onKeyDown={moveFocus}>
         <div className="save-map" style={{ width, minWidth: "100%" }}>
           <div className="save-map-head">
             {Array.from({ length: days }, (_, i) => (
               <span key={i} style={{ left: x(i + 1) }}>
-                {i < release.days ? dayLabel(i + 1) : msg.session.finished({}, options)}
+                {i < release.days ? msg.session.dayNumber({ day: i + 1 }) : msg.session.finished()}
               </span>
             ))}
           </div>
@@ -214,13 +211,11 @@ export default function SaveTree({
                   const style = { left: x(n.day), top: rowHeight / 2, width: 90 };
                   const content =
                     n === fresh ? (
-                      <b>{msg.session.newSlot({}, options)}</b>
+                      <b>{msg.session.newSlot()}</b>
                     ) : (
                       <>
                         <small>
-                          {n.result
-                            ? msg.session.closeLabel({}, options)
-                            : clock(release.network.opens)}
+                          {n.result ? msg.session.closeLabel() : clock(release.network.opens)}
                         </small>
                         <b>{n.cash === null ? "—" : money.format(n.cash)}</b>
                       </>
@@ -269,18 +264,13 @@ export default function SaveTree({
       <div className="save-decision">
         {selected === fresh ? (
           <button type="submit" form={newForm}>
-            {msg.session.start({}, options)}
+            {msg.session.start()}
           </button>
         ) : selected.result ? (
           <a
-            href={
-              "/" +
-              lang +
-              "/run/?" +
-              new URLSearchParams({ bench: release.revision, slot: selected.source })
-            }
+            href={"run/?" + new URLSearchParams({ bench: release.revision, slot: selected.source })}
           >
-            {msg.session.reopen({}, options)}
+            {msg.session.reopen()}
           </a>
         ) : (
           <button
@@ -288,10 +278,12 @@ export default function SaveTree({
             disabled={disabled}
             onClick={() => branch(selected.source, selected.day)}
           >
-            {msg.session.resume({}, options)}
+            {msg.session.resume()}
           </button>
         )}
-        <small aria-live="polite">{selected === fresh ? dayLabel(1) : title(selected)}</small>
+        <small aria-live="polite">
+          {selected === fresh ? msg.session.dayNumber({ day: 1 }) : title(selected)}
+        </small>
       </div>
     </section>
   );

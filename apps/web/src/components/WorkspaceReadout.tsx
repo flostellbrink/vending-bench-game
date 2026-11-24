@@ -1,5 +1,6 @@
 import type { ObservedSupplier } from "@/game/suppliers";
 
+import { msg } from "@/dictionary";
 import { inspectionCommand, type ReadoutContext } from "@/game/readout-route";
 
 import type { WorkspaceProps } from "./Workspace";
@@ -29,9 +30,6 @@ export function WorkspaceReadout({
   nav,
   shell,
   release,
-  lang,
-  t,
-  screen,
   money,
   context,
   suppliers,
@@ -40,7 +38,7 @@ export function WorkspaceReadout({
   const { state, reports } = run;
   const { tab, setTab } = nav;
   const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
-  const controls = { t, lang, money, reports, disabled, runCommand: shell.runCommand };
+  const controls = { money, reports, disabled, runCommand: shell.runCommand };
   if (
     state &&
     (tab === "status" ||
@@ -59,7 +57,6 @@ export function WorkspaceReadout({
         rivals={run.rivals}
         best={run.best}
         release={release}
-        {...{ lang, t }}
         selected={nav.balanceDay}
         setSelected={nav.setBalanceDay}
         showReceipts={(day) => {
@@ -114,16 +111,14 @@ export function WorkspaceReadout({
     ) : tab.startsWith("machine:") ? (
       <UninspectedMachine
         machine={tab.slice(8)}
-        {...{ state, t, lang, reports, disabled, action }}
+        {...{ state, reports, disabled, action }}
         runCommand={shell.runCommand}
       />
     ) : (
       <section className="sheet asset-actions">{action}</section>
     );
     if (tab === "site:depot")
-      return (
-        <DepotStock report={report} action={action} openReport={setTab} {...{ t, lang, money }} />
-      );
+      return <DepotStock report={report} action={action} openReport={setTab} {...{ money }} />;
     return instrument;
   }
   if (state && typeof tab === "string" && tab.startsWith("supplier:")) {
@@ -132,11 +127,7 @@ export function WorkspaceReadout({
     const contact = suppliers.find((entry) => entry.id === supplier);
     const purchases = contact?.orders ?? [];
     const compose = contact?.email && (
-      <EmailComposer
-        to={contact.email}
-        {...{ state, t, disabled, reports }}
-        send={shell.runCommand}
-      />
+      <EmailComposer to={contact.email} {...{ state, disabled, reports }} send={shell.runCommand} />
     );
     return (
       <article className="supplier-desk">
@@ -164,10 +155,10 @@ export function WorkspaceReadout({
         {purchases.length > 0 && (
           <section className="supplier-orders">
             <h3>
-              {t("orders")} <small>{purchases.length}</small>
+              {msg.operator.orders()} <small>{purchases.length}</small>
             </h3>
             <OrderRegister
-              {...{ t, money, reports, lang }}
+              {...{ money, reports }}
               supplier={contact?.name ?? supplier}
               orders={purchases}
             />
@@ -191,7 +182,7 @@ export function WorkspaceReadout({
       />
     );
   if (typeof tab === "string" && tab.startsWith("past:"))
-    return <ReportList reports={context.history} {...{ t, money }} open={setTab} />;
+    return <ReportList reports={context.history} {...{ money }} open={setTab} />;
   if (cmd && state)
     return (
       <section className="sheet">
@@ -203,8 +194,8 @@ export function WorkspaceReadout({
       </section>
     );
   if (tab === "help")
-    return <CommandIndex actions={run.actions} release={release} {...{ state, lang, t }} />;
-  if (tab === "brief") return <OperatorBrief embedded {...{ release, state, t, money }} />;
+    return <CommandIndex actions={run.actions} release={release} {...{ state }} />;
+  if (tab === "brief") return <OperatorBrief embedded {...{ release, state, money }} />;
   if (tab === "scores")
     return (
       <Scorecard
@@ -214,7 +205,7 @@ export function WorkspaceReadout({
           nav.setBalanceDay(day);
           setTab("day:" + day);
         }}
-        {...{ state, lang, t, screen, reports, money }}
+        {...{ state, reports, money }}
         rivals={run.rivals}
         best={run.best}
         openReport={setTab}
@@ -224,7 +215,7 @@ export function WorkspaceReadout({
   return (
     <ReportList
       reports={byDay ? reports.filter((r) => r.day === nav.balanceDay) : reports}
-      {...{ t, money }}
+      {...{ money }}
       open={setTab}
       backToBalance={byDay ? () => setTab("world") : undefined}
     />

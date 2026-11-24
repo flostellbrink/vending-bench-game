@@ -1,31 +1,32 @@
 import type { Report } from "games-common/benchmark";
 
-import type { Money, Translate } from "@/localization/messages";
+import type { Money } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { clock } from "@/scene/clock";
 
 interface Props {
   reports: Report[];
-  t: Translate;
+
   money: Money;
   open: (id: number) => void;
   backToBalance?: () => void;
 }
-export function ReportList({ reports, t, money, open, backToBalance }: Props) {
+export function ReportList({ reports, money, open, backToBalance }: Props) {
   const days = Map.groupBy(reports.toReversed(), (report) => report.day);
   return (
     <div className="sheet journal-sheet">
       {backToBalance && (
         <button className="receipt-link" onClick={backToBalance}>
-          {t("bank")}
+          {msg.operator.bank()}
         </button>
       )}
-      {reports.length === 0 && <p>{t("empty")}</p>}
+      {reports.length === 0 && <p>{msg.operator.empty()}</p>}
       {Array.from(days, ([day, entries]) => (
         <section className="journal-day" key={day}>
           {!backToBalance && (
             <h3>
-              {t("day")} {day}
+              {msg.operator.day()} {day}
             </h3>
           )}
           {entries.map((r) => (

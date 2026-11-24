@@ -2,8 +2,8 @@ import type { Snapshot } from "games-common/benchmark";
 import type { KeyboardEvent, ReactNode } from "react";
 
 import type { ObservedSupplier } from "@/game/suppliers";
-import type { Translate } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { address } from "@/game/commands";
 
 import "./object-navigator.css";
@@ -11,7 +11,7 @@ import "./object-navigator.css";
 interface Props {
   state: Snapshot | null;
   suppliers: ObservedSupplier[];
-  t: Translate;
+
   value: string;
   onOpen: (id: string) => void;
 }
@@ -47,37 +47,37 @@ function navigate(event: KeyboardEvent<HTMLElement>) {
   next?.focus();
 }
 
-export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
+export function ObjectNavigator({ state, suppliers, value, onOpen }: Props) {
   const items: Destination[] = [
     {
       id: "world",
-      label: t("bank"),
+      label: msg.operator.bank(),
       children: [
-        { id: "status", label: t("status") },
-        { id: "payments", label: t("payments") },
+        { id: "status", label: msg.operator.status() },
+        { id: "payments", label: msg.operator.payments() },
       ],
     },
-    { id: "scores", label: t("standings") },
+    { id: "scores", label: msg.operator.standings() },
     {
       id: "site:depot",
-      label: t("depot"),
+      label: msg.operator.depot(),
       children: [
-        { id: "machines", label: t("allMachines") },
+        { id: "machines", label: msg.operator.allMachines() },
         ...(state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? []),
       ],
     },
     {
       id: "suppliers",
-      label: t("supply"),
+      label: msg.operator.supply(),
       children: suppliers.map((s) => ({ id: "supplier:" + s.id, label: s.name })),
     },
-    { id: "mail", label: t("mailbox") },
-    { id: "sales", label: t("revenue") },
-    { id: "marketing", label: t("marketing") },
-    { id: "notes", label: t("notes") },
-    { id: "reminders", label: t("reminders") },
-    { id: "brief", label: t("rules") },
-    { id: "help", label: t("help") },
+    { id: "mail", label: msg.operator.mailbox() },
+    { id: "sales", label: msg.operator.revenue() },
+    { id: "marketing", label: msg.operator.marketing() },
+    { id: "notes", label: msg.operator.notes() },
+    { id: "reminders", label: msg.operator.reminders() },
+    { id: "brief", label: msg.operator.rules() },
+    { id: "help", label: msg.operator.help() },
   ];
   function render(nodes: Destination[], prefix = ""): ReactNode {
     return (
@@ -116,7 +116,11 @@ export function ObjectNavigator({ state, suppliers, t, value, onOpen }: Props) {
     );
   }
   return (
-    <nav className="object-tree object-directory" aria-label={t("network")} onKeyDown={navigate}>
+    <nav
+      className="object-tree object-directory"
+      aria-label={msg.operator.network()}
+      onKeyDown={navigate}
+    >
       {render(items)}
     </nav>
   );

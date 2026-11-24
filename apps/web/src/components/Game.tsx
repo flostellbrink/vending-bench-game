@@ -4,8 +4,6 @@ import type { Release } from "games-common/benchmark";
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import type { Lang } from "@/localization/messages";
-
 import { msg } from "@/dictionary";
 import { releases } from "@/game/releases";
 import {
@@ -18,25 +16,25 @@ import {
 } from "@/game/runs";
 
 import { Station } from "./Station";
-export default function Game({ lang }: { lang: Lang }) {
+export default function Game() {
   return (
     <Suspense fallback={<main className="run-loading">VENDIX/OS</main>}>
-      <ActiveRun lang={lang} />
+      <ActiveRun />
     </Suspense>
   );
 }
 
-function ActiveRun({ lang }: { lang: Lang }) {
+function ActiveRun() {
   const query = useSearchParams();
   const revision = query.get("bench");
   const slot = query.get("slot") ?? legacySlot;
   const release = releases.find((entry) => entry.revision === revision);
-  if (!release) redirect("/" + lang + "/");
-  if (slot === "new") return <OpenNewRun lang={lang} release={release} />;
-  return <SavedRun lang={lang} release={release} slot={slot} />;
+  if (!release) redirect("../");
+  if (slot === "new") return <OpenNewRun release={release} />;
+  return <SavedRun release={release} slot={slot} />;
 }
 
-function OpenNewRun({ lang, release }: { lang: Lang; release: Release }) {
+function OpenNewRun({ release }: { release: Release }) {
   const started = useRef(false),
     [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -49,17 +47,16 @@ function OpenNewRun({ lang, release }: { lang: Lang; release: Release }) {
         window.history.replaceState(
           null,
           "",
-          "/" + lang + "/run/?" + new URLSearchParams({ bench: release.revision, slot }),
+          "?" + new URLSearchParams({ bench: release.revision, slot }),
         );
       })
       .catch(() => setFailed(true));
-  }, [release, lang]);
+  }, [release]);
   return (
     <main className="run-loading">
       {failed ? (
         <p role="alert">
-          {msg.session.unavailable({}, { locale: lang })}{" "}
-          <a href={"/" + lang + "/"}>{msg.session.choose({}, { locale: lang })}</a>
+          {msg.session.unavailable()} <a href="../">{msg.session.choose()}</a>
         </p>
       ) : (
         "VENDIX/OS"
@@ -68,7 +65,7 @@ function OpenNewRun({ lang, release }: { lang: Lang; release: Release }) {
   );
 }
 
-function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot: string }) {
+function SavedRun({ release, slot }: { release: Release; slot: string }) {
   const snapshot = useSyncExternalStore(
     subscribe,
     () => {
@@ -84,7 +81,7 @@ function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot:
   if (snapshot === undefined) return <main className="run-loading">VENDIX/OS</main>;
   const slots = readSlotSnapshot(snapshot);
   const index = slots.findIndex((run) => run.id === slot);
-  if (index < 0) redirect("/" + lang + "/");
+  if (index < 0) redirect("../");
   const parentId = slots[index]?.parent?.slot;
   const parentIndex = slots.findIndex((run) => run.id === parentId);
   const parent = slots[parentIndex];
@@ -99,7 +96,7 @@ function SavedRun({ lang, release, slot }: { lang: Lang; release: Release; slot:
           ? { values: recordedClosings(parent) }
           : undefined
       }
-      lang={lang}
+
       changeLang={(l) => {
         localStorage.language = l;
         window.location.assign("/" + l + "/run/" + location.search + location.hash);

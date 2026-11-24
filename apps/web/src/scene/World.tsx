@@ -3,6 +3,7 @@ import type { Report, Snapshot } from "games-common/benchmark";
 import { msPerDay, type Optional } from "games-common/language";
 import { useMemo, type CSSProperties } from "react";
 
+import { msg } from "@/dictionary";
 import { address, moveDestination } from "@/game/commands";
 import { weatherObservations } from "@/game/reports";
 
@@ -16,7 +17,7 @@ import { minutesPerDay } from "./useClock";
 interface WorldProps {
   value: number;
   state: Optional<Snapshot>;
-  t: (key: "depot") => string;
+
   reports: readonly Report[];
   sceneObject: Optional<string>;
   onOpen: (id: string) => void;
@@ -60,8 +61,8 @@ function daylight(value: number, startDate: string): number {
 }
 
 /** Show the addressed site and its last observed inventory without spending simulated time. */
-export function World({ value, state, t, reports, sceneObject, onOpen }: WorldProps) {
-  const depot = { id: "depot", name: t("depot") };
+export function World({ value, state, reports, sceneObject, onOpen }: WorldProps) {
+  const depot = { id: "depot", name: msg.operator.depot() };
   const sites = [...(state?.sites ?? []).map((s) => ({ id: address(s.id), name: s.name })), depot];
   const closes = state?.closes ?? 0;
   const cabinets = useMemo(() => cabinetObservations(reports, closes), [reports, closes]);

@@ -1,7 +1,8 @@
 import type { Report } from "games-common/benchmark";
 
 import type { View } from "@/hooks/useNavigation";
-import type { OperatorLabel } from "@/localization/messages";
+
+import { msg } from "@/dictionary";
 
 import { address, commandForMove } from "./commands.ts";
 import { belongsTo, recordObject } from "./report-object";
@@ -12,21 +13,21 @@ const tools: Record<string, string> = {
   sales: "get_sales_report",
   "site:depot": "get_storage_inventory",
 };
-const labels: Partial<Record<string, OperatorLabel>> = {
-  world: "bank",
-  status: "status",
-  payments: "payments",
-  machines: "allMachines",
-  marketing: "marketing",
-  notes: "notes",
-  reminders: "reminders",
-  help: "help",
-  scores: "standings",
-  brief: "rules",
-  mail: "mailbox",
-  suppliers: "supply",
-  "site:depot": "depot",
-  sales: "revenue",
+const labels: Partial<Record<string, typeof msg.operator.history>> = {
+  world: msg.operator.bank,
+  status: msg.operator.status,
+  payments: msg.operator.payments,
+  machines: msg.operator.allMachines,
+  marketing: msg.operator.marketing,
+  notes: msg.operator.notes,
+  reminders: msg.operator.reminders,
+  help: msg.operator.help,
+  scores: msg.operator.standings,
+  brief: msg.operator.rules,
+  mail: msg.operator.mailbox,
+  suppliers: msg.operator.supply,
+  "site:depot": msg.operator.depot,
+  sales: msg.operator.revenue,
 };
 
 export function readoutContext(tab: View, reports: Report[]) {
@@ -57,7 +58,7 @@ export function readoutContext(tab: View, reports: Report[]) {
       : typeof tab === "number"
         ? selected?.line
         : undefined;
-  return { selected, object, history, name, label: labels[objectKey] ?? "history" };
+  return { selected, object, history, name, label: labels[objectKey] ?? msg.operator.history };
 }
 export type ReadoutContext = ReturnType<typeof readoutContext>;
 

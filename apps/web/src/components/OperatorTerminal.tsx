@@ -6,30 +6,28 @@ import type { CommandLine, Run } from "@/hooks/useCommandLine";
 
 import { msg } from "@/dictionary";
 import { syntax, toolFor } from "@/game/commands";
-import { timeLabel } from "@/game/time-label";
-import {
-  commandLabel,
-  type Lang,
-  type Money,
-  type ScreenTranslate,
-  type Translate,
-} from "@/localization/messages";
+import { useTimeLabel } from "@/game/time-label";
+import { orderStatus } from "@/localization/messages";
+import { commandLabel, type Money } from "@/localization/messages";
 import { clock } from "@/scene/clock";
 
 import { PlanEvidence } from "./PlanEvidence";
 import { Receipts } from "./Receipts";
 import { ShiftPlan } from "./ShiftPlan";
+const bootStages = {
+  runtime: msg.operator.runtime,
+  mount: msg.operator.mount,
+  ready: msg.operator.ready,
+};
 interface Props {
   release: Release;
-  lang: Lang;
-  t: Translate;
-  screen: ScreenTranslate;
+
   money: Money;
   run: Run;
   shell: CommandLine;
   setTab: (id: number | "help") => void;
 }
-export function OperatorTerminal({ release, lang, t, screen, money, run, shell, setTab }: Props) {
+export function OperatorTerminal({ release, money, run, shell, setTab }: Props) {
   const { busy, boot, lines, error, saveIssue, reports, state } = run;
   const {
     browse,
@@ -45,7 +43,8 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
     keys,
     orderEstimate,
   } = shell;
-  const estimate = timeLabel(verb, state, t),
+  const timeLabel = useTimeLabel();
+  const estimate = timeLabel(verb, state),
     log = useRef<HTMLDivElement>(null),
     follow = useRef(true);
   const observations = useMemo(() => {
@@ -70,7 +69,7 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
   return (
     <aside className="shell">
       <header>
-        <b>{t("terminal")}</b>
+        <b>{msg.operator.terminal()}</b>
         <span className={"lamp" + (busy ? " working" : "")}>TTY / 01</span>
       </header>
       <div
@@ -98,29 +97,28 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
  '-------'`}</pre>
             <div role="status">
               {boot.map((stage) => (
-                <div key={stage}>{t(stage)}</div>
+                <div key={stage}>{bootStages[stage]()}</div>
               ))}
             </div>
           </div>
         )}
         {!lines.length && (
           <>
-            <p>{msg.operator.objective({ days: release.days }, { locale: lang })}</p>
-            {!release.rivals.some((r) => r.kind === "model") && <p>{t("noRivals")}</p>}
-            <p>{t("hint")}</p>
+            <p>{msg.operator.objective({ days: release.days })}</p>
+            {!release.rivals.some((r) => r.kind === "model") && <p>{msg.operator.noRivals()}</p>}
+            <p>{msg.operator.hint()}</p>
           </>
         )}
-        <Receipts lines={lines} lang={lang} openReport={setTab} money={money} />
+        <Receipts lines={lines} openReport={setTab} money={money} />
       </div>
       <div className="input-zone">
-        {state && shell.steps.length > 0 && <ShiftPlan {...{ state, shell, busy, t }} />}
+        {state && shell.steps.length > 0 && <ShiftPlan {...{ state, shell, busy }} />}
         {state && shell.steps.length > 0 && (
           <PlanEvidence
             line={shell.line || shell.steps[0]?.line || ""}
             reports={reports}
             state={state}
             openReport={setTab}
-            t={t}
           />
         )}
         {browse && choices.length > 0 && (
@@ -138,12 +136,12 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
                       "/" +
                       (observations[s].capacity ?? "—") +
                       " · " +
-                      t("day") +
+                      msg.operator.day() +
                       " " +
                       observations[s].day +
                       " " +
                       clock(observations[s].minute)
-                    : commandLabel(toolFor(s), lang)}
+                    : commandLabel(toolFor(s))}
                 </small>
               </button>
             ))}
@@ -155,31 +153,36 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
               {syntax(verb, run.actions)} · {estimate}
             </small>
             {!state?.over && (
-              <button onClick={shell.stage} disabled={busy} title={"Ctrl+Enter · " + t("noCharge")}>
-                {shell.editing === null ? t("addPlan") : t("savePlan")}
+              <button
+                onClick={shell.stage}
+                disabled={busy}
+                title={"Ctrl+Enter · " + msg.operator.noCharge()}
+              >
+                {shell.editing === null ? msg.operator.addPlan() : msg.operator.savePlan()}
               </button>
             )}
           </div>
         )}
         {shell.editing !== null && (
           <div className="plan-edit">
-            <small>{t("editPlan")} · Enter / Esc</small>
-            <button onClick={shell.cancelEdit}>{t("cancelPlan")}</button>
+            <small>{msg.operator.editPlan()} · Enter / Esc</small>
+            <button onClick={shell.cancelEdit}>{msg.operator.cancelPlan()}</button>
           </div>
         )}
         {orderEstimate && (
           <div className="order-estimate">
-            <b>{t(orderEstimate.status)}</b>
+            <b>{orderStatus[orderEstimate.status]()}</b>
             {orderEstimate.cost != null && (
               <>
                 {" "}
-                · {money(orderEstimate.cost)} · {t("afterOrder")}: {money(orderEstimate.remaining)}
+                · {money(orderEstimate.cost)} · {msg.operator.afterOrder()}:{" "}
+                {money(orderEstimate.remaining)}
               </>
             )}
             {orderEstimate.status === "belowMinimum" && (
               <>
                 {" "}
-                · {t("shortBy")}: {money(orderEstimate.minimum - orderEstimate.cost)}
+                · {msg.operator.shortBy()}: {money(orderEstimate.minimum - orderEstimate.cost)}
               </>
             )}
           </div>
@@ -188,10 +191,14 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
         {run.runtimeError && (
           <div role="alert">
             <p>{run.runtimeError}</p>
-            <button onClick={() => location.reload()}>{t("resumeSavedRun")}</button>
+            <button onClick={() => location.reload()}>{msg.operator.resumeSavedRun()}</button>
           </div>
         )}
-        {saveIssue && <p role="alert">{t(saveIssue)}</p>}
+        {saveIssue && (
+          <p role="alert">
+            {(saveIssue === "saveConflict" ? msg.operator.saveConflict : msg.operator.saveFailed)()}
+          </p>
+        )}
         <div className="command-line">
           <span aria-hidden="true">›</span>
           <textarea
@@ -201,8 +208,8 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
             disabled={Boolean(run.runtimeError)}
             ref={prompt}
             value={line}
-            aria-label={t("query")}
-            aria-description={t("hint")}
+            aria-label={msg.operator.query()}
+            aria-description={msg.operator.hint()}
             enterKeyHint="send"
             autoComplete="off"
             spellCheck="false"
@@ -216,11 +223,16 @@ export function OperatorTerminal({ release, lang, t, screen, money, run, shell, 
       <div className="terminal-keys">
         <small>
           {busy
-            ? screen("loading")
-            : "Tab " + t("completeKey") + " · Enter " + t("execute") + " · ↑ " + t("history")}
+            ? msg.screen.loading()
+            : "Tab " +
+              msg.operator.completeKey() +
+              " · Enter " +
+              msg.operator.execute() +
+              " · ↑ " +
+              msg.operator.history()}
         </small>
         <button type="button" className="terminal-manual-link" onClick={() => setTab("help")}>
-          {t("help")}
+          {msg.operator.help()}
         </button>
       </div>
     </aside>

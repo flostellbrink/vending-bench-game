@@ -2,6 +2,7 @@ import type { Release } from "games-common/benchmark";
 
 import { useRef, useState, type KeyboardEvent } from "react";
 
+import { msg } from "@/dictionary";
 import {
   commandForMove,
   completions,
@@ -11,20 +12,16 @@ import {
   syntax,
 } from "@/game/commands";
 import { remainingPlan, type PlannedCommand } from "@/game/shift-plan";
-import { timeLabel } from "@/game/time-label";
+import { useTimeLabel } from "@/game/time-label";
 import { toolDefaults } from "@/game/tool-defaults";
-import { type ScreenTranslate, type Translate } from "@/localization/messages";
 
 import type { Navigation } from "./useNavigation";
 import type { useRun } from "./useRun";
 export type Run = ReturnType<typeof useRun>;
-export function useCommandLine(
-  run: Run,
-  nav: Navigation,
-  release: Release,
-  t: Translate,
-  screen: ScreenTranslate,
-) {
+export function useCommandLine(run: Run, nav: Navigation, release: Release) {
+  const timeLabel = useTimeLabel();
+  const defaultsLabel = msg.operator.defaults();
+  const completeLabel = msg.screen.complete();
   const [line, setLine] = useState(""),
     [caret, setCaret] = useState(0),
     [browse, setBrowse] = useState(false),
@@ -129,8 +126,8 @@ export function useCommandLine(
         ? [
             syntax(topic, actions),
             release.tools[topic],
-            timeLabel(topic, state, t),
-            defaults && t("defaults") + ": " + defaults,
+            timeLabel(topic, state),
+            defaults && defaultsLabel + ": " + defaults,
           ]
             .filter(Boolean)
             .join("\n")
@@ -140,7 +137,7 @@ export function useCommandLine(
       return;
     }
     if (state.over) {
-      run.setError(screen("complete"));
+      run.setError(completeLabel);
       return;
     }
     try {

@@ -5,7 +5,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { ParentBalance } from "@/game/runs";
 import type { CommandLine, Run } from "@/hooks/useCommandLine";
 import type { Navigation } from "@/hooks/useNavigation";
-import type { Lang, Money, ScreenTranslate, Translate } from "@/localization/messages";
+import type { Money } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
 import { readoutContext } from "@/game/readout-route";
@@ -23,18 +23,16 @@ export interface WorkspaceProps {
   nav: Navigation;
   shell: CommandLine;
   release: Release;
-  lang: Lang;
-  t: Translate;
-  screen: ScreenTranslate;
+
   money: Money;
   parentBalance?: ParentBalance;
 }
 
 export function Workspace(props: WorkspaceProps) {
-  const { run, nav, shell, release, lang, t } = props;
+  const { run, nav, shell, release } = props;
   const toolReference = useMemo(
-    () => ({ release, lang, state: run.state, actions: run.actions, t }),
-    [release, lang, run.state, run.actions, t],
+    () => ({ release, state: run.state, actions: run.actions }),
+    [release, run.state, run.actions],
   );
   const [preview, setPreview] = useState("");
   const context = useMemo(() => readoutContext(nav.tab, run.reports), [nav.tab, run.reports]);
@@ -53,7 +51,7 @@ export function Workspace(props: WorkspaceProps) {
     directory.current?.showModal();
     directory.current?.querySelector<HTMLButtonElement>("button[aria-current]")?.focus();
   }, [directoryOpen]);
-  const sections = msg.operator.sections({}, { locale: lang });
+  const sections = msg.operator.sections();
   useEffect(() => {
     const station = directory.current?.closest<HTMLElement>(".station");
     const phone = matchMedia("(max-width: 600px)");
@@ -74,22 +72,23 @@ export function Workspace(props: WorkspaceProps) {
       station.style.removeProperty("--phone-height");
     };
   }, []);
-  const directoryProps = { state: run.state, suppliers, t, value: context.object };
+  const directoryProps = { state: run.state, suppliers, value: context.object };
   const key = String(nav.tab);
   const parent = key.startsWith("supplier:")
-    ? { id: "suppliers", label: t("supply") }
+    ? { id: "suppliers", label: msg.operator.supply() }
     : key === "machines" || key.startsWith("machine:")
-      ? { id: "site:depot", label: t("depot") }
+      ? { id: "site:depot", label: msg.operator.depot() }
       : key === "status" || key === "payments"
-        ? { id: "world", label: t("bank") }
+        ? { id: "world", label: msg.operator.bank() }
         : null;
   const supplier = context.object.startsWith("supplier:")
     ? suppliers.find((entry) => entry.id === context.object.slice(9))
     : undefined;
-  let title = context.name ?? t(context.label);
+  let title = context.name ?? context.label();
   if (typeof nav.tab === "string" && supplier) title = supplier.name;
-  if (key.startsWith("day:")) title = t("results") + " · " + t("day") + " " + key.slice(4);
-  if (key.startsWith("past:")) title = t("history") + " · " + title;
+  if (key.startsWith("day:"))
+    title = msg.operator.results() + " · " + msg.operator.day() + " " + key.slice(4);
+  if (key.startsWith("past:")) title = msg.operator.history() + " · " + title;
   function previewFor(target: EventTarget | null) {
     const button = target instanceof Element ? target.closest("[data-clock-verb]") : null;
     setPreview(button?.getAttribute("data-clock-verb") ?? "");
@@ -106,9 +105,8 @@ export function Workspace(props: WorkspaceProps) {
         <OfficeDisplay
           state={run.state}
           release={release}
-          lang={lang}
+
           reports={run.reports}
-          t={t}
           disabled={run.busy || Boolean(run.runtimeError)}
           closeDay={() => shell.runCommand("wait_for_next_day")}
           previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
@@ -149,7 +147,7 @@ export function Workspace(props: WorkspaceProps) {
           )}
           {context.history.length > 0 && !String(nav.tab).startsWith("past:") && (
             <button className="history-key" onClick={() => nav.setTab("past:" + context.object)}>
-              {t("history")} ({context.history.length})
+              {msg.operator.history()} ({context.history.length})
             </button>
           )}
         </div>
@@ -167,7 +165,7 @@ export function Workspace(props: WorkspaceProps) {
             <h2>{sections}</h2>
             <button
               type="button"
-              aria-label={msg.operator.closeSections({}, { locale: lang })}
+              aria-label={msg.operator.closeSections()}
               onClick={() => directory.current?.close()}
             >
               ×

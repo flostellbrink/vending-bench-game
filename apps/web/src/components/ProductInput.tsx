@@ -3,8 +3,7 @@ import type { Report } from "games-common/benchmark";
 import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 
-import type { Translate } from "@/localization/messages";
-
+import { msg } from "@/dictionary";
 import { observedProducts, type ObservedProduct } from "@/game/observed-products";
 import { clock } from "@/scene/clock";
 
@@ -16,7 +15,7 @@ interface Props {
   value: string;
   onChange: (id: string) => void;
   label: string;
-  t: Translate;
+
   disabled?: boolean;
   readOnly?: boolean;
   preferSize?: string;
@@ -26,7 +25,6 @@ export function ProductInput({
   value,
   onChange,
   label,
-  t,
   disabled,
   readOnly,
   preferSize,
@@ -165,8 +163,8 @@ export function ProductInput({
                   {p.name && <span>{p.name}</span>}
                   {p.depot && (
                     <small>
-                      {t("depot")} · {p.depot.quantity}
-                      {p.size && " · " + p.size} · {t("day")} {p.depot.day} /{" "}
+                      {msg.operator.depot()} · {p.depot.quantity}
+                      {p.size && " · " + p.size} · {msg.operator.day()} {p.depot.day} /{" "}
                       {clock(p.depot.minute)} · #{p.depot.receipt}
                     </small>
                   )}
@@ -174,7 +172,9 @@ export function ProductInput({
               ))}
             </ul>
             {!choices.length && (
-              <p role="status">{t(all.length ? "noMatchingProducts" : "noObservedProducts")}</p>
+              <p role="status">
+                {(all.length ? msg.operator.noMatchingProducts : msg.operator.noObservedProducts)()}
+              </p>
             )}
           </div>,
           document.body,

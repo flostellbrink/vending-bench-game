@@ -3,13 +3,14 @@ import type { ReactNode } from "react";
 
 import type { Money } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { clock } from "@/scene/clock";
 
 interface Props {
   embedded?: boolean;
   release: Release;
   state: Snapshot | null;
-  t: (key: "rules" | "day" | "fee") => string;
+
   money: Money;
 }
 function inline(text: string) {
@@ -44,18 +45,18 @@ function briefBody(source: string) {
   }
   return sections;
 }
-export function OperatorBrief({ release, state, t, money, embedded }: Props) {
+export function OperatorBrief({ release, state, money, embedded }: Props) {
   return (
     <section className="sheet brief">
       {!embedded && (
         <h2>
-          {t("rules")} · {release.id}
+          {msg.operator.rules()} · {release.id}
         </h2>
       )}
       {state && (
         <p>
-          {t("day")} {state.days} · {clock(state.opens)}–{clock(state.closes)} · {t("fee")}{" "}
-          {money(state.fee)}
+          {msg.operator.day()} {state.days} · {clock(state.opens)}–{clock(state.closes)} ·{" "}
+          {msg.operator.fee()} {money(state.fee)}
         </p>
       )}
       <div lang="en">{briefBody(release.brief)}</div>

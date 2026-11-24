@@ -3,24 +3,22 @@ import { memo, useState } from "react";
 import type { LogLine } from "@/hooks/useRun";
 import type { Money } from "@/localization/messages";
 
+import { msg } from "@/dictionary";
 import { opensInstrument } from "@/game/receipt-routing";
-import { translate, type Lang } from "@/localization/messages";
-import { stationMessages as msg } from "@/localization/station-messages";
 import { clock, receiptEnd } from "@/scene/clock";
 export const Receipts = memo(function Receipts({
   lines,
-  lang,
   openReport,
   money,
 }: {
   lines: LogLine[];
-  lang: Lang;
+
   openReport: (id: number) => void;
   money: Money;
 }) {
   const [peek, setPeek] = useState<number | null>(null);
-  const day = translate(msg.operator.day, lang),
-    result = translate(msg.operator.results, lang);
+  const day = msg.operator.day(),
+    result = msg.operator.results();
   return lines.map((r) => (
     <div className="receipt" key={r.id}>
       <small>
@@ -41,7 +39,7 @@ export const Receipts = memo(function Receipts({
               : r.rows.length
                 ? r.rows.length + " " + result
                 : r.tool === "wait_for_next_day"
-                  ? translate(msg.operator.statement, lang) + " · " + day + " " + r.day
+                  ? msg.operator.statement() + " · " + day + " " + r.day
                   : (r.display.split("\n")[0] ?? "").slice(0, 110))}
         </button>
       )}
@@ -53,7 +51,7 @@ export const Receipts = memo(function Receipts({
           </small>
           {r.terms?.order && (
             <span>
-              {translate(msg.operator.expectedClose, lang)} {r.terms.eta}
+              {msg.operator.expectedClose()} {r.terms.eta}
             </span>
           )}
           {r.tool === "restock_machine" &&
@@ -81,7 +79,7 @@ export const Receipts = memo(function Receipts({
             </p>
           ) : r.terms?.order ? (
             <p>
-              {r.terms.order} · {translate(msg.operator.expectedClose, lang)} {r.terms.eta}
+              {r.terms.order} · {msg.operator.expectedClose()} {r.terms.eta}
             </p>
           ) : (
             <p>
@@ -94,7 +92,7 @@ export const Receipts = memo(function Receipts({
             </p>
           )}
           <button onClick={() => openReport(r.id)}>
-            {translate(msg.operator.openReceipt, lang)} #{r.id}
+            {msg.operator.openReceipt()} #{r.id}
           </button>
         </div>
       )}

@@ -1,16 +1,17 @@
 import type { Snapshot } from "games-common/benchmark";
 
-import type { Translate } from "@/localization/messages";
-
+import { msg } from "@/dictionary";
 import { timing } from "@/game/commands";
 import { clock } from "@/scene/clock";
 
-export function timeLabel(verb: string, state: Snapshot | null, t: Translate): string {
-  if (!state) return t("noCharge");
-  const span = timing(verb, state);
-  if (!span) return t("noCharge");
-  const end = span.rolls
-    ? (state.day === state.days ? t("endRun") : t("next")) + " " + clock(span.to)
-    : clock(span.to);
-  return span.minutes + " min · " + clock(span.from) + " → " + end;
+export function useTimeLabel() {
+  const free = msg.operator.noCharge();
+  const endRun = msg.operator.endRun();
+  const next = msg.operator.next();
+  return (verb: string, state: Snapshot | null) => {
+    const span = timing(verb, state);
+    if (!state || !span) return free;
+    const end = span.rolls ? (state.day === state.days ? endRun : next) + " " : "";
+    return span.minutes + " min · " + clock(span.from) + " → " + end + clock(span.to);
+  };
 }

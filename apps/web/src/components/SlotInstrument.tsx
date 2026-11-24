@@ -4,9 +4,9 @@ import { useId, useState, type FormEvent, type ReactNode } from "react";
 
 import type { CabinetSlot } from "@/game/cabinet-layout";
 
+import { msg } from "@/dictionary";
 import { commandForMove } from "@/game/commands";
 import { slotChanges } from "@/game/slot-evidence";
-import { stationMessages as msg } from "@/localization/station-messages";
 import { clock } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
@@ -27,8 +27,6 @@ export function SlotInstrument({
   report,
   money,
   reports,
-  lang,
-  t,
   runCommand,
   disabled,
   slot,
@@ -38,7 +36,6 @@ export function SlotInstrument({
   openReport,
 }: Props) {
   const changes = live ? [] : slotChanges(reports, slot.id, report.id);
-  const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   return (
     <section className="slot-instrument">
       <header>
@@ -46,25 +43,25 @@ export function SlotInstrument({
         <div>
           <h3>{slot.product}</h3>
           <small>
-            {t("size")}: {slot.size}
+            {msg.operator.size()}: {slot.size}
           </small>
         </div>
       </header>
       <dl className="slot-reading">
         <div>
-          <dt>{field("quantity")}</dt>
+          <dt>{msg.fields.quantity()}</dt>
           <dd>
             {slot.quantity}
             <small> / {slot.capacity}</small>
           </dd>
         </div>
         <div>
-          <dt>{field("price")}</dt>
+          <dt>{msg.fields.price()}</dt>
           <dd>{typeof slot.price === "number" ? money(slot.price) : slot.price}</dd>
         </div>
       </dl>
       <div className="slot-evidence">
-        {t("seen")} · {t("day")} {stockSource.day} / {clock(stockSource.minute)}
+        {msg.operator.seen()} · {msg.operator.day()} {stockSource.day} / {clock(stockSource.minute)}
         {live && (
           <button type="button" className="slot-source" onClick={() => openReport(stockSource.id)}>
             #{stockSource.id}
@@ -72,7 +69,8 @@ export function SlotInstrument({
         )}
         {live && priceSource.id !== stockSource.id && (
           <span>
-            {field("price")} · {t("day")} {priceSource.day} / {clock(priceSource.minute)}{" "}
+            {msg.fields.price()} · {msg.operator.day()} {priceSource.day} /{" "}
+            {clock(priceSource.minute)}{" "}
             <button
               type="button"
               className="slot-source"
@@ -85,19 +83,21 @@ export function SlotInstrument({
       </div>
       {changes.length > 0 && (
         <div className="slot-amendment">
-          <b>{t("laterObservations")}</b>
+          <b>{msg.operator.laterObservations()}</b>
           {changes.slice(-3).map((change) => (
             <div key={change.report.id}>
               <small>
-                {t("day")} {change.report.day} · {clock(change.report.minute)}
+                {msg.operator.day()} {change.report.day} · {clock(change.report.minute)}
               </small>{" "}
               {change.observation
-                ? field("quantity") +
+                ? msg.fields.quantity() +
                   ": " +
                   change.observation.qty +
                   "/" +
                   (change.observation.capacity ?? slot.capacity)
-                : field("price") + ": " + (change.price === undefined ? "—" : money(change.price))}
+                : msg.fields.price() +
+                  ": " +
+                  (change.price === undefined ? "—" : money(change.price))}
             </div>
           ))}
         </div>
@@ -105,13 +105,13 @@ export function SlotInstrument({
       <SlotService
         slotId={slot.rawId}
         size={slot.size}
-        {...{ reports, lang, t, runCommand, disabled, live }}
+        {...{ reports, runCommand, disabled, live }}
       />
     </section>
   );
 }
 
-type ServiceProps = Pick<ObservationProps, "lang" | "reports" | "t" | "disabled" | "runCommand">;
+type ServiceProps = Pick<ObservationProps, "reports" | "disabled" | "runCommand">;
 
 export function UninspectedMachine({
   machine,
@@ -125,7 +125,7 @@ export function UninspectedMachine({
   return (
     <section className="sheet slot-instrument">
       <div className="asset-actions">{action}</div>
-      <Field label={msg.fields.slot({}, { locale: props.lang })}>
+      <Field label={msg.fields.slot()}>
         <ControlInput
           list={slotList}
           value={slotId}
@@ -146,8 +146,6 @@ function SlotService({
   slotId,
   size,
   reports,
-  lang,
-  t,
   runCommand,
   disabled,
   live,
@@ -157,12 +155,11 @@ function SlotService({
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const needsProduct = verb === "restock_machine" || verb === "swap_item";
-  const field = (name: keyof typeof msg.fields) => msg.fields[name]({}, { locale: lang });
   const labels = {
-    restock_machine: msg.commands.restock_machine({}, { locale: lang }),
-    set_price: msg.commands.set_price({}, { locale: lang }),
-    clear_slot: msg.commands.clear_slot({}, { locale: lang }),
-    swap_item: msg.commands.swap_item({}, { locale: lang }),
+    restock_machine: msg.commands.restock_machine(),
+    set_price: msg.commands.set_price(),
+    clear_slot: msg.commands.clear_slot(),
+    swap_item: msg.commands.swap_item(),
   };
   const valid =
     slotId.trim() &&
@@ -183,7 +180,7 @@ function SlotService({
   }
   return (
     <form onSubmit={submit}>
-      <div className="slot-operations" role="group" aria-label={field("slot") + " " + slotId}>
+      <div className="slot-operations" role="group" aria-label={msg.fields.slot() + " " + slotId}>
         {operations.map((action) => (
           <button
             type="button"
@@ -199,18 +196,18 @@ function SlotService({
       <ControlRow className="slot-inputs">
         {needsProduct && (
           <>
-            <Field label={field("product_id")}>
+            <Field label={msg.fields.product_id()}>
               <ProductInput
                 reports={reports}
-                t={t}
-                label={field("product_id")}
+
+                label={msg.fields.product_id()}
                 preferSize={size}
                 disabled={disabled}
                 value={product}
                 onChange={setProduct}
               />
             </Field>
-            <Field label={field("quantity")}>
+            <Field label={msg.fields.quantity()}>
               <QuantityInput
                 disabled={!product}
                 value={quantity}
@@ -220,7 +217,7 @@ function SlotService({
           </>
         )}
         {verb === "set_price" && (
-          <Field label={field("price")}>
+          <Field label={msg.fields.price()}>
             <ControlInput
               type="number"
               min="0"

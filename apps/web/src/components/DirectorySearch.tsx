@@ -1,18 +1,16 @@
 import { useState } from "react";
 
-import type { Translate } from "@/localization/messages";
-
+import { msg } from "@/dictionary";
 import { commandForMove } from "@/game/commands";
 
 import { ControlInput, ControlRow, Field } from "./FormControls";
 import { GuiToolInfo } from "./GuiToolInfo";
 
 interface Props {
-  t: Translate;
   disabled: boolean;
   runCommand: (line: string) => void;
 }
-export function DirectorySearch({ t, disabled, runCommand }: Props) {
+export function DirectorySearch({ disabled, runCommand }: Props) {
   const [query, setQuery] = useState("");
   return (
     <form
@@ -23,7 +21,7 @@ export function DirectorySearch({ t, disabled, runCommand }: Props) {
       }}
     >
       <ControlRow>
-        <Field label={t("searchSuppliers")}>
+        <Field label={msg.operator.searchSuppliers()}>
           <ControlInput value={query} onChange={(e) => setQuery(e.currentTarget.value)} />
         </Field>
         <GuiToolInfo verb="search_web">

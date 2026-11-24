@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 
+import { msg } from "@/dictionary";
 import { priceOrder } from "@/game/commands";
 import { purchaseSupplier as supplierForPurchase } from "@/game/suppliers";
+import { orderStatus } from "@/localization/messages";
 import { clock, receiptEnd } from "@/scene/clock";
 
 import type { ObservationProps } from "./panel-props";
@@ -14,15 +16,14 @@ import { OrderSlip, QuoteRequest } from "./OrderSlip";
 import { ReportGrid } from "./ReportGrid";
 function ReceiptHeading({
   report,
-  t,
   action,
-}: Pick<ObservationProps, "report" | "t"> & { action?: ReactNode }) {
+}: Pick<ObservationProps, "report"> & { action?: ReactNode }) {
   return (
     <header className="receipt-heading">
       {action ?? (report.terms?.order && <h3>{report.terms.order}</h3>)}
       <small>
-        #{report.id} · {t("day")} {report.day} · {clock(report.minute)} →{" "}
-        {receiptEnd(report, t("day"))} · {report.minutes} min
+        #{report.id} · {msg.operator.day()} {report.day} · {clock(report.minute)} →{" "}
+        {receiptEnd(report, msg.operator.day())} · {report.minutes} min
       </small>
     </header>
   );
@@ -32,8 +33,6 @@ export default function ObservationView({
   report,
   reports,
   state,
-  lang,
-  t,
   money,
   runCommand,
   disabled,
@@ -55,7 +54,7 @@ export default function ObservationView({
       )
     : null;
   const purchaseSupplier = supplierForPurchase(report, reports);
-  const letterProps = { reports, t, disabled, send: runCommand };
+  const letterProps = { reports, disabled, send: runCommand };
   const contact =
     report.terms?.minimum === undefined
       ? undefined
@@ -71,7 +70,7 @@ export default function ObservationView({
     );
   return (
     <section className="report">
-      <ReceiptHeading report={report} t={t} action={action} />
+      <ReceiptHeading report={report} action={action} />
       {report.mail ? (
         <article className="mail-paper">
           <h3>{report.mail.subject}</h3>
@@ -101,14 +100,14 @@ export default function ObservationView({
                 <small>{entry.id}</small>
                 <p>{entry.description}</p>
                 <div>
-                  {t("minimum")}: <b>{entry.minimum}</b>
+                  {msg.operator.minimum()}: <b>{entry.minimum}</b>
                 </div>
                 <div className="supplier-contact">
                   <span>{entry.email}</span>
                   <EmailComposer {...letterProps} to={entry.email} />
                 </div>
               </div>
-              <QuoteRequest supplier={entry.id} {...{ state, t, disabled, runCommand }} />
+              <QuoteRequest supplier={entry.id} {...{ state, disabled, runCommand }} />
             </article>
           ))}
           {!action && contact && (
@@ -122,7 +121,7 @@ export default function ObservationView({
               key={report.id}
               supplier={report.args.supplier_id}
               openReport={openReport}
-              {...{ report, reports, state, lang, t, money, runCommand, disabled }}
+              {...{ report, reports, state, money, runCommand, disabled }}
             />
           ) : (
             <>
@@ -135,8 +134,8 @@ export default function ObservationView({
                   ) : (
                     (purchaseSupplier ?? report.args.to)
                   )}{" "}
-                  · {t("amountPaid")}: {money(report.terms.paid)} · {t("expectedClose")}{" "}
-                  {report.terms.eta}
+                  · {msg.operator.amountPaid()}: {money(report.terms.paid)} ·{" "}
+                  {msg.operator.expectedClose()} {report.terms.eta}
                 </p>
               )}
               {!!report.rows.length &&
@@ -144,37 +143,27 @@ export default function ObservationView({
                   <CabinetBench
                     live={Boolean(action)}
                     openReport={openReport}
-                    {...{ report, reports, state, lang, t, money, runCommand, disabled }}
+                    {...{ report, reports, state, money, runCommand, disabled }}
                   />
                 ) : (
                   <ReportGrid
-                    {...{
-                      report,
-                      reports,
-                      t,
-                      lang,
-                      money,
-                      state,
-                      runCommand,
-                      disabled,
-                      openReport,
-                    }}
+                    {...{ report, reports, money, state, runCommand, disabled, openReport }}
                   />
                 ))}
             </>
           )}
           {report.channels && (
             <>
-              <h3>{t("traffic")}</h3>
-              <Metrics data={report.channels.traffic} lang={lang} />
-              <h3>{t("printRules")}</h3>
-              <Metrics data={report.channels.rules} lang={lang} />
+              <h3>{msg.operator.traffic()}</h3>
+              <Metrics data={report.channels.traffic} />
+              <h3>{msg.operator.printRules()}</h3>
+              <Metrics data={report.channels.rules} />
               {report.channels.recent.length > 0 && (
                 <>
-                  <h3>{t("recentCampaigns")}</h3>
+                  <h3>{msg.operator.recentCampaigns()}</h3>
                   {report.channels.recent.map((m, i) => (
                     <p key={i}>
-                      {t("day")} {m.day} / {m.location} / {m.channel} · {m.message}
+                      {msg.operator.day()} {m.day} / {m.location} / {m.channel} · {m.message}
                     </p>
                   ))}
                 </>
@@ -186,12 +175,13 @@ export default function ObservationView({
             <div className="terms">
               {estimate.cost !== undefined && (
                 <p>
-                  {t("quoted")}: {money(estimate.cost)} · {t("minimum")}: {money(estimate.minimum)}
+                  {msg.operator.quoted()}: {money(estimate.cost)} · {msg.operator.minimum()}:{" "}
+                  {money(estimate.minimum)}
                 </p>
               )}
               {(estimate.status === "belowMinimum" || estimate.status === "lowCash") && (
                 <p>
-                  {t(estimate.status)} · {t("shortBy")}:{" "}
+                  {orderStatus[estimate.status]()} · {msg.operator.shortBy()}:{" "}
                   {money(
                     estimate.status === "belowMinimum"
                       ? estimate.minimum - estimate.cost
@@ -200,7 +190,7 @@ export default function ObservationView({
                 </p>
               )}
               {(estimate.status === "needQuote" || estimate.status === "expiredQuote") && (
-                <p>{t(estimate.status)}</p>
+                <p>{orderStatus[estimate.status]()}</p>
               )}
               {openSupplier && report.args.supplier_id && (
                 <button
@@ -214,14 +204,14 @@ export default function ObservationView({
           )}
           {report.demand && (
             <details>
-              <summary>{t("demand")}</summary>
-              <Metrics data={report.demand} lang={lang} />
+              <summary>{msg.operator.demand()}</summary>
+              <Metrics data={report.demand} />
             </details>
           )}
         </>
       )}
       {report.endDay !== report.day && (
-        <DayStatement {...{ report, reports, state, t, money, openReport }} />
+        <DayStatement {...{ report, reports, state, money, openReport }} />
       )}
       {report.notices?.length > 0 && (
         <div className="overnight-notices">

@@ -2,8 +2,6 @@ import type { Actions, Release } from "games-common/benchmark";
 
 import { useId, useRef } from "react";
 
-import type { Lang } from "@/localization/messages";
-
 import { msg } from "@/dictionary";
 import { syntax } from "@/game/commands";
 import { toolDefaults } from "@/game/tool-defaults";
@@ -13,19 +11,18 @@ import { ActionButton } from "./FormControls";
 
 interface Props {
   release: Release;
-  lang: Lang;
+
   verb: string;
   actions: Actions;
   prediction?: string;
 }
 
-export function ToolInfo({ release, lang, verb: tool, actions, prediction }: Props) {
+export function ToolInfo({ release, verb: tool, actions, prediction }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   if (release.tools[tool] === undefined) return null;
-  const options = { locale: lang };
-  const heading = msg.operator.toolInformation({}, options);
+  const heading = msg.operator.toolInformation();
   const label = heading + ": " + tool;
   const defaults = toolDefaults(release, tool);
 
@@ -78,7 +75,7 @@ export function ToolInfo({ release, lang, verb: tool, actions, prediction }: Pro
           <b>{heading}</b>
           <button
             type="button"
-            aria-label={msg.operator.dismissInfo({}, options)}
+            aria-label={msg.operator.dismissInfo()}
             popoverTarget={id}
             popoverTargetAction="hide"
           >
@@ -89,7 +86,7 @@ export function ToolInfo({ release, lang, verb: tool, actions, prediction }: Pro
         {prediction && <small className="tool-prediction">{prediction}</small>}
         {defaults && (
           <small>
-            {msg.operator.defaults({}, options)}: <code>{defaults}</code>
+            {msg.operator.defaults()}: <code>{defaults}</code>
           </small>
         )}
         <p lang="en">{release.tools[tool]}</p>

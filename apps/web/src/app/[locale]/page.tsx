@@ -6,5 +6,5 @@ import { isLang } from "@/localization/locale";
 export default async function Page({ params }: PageProps<"/[locale]">) {
   const { locale } = await params;
   if (!isLang(locale)) notFound();
-  return <BenchmarkLanding lang={locale} />;
+  return <BenchmarkLanding />;
 }

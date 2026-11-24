@@ -4,9 +4,9 @@ import type { CSSProperties, PointerEvent } from "react";
 import { assertValue, hasValue } from "games-common/language";
 
 import type { ParentBalance } from "@/game/runs";
-import type { Lang, Translate } from "@/localization/messages";
 
 import { msg } from "@/dictionary";
+import { useCurrency } from "@/localization/formatters";
 
 import "./financial-readouts.css";
 const ink = ["#bbeb9b", "#eac177", "#9dd4e6", "#d9bbd8"];
@@ -18,8 +18,7 @@ interface BalanceScopeProps {
   rivals: Rival[];
   best: PersonalBest | null;
   release: Release;
-  lang: Lang;
-  t: Translate;
+
   selected: number | null;
   setSelected: (day: number) => void;
   showReceipts: (day: number) => void;
@@ -38,30 +37,22 @@ export function BalanceScope({
   rivals,
   best,
   release,
-  lang,
-  t,
   selected,
   setSelected,
   showReceipts,
 }: BalanceScopeProps) {
   const day = Math.min(selected ?? Math.max(0, history.length - 1), release.days);
   const series: Trace[] = [
-    { name: msg.fields.player({}, { locale: lang }), values: history },
-    ...(best ? [{ name: t("previousBest"), values: best.values }] : []),
+    { name: msg.fields.player(), values: history },
+    ...(best ? [{ name: msg.operator.previousBest(), values: best.values }] : []),
     ...rivals.map((r) => ({
-      name: r.kind === "script" ? msg.fields.bot({}, { locale: lang }) : assertValue(r.name),
+      name: r.kind === "script" ? msg.fields.bot() : assertValue(r.name),
       values: r.values,
       endDay: r.endDay,
       finalBalance: r.finalBalance,
     })),
     ...(parentBalance
-      ? [
-          {
-            name: msg.session.sourceTrack({}, { locale: lang }),
-            values: parentBalance.values,
-            color: "#ff997e",
-          },
-        ]
+      ? [{ name: msg.session.sourceTrack(), values: parentBalance.values, color: "#ff997e" }]
       : []),
   ];
   const known = series
@@ -73,13 +64,8 @@ export function BalanceScope({
   const bottom = Math.floor(Math.min(0, ...known) / step) * step;
   const x = (d: number) => 6 + (988 * d) / release.days,
     y = (v: number) => 5 + (88 * (top - v)) / (top - bottom);
-  const format = new Intl.NumberFormat(lang, { style: "currency", currency: release.currency });
-  const tick = new Intl.NumberFormat(lang, {
-    style: "currency",
-    currency: release.currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
+  const format = useCurrency(release.currency);
+  const tick = useCurrency(release.currency, true);
   const valueAt = (s: Trace) => s.values?.[day] ?? (day === s.endDay ? s.finalBalance : undefined);
   const days = Array.from(
     new Set(Array.from({ length: 7 }, (_, i) => Math.round((i * release.days) / 6))),
@@ -96,16 +82,17 @@ export function BalanceScope({
       <header>
         <div className="balance-reading">
           <small>
-            {!embedded && t("bank") + " · "}
-            {day === 0 ? t("opening") : t("closing")} · {t("day")} {day} / {release.days}
+            {!embedded && msg.operator.bank() + " · "}
+            {day === 0 ? msg.operator.opening() : msg.operator.closing()} · {msg.operator.day()}{" "}
+            {day} / {release.days}
           </small>
           <strong>{playerBalance === undefined ? "—" : format.format(playerBalance)}</strong>
         </div>
         {day > 0 && day < history.length && (
           <button className="receipt-link" onClick={() => showReceipts(day)}>
-            {t("cashChange")}{" "}
+            {msg.operator.cashChange()}{" "}
             {format.format(assertValue(history[day]) - assertValue(history[day - 1]))} ·{" "}
-            {t("results")}
+            {msg.operator.results()}
           </button>
         )}
       </header>
@@ -163,7 +150,7 @@ export function BalanceScope({
             />
           )}
         </svg>
-        <small className="axis-unit">{t("day")}</small>
+        <small className="axis-unit">{msg.operator.day()}</small>
         <div className="scope-days" aria-hidden="true">
           {days.map((d) => (
             <span key={d} style={{ left: x(d) / 10 + "%" }}>
@@ -172,7 +159,7 @@ export function BalanceScope({
           ))}
         </div>
         <input
-          aria-label={t("day")}
+          aria-label={msg.operator.day()}
           type="range"
           min="0"
           max={release.days}

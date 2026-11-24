@@ -3,33 +3,40 @@ import type { Actions, Release, Snapshot } from "games-common/benchmark";
 import { entries } from "games-common/language";
 import { useState } from "react";
 
+import { msg } from "@/dictionary";
 import { commandGroups, local, syntax, toolFor } from "@/game/commands";
-import { timeLabel } from "@/game/time-label";
+import { useTimeLabel } from "@/game/time-label";
 import { toolDefaults } from "@/game/tool-defaults";
-import { commandLabel, type Lang, type Translate } from "@/localization/messages";
+import { commandLabel } from "@/localization/messages";
 
 import "./command-manual.css";
 
+const groupsLabels = {
+  supply: msg.operator.supply,
+  machines: msg.operator.machines,
+  business: msg.operator.business,
+  correspondence: msg.operator.correspondence,
+  records: msg.operator.records,
+};
 interface Props {
   actions: Actions;
   release: Release;
   state: Snapshot | null;
-  lang: Lang;
-  t: Translate;
 }
 
-export function CommandIndex({ actions, release, state, lang, t }: Props) {
+export function CommandIndex({ actions, release, state }: Props) {
   const [choice, choose] = useState("search_web");
+  const timeLabel = useTimeLabel();
   const groups = entries(commandGroups).map(([key, names]) => ({
-    label: t(key),
+    label: groupsLabels[key](),
     names: names.filter((name) => name in release.tools || name in actions),
   }));
   const mapped = new Set<string>(groups.flatMap((group) => group.names));
   const other = Object.keys(release.tools).filter((tool) => !mapped.has(tool));
   const sections = [
     ...groups,
-    { label: t("toolInformation"), names: other },
-    { label: t("local"), names: local },
+    { label: msg.operator.toolInformation(), names: other },
+    { label: msg.operator.local(), names: local },
   ].filter((g) => g.names.length > 0);
   const selected = sections.some((s) => s.names.some((name) => name === choice))
     ? choice
@@ -39,7 +46,7 @@ export function CommandIndex({ actions, release, state, lang, t }: Props) {
   const defaults = toolDefaults(release, tool);
   return (
     <section className="command-manual">
-      <nav className="manual-index" aria-label={t("help")}>
+      <nav className="manual-index" aria-label={msg.operator.help()}>
         {sections.map((section) => (
           <section key={section.label}>
             <h3>{section.label}</h3>
@@ -61,22 +68,22 @@ export function CommandIndex({ actions, release, state, lang, t }: Props) {
       <article className="manual-page" aria-live="polite">
         <header>
           <h3>{selected}</h3>
-          <span>{tool ? commandLabel(toolFor(tool), lang) : t("help")}</span>
+          <span>{tool ? commandLabel(toolFor(tool)) : msg.operator.help()}</span>
         </header>
         <pre>{syntax(selected, actions)}</pre>
         <dl>
           <div>
-            <dt>{t("timeCost")}</dt>
-            <dd>{timeLabel(selected, state, t)}</dd>
+            <dt>{msg.operator.timeCost()}</dt>
+            <dd>{timeLabel(selected, state)}</dd>
           </div>
         </dl>
         {defaults && (
           <small>
-            {t("defaults")}: <code>{defaults}</code>
+            {msg.operator.defaults()}: <code>{defaults}</code>
           </small>
         )}
         {description && <p lang="en">{description}</p>}
-        {!other.includes(selected) && <small>{t("notation")}</small>}
+        {!other.includes(selected) && <small>{msg.operator.notation()}</small>}
       </article>
     </section>
   );
