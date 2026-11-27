@@ -80,6 +80,21 @@
   white-space: nowrap;
   color: #adbfad;
 }
+.save-lane-name {
+  position: sticky;
+  z-index: 2;
+  left: 0;
+  box-sizing: border-box;
+  display: block;
+  padding: 0 0.6rem;
+  background: var(--scope);
+  border-right: 1px solid #566a5c;
+  color: #c6d2c4;
+  font-size: 0.82rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .save-map-lanes > svg {
   position: absolute;
   top: 0;
@@ -129,12 +144,7 @@
 .save-card[aria-pressed="true"] small {
   color: #304b38;
 }
-.save-card.reference {
-  background: transparent;
-  border: 0;
-  border-left: 1px solid #566a5c;
-}
-.save-card:not(.reference):hover {
+.save-card:hover {
   border-color: white;
   color: white;
   background: #35483a;

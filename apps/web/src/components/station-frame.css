@@ -144,48 +144,6 @@
 .score-ladder li:first-child .score-track i {
   background: #3a654e;
 }
-.launch-bay {
-  position: sticky;
-  top: 8px;
-  border: 3px ridge #708174;
-  border-radius: 3px;
-  background: #1a2420;
-}
-/* A growing save tree must scroll with the page rather than pinning its controls below it. */
-.launch-bay:has(.save-library) {
-  position: static;
-}
-.launch-bay .session-setup {
-  width: auto;
-  max-width: none;
-  border: 0;
-  border-radius: 0;
-  margin: 0;
-  background: #202a25;
-  color: #e1e9d9;
-  box-shadow: none;
-  padding: 1.1rem;
-}
-.launch-bay .session-setup header {
-  border-color: #687c68;
-}
-.launch-bay .session-setup h2 {
-  color: #c0e4ad;
-}
-.launch-bay .session-note {
-  color: #c6d1c1;
-}
-.launch-bay .session-version select {
-  color: #1e3026;
-}
-.launch-bay .session-actions button {
-  background: #c3e4ad;
-  color: #1b3425;
-  box-shadow:
-    inset 0 1px #eaf9dd,
-    inset 0 -2px #90af81;
-  font-weight: bold;
-}
 .runtime-note {
   border-top: 1px solid #657165;
   background: #d5dbcb;
@@ -202,6 +160,9 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.settlement-desks {
+  grid-template-columns: minmax(0, 1fr);
+}
 .settlement-desks .scorecard {
   padding: 0;
   background: none;
@@ -213,10 +174,6 @@
   .dossier {
     display: flex;
     flex-direction: column;
-  }
-  .launch-bay {
-    position: static;
-    width: 100%;
   }
   .dossier:not(.settlement-desks) {
     display: grid;
@@ -234,9 +191,6 @@
   }
   .bench-intro {
     grid-row: 1;
-  }
-  .launch-bay {
-    grid-row: 2;
   }
   .score-ladder li {
     grid-template-columns: 2ch minmax(0, 1fr) auto;

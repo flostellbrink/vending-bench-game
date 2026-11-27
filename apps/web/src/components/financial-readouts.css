@@ -9,6 +9,9 @@
 .settlement-desks .balance-scope {
   min-height: 18rem;
 }
+.settlement-desks .balance-scope .scope-graph {
+  grid-template-rows: minmax(10rem, 1fr) auto auto;
+}
 .balance-scope > header {
   display: flex;
   justify-content: space-between;
@@ -130,8 +133,11 @@
   border: 0;
   border-bottom: 1px solid #aab6a8;
 }
-.scorecard .score-ranking tr > :first-child {
+.scorecard .score-ranking tr > :is(:first-child, :nth-child(2)) {
   text-align: left;
+}
+.scorecard .score-ranking tr > :first-child {
+  width: 4ch;
 }
 .scorecard .score-ranking thead th,
 .day-statement > header {

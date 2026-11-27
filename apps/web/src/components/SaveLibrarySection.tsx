@@ -6,11 +6,12 @@ import { useId, useState } from "react";
 
 import { msg } from "@/dictionary/index.ts";
 import {
+  existingBranch,
   forkReferenceRun,
   forkRun,
+  isReferenceSlot,
   listRuns,
-  referenceRun,
-  referenceSlot,
+  referenceRuns,
   runKey,
   readSlotSnapshot,
   slotSnapshot,
@@ -31,8 +32,6 @@ export function SaveLibrarySection({
   slot?: string;
   day?: number;
 }) {
-  const reference = referenceRun(release);
-  const closings = reference?.values?.slice(1, release.days + 1) ?? [];
   const snapshot = useStoredText(() => slotSnapshot(localStorage, release));
   const runs = typeof snapshot === "string" ? readSlotSnapshot(snapshot) : [];
   const [problem, setProblem] = useState(false);
@@ -48,27 +47,16 @@ export function SaveLibrarySection({
     setSending(true);
     try {
       const child = await withRunLock(`${runKey(release)}:fork:${id}:${startDay}`, () => {
-        const [existing] = listRuns(localStorage, release)
-          .filter(
-            (run) =>
-              !run.damaged &&
-              !run.finished &&
-              run.day === startDay &&
-              run.checkpoints.some(
-                (point) => point.day === startDay && point.moveCount === run.moves,
-              ) &&
-              (run.id === id || (run.parent?.slot === id && run.parent.day === startDay)),
-          )
-          .toSorted(
-            (a, b) =>
-              Number(b.id === slot) - Number(a.id === slot) ||
-              (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
-          );
+        const existing = existingBranch(listRuns(localStorage, release), release, {
+          day: startDay,
+          preferred: slot,
+          source: id,
+        });
         if (existing) {
           return existing.id;
         }
-        return id === referenceSlot
-          ? forkReferenceRun(localStorage, release, startDay)
+        return isReferenceSlot(id)
+          ? forkReferenceRun(localStorage, release, id, startDay)
           : forkRun(localStorage, release, id, startDay);
       });
       location.assign(resume(child));
@@ -94,8 +82,7 @@ export function SaveLibrarySection({
           key={`${release.revision}:${slot ?? "latest"}:${day ?? "tip"}`}
           release={release}
           slots={runs}
-          closings={closings}
-          reference={reference?.name}
+          references={referenceRuns(release)}
 
           activeSlot={slot}
           initialDay={day}

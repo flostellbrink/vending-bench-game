@@ -3,7 +3,7 @@ import type { Release } from "games-common/benchmark";
 import { hasValue, type Optional } from "games-common/language";
 import { useState } from "react";
 
-import type { ParentBalance } from "@/game/runs.ts";
+import type { ParentBalance, RunOrigin } from "@/game/runs.ts";
 import type { Run } from "@/hooks/useCommandLine.ts";
 import type { Money } from "@/localization/messages.ts";
 
@@ -15,22 +15,39 @@ import { DayStatement } from "./DayStatement.tsx";
 import ObservationView from "./ObservationView.tsx";
 import { ReportList } from "./ReportList.tsx";
 import { ResultDialog, resultTitle } from "./ResultDialog.tsx";
+import { SaveLibrarySection } from "./SaveLibrarySection.tsx";
 import { Scorecard } from "./Scorecard.tsx";
-import SessionSetup from "./SessionSetup.tsx";
 import { StationFrame } from "./StationFrame.tsx";
 
 interface Props {
   parentBalance?: ParentBalance;
+  origin: Optional<RunOrigin>;
   slot: string;
   run: Run;
   release: Release;
 
   money: Money;
 }
-export function Settlement({ run, release, slot, money, parentBalance }: Props) {
+/** Who made the moves of a run: the player, the player after a model run, or only a model. */
+function operatorName(release: Release, origin: Optional<RunOrigin>) {
+  if (!origin) {
+    return msg.fields.player();
+  }
+  if (origin.day > release.days) {
+    return origin.rival.name;
+  }
+  return msg.fields.forkedPlayer({ day: origin.day, model: origin.rival.name });
+}
+export function Settlement({ run, release, slot, money, parentBalance, origin }: Props) {
   const [balanceDay, setBalanceDay] = useState<Optional<number>>(null);
   const nav = useNavigation("scores");
-  const { state, rivals, best, reports, history } = run;
+  const { state, best, reports, history } = run;
+  const operator = operatorName(release, origin);
+  // A run with only a model's moves is that model's result, not a second row beside it.
+  const rivals =
+    origin && origin.day > release.days
+      ? run.rivals.filter((rival) => rival.id !== origin.rival.id)
+      : run.rivals;
   const finalReceipt = reports.at(-1);
   const openDay = (day: number) => nav.setTab(`day:${day}`);
   return (
@@ -42,6 +59,7 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
             best={best}
             history={history}
             money={money}
+            operator={operator}
             reports={reports}
             rivals={rivals}
             state={state}
@@ -61,6 +79,7 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
           <BalanceScope
             best={best}
             history={history}
+            operator={operator}
             parentBalance={parentBalance}
             release={release}
             rivals={rivals}
@@ -118,9 +137,7 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
               );
             })}
         </section>
-        <aside className="launch-bay">
-          <SessionSetup initialRevision={release.revision} activeSlot={slot} compact />
-        </aside>
+        <SaveLibrarySection release={release} />
       </div>
     </StationFrame>
   );

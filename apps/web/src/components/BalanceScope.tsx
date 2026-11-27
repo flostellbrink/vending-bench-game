@@ -49,6 +49,8 @@ interface BalanceScopeProps {
   selected: Optional<number>;
   setSelected: (day: number) => void;
   showReceipts: (day: number) => void;
+  /** Who made this run's moves. */
+  operator?: string;
 }
 interface Trace {
   color?: string;
@@ -67,6 +69,7 @@ export function BalanceScope({
   selected,
   setSelected,
   showReceipts,
+  operator = msg.fields.player(),
 }: BalanceScopeProps) {
   const day = Math.min(selected ?? Math.max(0, history.length - 1), release.days);
   const endpoints = rivals.filter(
@@ -74,7 +77,7 @@ export function BalanceScope({
   );
   const endpointDays = new Set(endpoints.map((r) => r.endDay));
   const series: Trace[] = [
-    { name: msg.fields.player(), values: history },
+    { name: operator, values: history },
     ...(best ? [{ name: msg.operator.previousBest(), values: best.values }] : []),
     ...rivals.map((r) => ({
       endDay: r.endDay,

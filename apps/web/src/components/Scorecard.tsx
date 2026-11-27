@@ -21,12 +21,36 @@ interface Props {
   money: Money;
   history: number[];
   reviewDay: (day: number) => void;
+  /** Who made this run's moves. */
+  operator?: string;
 }
 function standingsTitle(state: Optional<Snapshot>) {
   if (!state?.over) {
     return msg.operator.standings();
   }
   return state.failed ? msg.operator.bankrupt() : msg.screen.complete();
+}
+/** Rows by score, highest first. Equal scores share a rank, and this run comes first among them. */
+function standings({
+  score,
+  operator,
+  best,
+  models,
+}: {
+  score: Optional<number>;
+  operator: string;
+  best: Optional<PersonalBest>;
+  models: Rival[];
+}) {
+  const rows = [
+    ...(hasValue(score) ? [{ name: operator, player: true, score }] : []),
+    ...(best ? [{ name: msg.operator.previousBest(), player: false, score: best.score }] : []),
+    ...models.map((model) => ({ name: model.name, player: false, score: model.score })),
+  ].toSorted((a, b) => b.score - a.score);
+  return rows.map((row) => ({
+    ...row,
+    rank: rows.findIndex((other) => other.score === row.score) + 1,
+  }));
 }
 function CashEventRow({
   report,
@@ -67,6 +91,7 @@ export function Scorecard({
   money,
   history,
   reviewDay,
+  operator = msg.fields.player(),
 }: Props) {
   const score = state?.final?.reward;
   const models = rankedModels(rivals);
@@ -92,29 +117,28 @@ export function Scorecard({
       <table className="score-ranking">
         <thead>
           <tr>
+            <th>{msg.operator.rank()}</th>
             <th>{msg.operator.scoreOperator()}</th>
             <th>{msg.fields.score()}</th>
-            <th>{msg.operator.difference()}</th>
           </tr>
         </thead>
         <tbody>
-          <tr className="player-score">
-            <th scope="row">{msg.fields.player()}</th>
-            <td>
-              <strong>{hasValue(score) ? money(score) : "—"}</strong>
-            </td>
-            <td>—</td>
-          </tr>
-          {[
-            ...(best ? [{ name: msg.operator.previousBest(), score: best.score }] : []),
-            ...models.map((r) => ({ name: r.name, score: r.score })),
-          ].map((row) => (
-            <tr key={row.name}>
+          {standings({ best, models, operator, score }).map((row) => (
+            <tr key={row.name} className={row.player ? "player-score" : undefined}>
+              <td>{row.rank}</td>
               <th scope="row">{row.name}</th>
-              <td>{money(row.score)}</td>
-              <td>{hasValue(score) ? money(score - row.score) : "—"}</td>
+              <td>{row.player ? <strong>{money(row.score)}</strong> : money(row.score)}</td>
             </tr>
           ))}
+          {!hasValue(score) && (
+            <tr className="player-score">
+              <td>—</td>
+              <th scope="row">{operator}</th>
+              <td>
+                <strong>—</strong>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
       <div className="score-notes">
@@ -127,7 +151,7 @@ export function Scorecard({
         money={money}
         reviewDay={reviewDay}
         rivals={rivals}
-        playerName={msg.fields.player()}
+        playerName={operator}
       />
       {reports.some((r) => r.openingCash !== r.closingCash) && (
         <details>

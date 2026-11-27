@@ -1,12 +1,20 @@
-import { assertValue, keys } from "games-common/language";
+import { parseReleases } from "games-common/benchmark";
+import { assertValue, first, keys } from "games-common/language";
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import * as v from "valibot";
 
 import { locales } from "../src/dictionary/runtime.ts";
+import { referenceRuns, referenceSlotOf } from "../src/game/runs.ts";
 
 const directory = new URL("../out/", import.meta.url);
+const firstButton = (track: string) => assertValue(/<button\b[^>]+>/.exec(track)?.[0]);
+const release = first(
+  parseReleases(
+    JSON.parse(await readFile(new URL("../src/generated/releases.json", import.meta.url), "utf8")),
+  ),
+);
 const messageSubset = v.record(v.string(), v.record(v.string(), v.string()));
 const flightRecord = v.tuple([
   v.unknown(),
@@ -35,12 +43,17 @@ await test("each exported page ships only its own localized messages", async () 
           /class="save-map-head"[^>]*>(?<headings>.*?)<\/div>/s.exec(html)?.groups?.headings,
         );
         assert.ok(!headings.includes("<button"), "The day headings must not contain the New box");
-        const firstTrack = assertValue(
-          /class="save-map-row"[^>]*>(?<track>.*?)<\/div>/s.exec(html)?.groups?.track,
+        const [newTrack, topModelTrack] = [
+          ...html.matchAll(/class="save-map-row"[^>]*>(?<track>.*?)<\/div>/gs),
+        ].map((row) => assertValue(row.groups?.track));
+        assert.ok(firstButton(assertValue(newTrack)).includes('data-checkpoint="new:1"'));
+        const topModel = assertValue(referenceRuns(release)[0]);
+        assert.ok(assertValue(topModelTrack).includes(topModel.name), "Model rows carry a name");
+        assert.ok(
+          firstButton(assertValue(topModelTrack)).includes(
+            `data-checkpoint="${referenceSlotOf(topModel)}:2"`,
+          ),
         );
-        const nodes = [...firstTrack.matchAll(/<button\b[^>]+>/g)].map(([button]) => button);
-        assert.ok(assertValue(nodes[0]).includes('data-checkpoint="new:1"'));
-        assert.ok(assertValue(nodes[1]).includes('data-checkpoint="reference-run:2"'));
         const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]
           .map(([form]) => form)
           .filter((form) => {
@@ -69,7 +82,7 @@ await test("each exported page ships only its own localized messages", async () 
       const messages = assertValue(dictionary[locale]);
       const landmark = assertValue(messages[landmarkId]);
       assert.equal("VBBOOT03" in messages, segment === "/run", "Wrong boot-hint scope");
-      assert.equal("SLTR0014" in messages, segment !== "/run", "Wrong save-library scope");
+      assert.ok("SLTR0014" in messages, "The landing and result screens show the save timeline");
       assert.equal(
         "HN000001" in messages,
         segment === "",

@@ -200,7 +200,7 @@ def model_results(version):
                           and days == config.SIM_DAYS and seed == config.SEED
                           and comparable_config(read_json(result_path.parent / "config.json")))
             if comparable:
-                models.append({"name": name, "score": result["reward"],
+                models.append({"id": result_path.parent.name, "name": name, "score": result["reward"],
                                "endDay": days if result["completed"] else result.get("days_operated"),
                                "finalBalance": result["final_balance"],
                                "sourcePath": source,
@@ -213,12 +213,11 @@ def metadata():
     version = task["task"]["version"]
     brief = render()
     tools, defaults = tool_metadata()
-    models = model_results(version)
-    for rival in sorted(models, key=lambda rival: -rival["score"]):
+    models = sorted(model_results(version), key=lambda rival: -rival["score"])
+    for rival in models:
         replay = model_replay(rival)
         if replay:
             rival["replay"] = replay
-            break
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
                        "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
