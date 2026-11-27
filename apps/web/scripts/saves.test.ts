@@ -1,5 +1,5 @@
 import { parseReleases, type Entry } from "games-common/benchmark";
-import { first } from "games-common/language";
+import { assertValue, first } from "games-common/language";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -21,7 +21,9 @@ import {
   runTimeline,
   saveRun,
   slotSnapshot,
+  type RunSlot,
 } from "../src/game/runs.ts";
+import { timelineLanes } from "../src/game/save-timeline.ts";
 
 const releases = JSON.parse(
   await readFile(new URL("../src/generated/releases.json", import.meta.url), "utf8"),
@@ -166,6 +168,76 @@ await test("old saves remain visible and one broken slot cannot hide healthy run
   });
   const branch = forkRun(db, release, legacySlot, 2);
   assert.deepEqual(readRun(db.getItem(runKey(release, branch)), null).moves, saved.moves);
+});
+
+/** An unfinished run that branched from parent and reached the morning of day. */
+function branchRun(day: number, parent: RunSlot["parent"]): RunSlot {
+  return {
+    cash: null,
+    checkpoints: Array.from({ length: day }, (_, i) => ({ cash: 0, day: i + 1, moveCount: i })),
+    createdAt: 1,
+    damaged: false,
+    day,
+    finished: false,
+    id: crypto.randomUUID(),
+    moves: day - 1,
+    parent,
+  };
+}
+
+/** @risk impact=2 likelihood=3 */
+await test("branch rows sit under their parent row and their lines cross no boxes", () => {
+  const [gemini, gpt] = referenceRuns(release);
+  assert.ok(gemini && gpt, "The catalog needs two replayable model runs");
+  // Branch days and the morning each run reached.
+  const days = {
+    early: { from: 5, to: 8 },
+    fresh: { to: 3 },
+    late: { from: 20, to: 21 },
+    middle: { from: 10, to: 14 },
+    nested: { from: 12, to: 13 },
+    other: { from: 6, to: 7 },
+  };
+  const geminiRow = referenceSlotOf(gemini);
+  const late = branchRun(days.late.to, { day: days.late.from, slot: "reference-run" });
+  const middle = branchRun(days.middle.to, { day: days.middle.from, slot: geminiRow });
+  const nested = branchRun(days.nested.to, { day: days.nested.from, slot: middle.id });
+  const early = branchRun(days.early.to, { day: days.early.from, slot: geminiRow });
+  const fresh = branchRun(days.fresh.to, null);
+  const other = branchRun(days.other.to, { day: days.other.from, slot: referenceSlotOf(gpt) });
+  const lanes = timelineLanes(release, {
+    labels: { newRun: "New", player: "Player" },
+    references: referenceRuns(release),
+    slots: [fresh, early, other, nested, middle, late],
+  });
+  const expected = [
+    geminiRow,
+    late.id,
+    middle.id,
+    nested.id,
+    early.id,
+    fresh.id,
+    referenceSlotOf(gpt),
+    other.id,
+  ];
+  assert.deepEqual(
+    lanes.slice(0, expected.length).map((lane) => lane.source),
+    expected,
+  );
+  assert.equal(lanes[0]?.nodes[0]?.source, "new");
+  const rowOf = (source: string) => lanes.findIndex((lane) => lane.source === source);
+  for (const [row, lane] of lanes.entries()) {
+    if (!lane.parent) {
+      continue;
+    }
+    const { day, slot } = lane.parent;
+    const parentRow = slot === "new" ? 0 : rowOf(slot);
+    assert.ok(parentRow >= 0 && parentRow < row, `${lane.source} sits below its parent`);
+    for (const passed of lanes.slice(parentRow + 1, row)) {
+      const start = passed.parent?.day ?? assertValue(passed.nodes[0]).day;
+      assert.ok(start > day, `The line from day ${day} crosses ${passed.source}`);
+    }
+  }
 });
 
 /** @risk impact=4 likelihood=2 */

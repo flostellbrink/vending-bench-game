@@ -9,7 +9,6 @@ import { locales } from "../src/dictionary/runtime.ts";
 import { referenceRuns, referenceSlotOf } from "../src/game/runs.ts";
 
 const directory = new URL("../out/", import.meta.url);
-const firstButton = (track: string) => assertValue(/<button\b[^>]+>/.exec(track)?.[0]);
 const release = first(
   parseReleases(
     JSON.parse(await readFile(new URL("../src/generated/releases.json", import.meta.url), "utf8")),
@@ -43,17 +42,14 @@ await test("each exported page ships only its own localized messages", async () 
           /class="save-map-head"[^>]*>(?<headings>.*?)<\/div>/s.exec(html)?.groups?.headings,
         );
         assert.ok(!headings.includes("<button"), "The day headings must not contain the New box");
-        const [newTrack, topModelTrack] = [
-          ...html.matchAll(/class="save-map-row"[^>]*>(?<track>.*?)<\/div>/gs),
-        ].map((row) => assertValue(row.groups?.track));
-        assert.ok(firstButton(assertValue(newTrack)).includes('data-checkpoint="new:1"'));
-        const topModel = assertValue(referenceRuns(release)[0]);
-        assert.ok(assertValue(topModelTrack).includes(topModel.name), "Model rows carry a name");
-        assert.ok(
-          firstButton(assertValue(topModelTrack)).includes(
-            `data-checkpoint="${referenceSlotOf(topModel)}:2"`,
-          ),
+        const firstTrack = assertValue(
+          /class="save-map-row"[^>]*>(?<track>.*?)<\/div>/s.exec(html)?.groups?.track,
         );
+        const [newBox, dayTwo] = [...firstTrack.matchAll(/<button\b[^>]+>/g)].map(([b]) => b);
+        const topModel = assertValue(referenceRuns(release)[0]);
+        assert.ok(firstTrack.includes(topModel.name), "The first row is the top model run");
+        assert.ok(assertValue(newBox).includes('data-checkpoint="new:1"'));
+        assert.ok(assertValue(dayTwo).includes(`data-checkpoint="${referenceSlotOf(topModel)}:2"`));
         const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]
           .map(([form]) => form)
           .filter((form) => {
