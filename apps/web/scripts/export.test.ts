@@ -47,7 +47,9 @@ await test("each exported page ships only its own localized messages", async () 
         );
         const [newBox, dayTwo] = [...firstTrack.matchAll(/<button\b[^>]+>/g)].map(([b]) => b);
         const topModel = assertValue(referenceRuns(release)[0]);
-        assert.ok(firstTrack.includes(topModel.name), "The first row is the top model run");
+        const firstName = /class="save-names-head"[^>]*><\/div><div[^>]*>(?<name>[^<]*)</.exec(html)
+          ?.groups?.name;
+        assert.equal(firstName, topModel.name, "The first row is the top model run");
         assert.ok(assertValue(newBox).includes('data-checkpoint="new:1"'));
         assert.ok(assertValue(dayTwo).includes(`data-checkpoint="${referenceSlotOf(topModel)}:2"`));
         const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]

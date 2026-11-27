@@ -7,8 +7,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { RunSlot } from "@/game/runs.ts";
 
 import { msg } from "@/dictionary/index.ts";
-import { isReferenceSlot } from "@/game/runs.ts";
-import { freshNode, sourceOf, timelineLanes, type TimelineNode } from "@/game/save-timeline.ts";
+import { isReferenceSlot, referenceSlotOf } from "@/game/runs.ts";
+import { freshNode, saveTimeline, sourceOf, type TimelineNode } from "@/game/save-timeline.ts";
 import { useCurrency } from "@/localization/formatters.ts";
 import { clock } from "@/scene/clock.ts";
 
@@ -27,13 +27,10 @@ type Node = TimelineNode;
 const column = 106;
 const rowHeight = 60;
 const cardWidth = 90;
-/** The sticky column of row names covers the left of the scroll box. */
-const labelWidth = 170;
 /** Space kept between a focused card and the edge of the scroll box. */
 const scrollMargin = 6;
-/** The sticky row of day labels covers the top of the scroll box. */
 const headHeight = 36;
-const x = (day: number) => labelWidth + day * column - column / 2;
+const x = (day: number) => day * column - column / 2;
 const y = (row: number) => row * rowHeight + rowHeight / 2;
 const id = (node: Node) => `${node.source}:${node.day}`;
 const fresh = freshNode;
@@ -191,15 +188,9 @@ export default function SaveTree({
 }: Props) {
   const [choice, setChoice] = useState<string>();
   const box = useRef<HTMLDivElement>(null);
-  const lanes = timelineLanes(release, {
-    labels: { newRun: msg.session.newSlot(), player: msg.fields.player() },
-    references,
-    slots,
-  });
-  const rowFor = new Map(lanes.map((lane, i) => [lane.source, i]));
-  rowFor.set(fresh.source, 0);
-  const labelFor = new Map(lanes.map((lane) => [lane.source, lane.label]));
-  const all = lanes.flatMap((l) => l.nodes);
+  const { rows, runs } = saveTimeline(release, { references, slots });
+  const modelName = new Map(references.map((model) => [referenceSlotOf(model), model.name]));
+  const all = runs.flatMap((run) => run.nodes);
   const local = slots.find((s) => s.id === activeSlot);
   const requested = initialDay ?? (local?.finished ? release.days + 1 : local?.day);
   let original = activeSlot;
@@ -232,26 +223,20 @@ export default function SaveTree({
     if (item.right > bounds.right) {
       scroller.scrollLeft += item.right - bounds.right + scrollMargin;
     }
-    if (item.left < bounds.left + labelWidth) {
-      scroller.scrollLeft += item.left - bounds.left - labelWidth - scrollMargin;
-    }
-    if (item.bottom > bounds.bottom) {
-      scroller.scrollTop += item.bottom - bounds.bottom + scrollMargin;
-    }
-    if (item.top < bounds.top + headHeight) {
-      scroller.scrollTop += item.top - bounds.top - headHeight;
+    if (item.left < bounds.left) {
+      scroller.scrollLeft += item.left - bounds.left - scrollMargin;
     }
   }, [box, picked]);
   const days = Math.max(1, ...all.map((n) => n.day));
-  const width = labelWidth + days * column;
-  const height = lanes.length * rowHeight;
+  const width = days * column;
+  const height = rows.length * rowHeight;
   const money = useCurrency(release.currency);
   const amount = (node: Node) => (hasValue(node.cash) ? money.format(node.cash) : "—");
   const title = (node: Node) =>
     node === fresh
       ? msg.session.newSlot()
       : [
-          isReferenceSlot(node.source) ? labelFor.get(node.source) : undefined,
+          modelName.get(node.source),
           node.result ? msg.session.finished() : msg.session.dayNumber({ day: node.day }),
           hasValue(node.cash) ? money.format(node.cash) : undefined,
         ]
@@ -259,52 +244,54 @@ export default function SaveTree({
           .join(" · ");
   return (
     <section className="save-library" aria-label={msg.session.library()}>
+      <div className="save-names" aria-hidden="true">
+        <div className="save-names-head" style={{ height: headHeight }} />
+        {rows.map(({ key, label }) => (
+          <div key={key} title={label} style={{ height: rowHeight, lineHeight: `${rowHeight}px` }}>
+            {label}
+          </div>
+        ))}
+      </div>
       <div className="save-scroll" ref={box} onKeyDown={moveFocus}>
         <div className="save-map" style={{ minWidth: "100%", width }}>
-          <div className="save-map-head">
+          <div className="save-map-head" style={{ height: headHeight }}>
             {Array.from({ length: days }, (_, i) => (
-              <span key={i} style={{ left: x(i + 1) }}>
+              <span key={i} className="save-map-day" style={{ left: x(i + 1) }}>
                 {i < release.days ? msg.session.dayNumber({ day: i + 1 }) : msg.session.finished()}
               </span>
             ))}
           </div>
           <div className="save-map-lanes" style={{ height }}>
             <svg width={width} height={height} aria-hidden="true">
-              {lanes.map((lane, row) => {
-                const [first] = lane.nodes;
-                const tail = lane.nodes.at(-1);
+              {runs.map(({ source, row, parent, nodes }) => {
+                const [first] = nodes;
+                const tail = nodes.at(-1);
                 if (!first || !tail) {
                   return null;
                 }
-                const origin = lane.parent && rowFor.get(lane.parent.slot);
-                const path =
-                  lane.parent && hasValue(origin)
-                    ? `M${x(lane.parent.day)} ${y(origin)} V${y(row)} H${x(tail.day)}`
-                    : `M${x(first.day)} ${y(row)} H${x(tail.day)}`;
-                return <path key={lane.source} d={path} />;
+                const path = parent
+                  ? `M${x(parent.day)} ${y(parent.row)} V${y(row)} H${x(tail.day)}`
+                  : `M${x(first.day)} ${y(row)} H${x(tail.day)}`;
+                return <path key={source} d={path} />;
               })}
             </svg>
-            {lanes.map((lane, row) => (
-              <div className="save-map-row" key={lane.source} style={{ height: rowHeight }}>
-                <span
-                  className="save-lane-name"
-                  style={{ lineHeight: `${rowHeight}px`, width: labelWidth }}
-                  title={lane.label}
-                >
-                  {lane.label}
-                </span>
-                {lane.nodes.map((n) => (
-                  <SaveCard
-                    key={id(n)}
-                    node={n}
-                    row={row}
-                    time={clock(release.network.opens)}
-                    amount={amount(n)}
-                    title={title(n)}
-                    active={picked === id(n)}
-                    choose={() => setChoice(id(n))}
-                  />
-                ))}
+            {rows.map(({ key }, row) => (
+              <div className="save-map-row" key={key} style={{ height: rowHeight }}>
+                {runs
+                  .filter((run) => run.row === row)
+                  .flatMap((run) => run.nodes)
+                  .map((n) => (
+                    <SaveCard
+                      key={id(n)}
+                      node={n}
+                      row={row}
+                      time={clock(release.network.opens)}
+                      amount={amount(n)}
+                      title={title(n)}
+                      active={picked === id(n)}
+                      choose={() => setChoice(id(n))}
+                    />
+                  ))}
               </div>
             ))}
           </div>

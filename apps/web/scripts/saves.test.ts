@@ -1,5 +1,5 @@
 import { parseReleases, type Entry } from "games-common/benchmark";
-import { assertValue, first } from "games-common/language";
+import { assertValue, first, hasValue } from "games-common/language";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -23,7 +23,7 @@ import {
   slotSnapshot,
   type RunSlot,
 } from "../src/game/runs.ts";
-import { timelineLanes } from "../src/game/save-timeline.ts";
+import { saveTimeline } from "../src/game/save-timeline.ts";
 
 const releases = JSON.parse(
   await readFile(new URL("../src/generated/releases.json", import.meta.url), "utf8"),
@@ -186,8 +186,9 @@ function branchRun(day: number, parent: RunSlot["parent"]): RunSlot {
 }
 
 /** @risk impact=2 likelihood=3 */
-await test("branch rows sit under their parent row and their lines cross no boxes", () => {
-  const [gemini, gpt] = referenceRuns(release);
+await test("the save timeline is one tree from New, packed without crossing lines", () => {
+  const models = referenceRuns(release);
+  const [gemini, gpt] = models;
   assert.ok(gemini && gpt, "The catalog needs two replayable model runs");
   // Branch days and the morning each run reached.
   const days = {
@@ -205,37 +206,47 @@ await test("branch rows sit under their parent row and their lines cross no boxe
   const early = branchRun(days.early.to, { day: days.early.from, slot: geminiRow });
   const fresh = branchRun(days.fresh.to, null);
   const other = branchRun(days.other.to, { day: days.other.from, slot: referenceSlotOf(gpt) });
-  const lanes = timelineLanes(release, {
-    labels: { newRun: "New", player: "Player" },
-    references: referenceRuns(release),
+  const { rows, runs } = saveTimeline(release, {
+    references: models,
     slots: [fresh, early, other, nested, middle, late],
   });
-  const expected = [
-    geminiRow,
-    late.id,
-    middle.id,
-    nested.id,
-    early.id,
-    fresh.id,
-    referenceSlotOf(gpt),
-    other.id,
-  ];
+  const runOf = (source: string) => assertValue(runs.find((run) => run.source === source));
+  const spanOf = (run: (typeof runs)[number]) => ({
+    end: assertValue(run.nodes.at(-1)).day,
+    start: run.parent?.day ?? assertValue(run.nodes[0]).day,
+  });
+  assert.equal(runOf("new").row, 0);
+  assert.equal(runOf(geminiRow).row, 0, "The top model run continues the row of New");
   assert.deepEqual(
-    lanes.slice(0, expected.length).map((lane) => lane.source),
-    expected,
+    rows.filter((row) => hasValue(row.label)).map((row) => row.label),
+    models.map((model) => model.name),
+    "Only model rows have a label",
   );
-  assert.equal(lanes[0]?.nodes[0]?.source, "new");
-  const rowOf = (source: string) => lanes.findIndex((lane) => lane.source === source);
-  for (const [row, lane] of lanes.entries()) {
-    if (!lane.parent) {
+  assert.equal(runOf(early.id).row, runOf(late.id).row, "Branches that do not overlap share a row");
+  for (const run of runs) {
+    if (run.source === "new") {
       continue;
     }
-    const { day, slot } = lane.parent;
-    const parentRow = slot === "new" ? 0 : rowOf(slot);
-    assert.ok(parentRow >= 0 && parentRow < row, `${lane.source} sits below its parent`);
-    for (const passed of lanes.slice(parentRow + 1, row)) {
-      const start = passed.parent?.day ?? assertValue(passed.nodes[0]).day;
-      assert.ok(start > day, `The line from day ${day} crosses ${passed.source}`);
+    const { parent } = run;
+    assert.ok(parent, `${run.source} branches from a box`);
+    assert.ok(parent.row <= run.row, `${run.source} sits at or below its parent`);
+    const span = spanOf(run);
+    for (const neighbour of runs.filter((o) => o.row === run.row && o !== run)) {
+      const shared = spanOf(neighbour);
+      const continues: boolean = neighbour.source === parent.source && shared.end === span.start;
+      assert.ok(
+        continues || shared.end < span.start || span.end < shared.start,
+        `${run.source} and ${neighbour.source} overlap on row ${run.row}`,
+      );
+    }
+    for (const passed of runs.filter((o) => o.row > parent.row && o.row < run.row)) {
+      const crossed = spanOf(passed);
+      const sameBox: boolean =
+        passed.parent?.source === parent.source && passed.parent.day === parent.day;
+      assert.ok(
+        sameBox || crossed.end < parent.day || parent.day < crossed.start,
+        `The line from day ${parent.day} crosses ${passed.source}`,
+      );
     }
   }
 });
