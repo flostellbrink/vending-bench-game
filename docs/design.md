@@ -15,7 +15,7 @@ The player is a remote operator. The goal is the highest final bank balance. Bus
 - **Find a supplier:** search a directory, open an offer, order without losing the quote.
 - **Fill and price a slot:** inspect the depot and the cabinet, keep both readings open, refill, then set a price. A full but unpriced slot earns nothing.
 - **Spend the day:** show the time cost before a command runs. A preview never promises success.
-- **Compare:** compare the final score only with runs that have the same rules, seed and horizon. Show recorded daily balances as curves and final-only results as end points. Never invent a daily trajectory.
+- **Compare:** compare the final score only with runs that have the same rules, seed and horizon. Show recorded daily balances as curves and final-only results as end points. Never invent a daily trajectory. The rivals are the model baseline runs of the pinned benchmark commit. The save timeline replays the highest-scoring run that reproduces exactly in the browser engine.
 - **Resume:** restore the run and earlier observations without charging again.
 
 ## Commands
@@ -32,8 +32,6 @@ The player is a remote operator. The goal is the highest final bank balance. Bus
 ## Shift strip
 
 Ctrl+Enter or Cmd+Enter puts a command on the strip without spending time. The strip shows which steps fit before closing, using the benchmark's time costs. It does not predict stock, sales or prices.
-
-Reason: the hard choice late in a day is what to postpone. At 16:00 on day 6, seed 1, refilling and pricing before closing sold 3 units (€4.50). Inspecting first pushed the price change past closing, and nothing sold that night. A reviewer saw from the strip that the inspection moved pricing to the next morning.
 
 Rejected: a route-and-van metaphor. Vehicle capacity and travel times are not rules of this benchmark.
 
