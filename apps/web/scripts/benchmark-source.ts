@@ -68,11 +68,9 @@ function sourceFiles(revision: string) {
   return paths.filter(
     (path) =>
       evaluationFile(path) ||
-      [
-        "tasks/vending-bench/task.toml",
-        "tasks/vending-bench/solution/reference_bot.py",
-        "results/baselines/scripted-reference/results.json",
-      ].includes(path) ||
+      ["tasks/vending-bench/task.toml", "tasks/vending-bench/solution/reference_bot.py"].includes(
+        path,
+      ) ||
       (/^results\/[^/]+\/single-agent\/[^/]+\//.test(path) &&
         [
           "result.json",

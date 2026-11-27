@@ -34,7 +34,7 @@ export default function SessionSetup({
   const revision = choice ?? initialRevision ?? urlRevision;
   const current =
     releases.find((release) => release.revision === revision) ??
-    releases.find((release) => release.rivals.some((r) => r.kind === "model")) ??
+    releases.find((release) => release.rivals.length) ??
     first(releases);
   const record = useStoredText(() => {
     const best = readRecord(localStorage.getItem(recordKey(current)));

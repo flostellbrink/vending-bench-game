@@ -18,8 +18,7 @@ const jsonObjectSchema = v.record(v.string(), jsonValueSchema);
 
 export type Rival = v.InferOutput<typeof rivalSchema>;
 export const rivalSchema = v.object({
-  kind: v.picklist(["model", "script"]),
-  name: v.optional(v.string()),
+  name: v.string(),
   score: v.number(),
   endDay: v.optional(v.nullable(v.number())),
   finalBalance: v.optional(v.number()),

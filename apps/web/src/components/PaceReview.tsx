@@ -12,28 +12,15 @@ interface Props {
   rivals: readonly Rival[];
   best: PersonalBest | null;
   playerName: string;
-  scriptName: string;
 
   money: Money;
   reviewDay: (day: number) => void;
 }
-export function PaceReview({
-  history,
-  rivals,
-  best,
-  playerName,
-  scriptName,
-  money,
-  reviewDay,
-}: Props) {
+export function PaceReview({ history, rivals, best, playerName, money, reviewDay }: Props) {
   const [choice, choose] = useState("");
   const opponents = rivals
     .filter((r) => r.values && r.values.length > 1)
-    .map((r) => ({
-      key: r.source,
-      name: r.kind === "script" ? scriptName : (r.name ?? r.source),
-      values: r.values ?? [],
-    }));
+    .map((r) => ({ key: r.source, name: r.name, values: r.values ?? [] }));
   if (best)
     opponents.push({ key: "personal", name: msg.operator.previousBest(), values: best.values });
   const rival = opponents.find((r) => r.key === choice) ?? opponents[0];

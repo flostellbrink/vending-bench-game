@@ -96,7 +96,6 @@ export function Scorecard({
       <PaceReview
         {...{ history, rivals, best, money, reviewDay }}
         playerName={msg.fields.player()}
-        scriptName={msg.fields.bot()}
       />
       {reports.some((r) => r.openingCash !== r.closingCash) && (
         <details>

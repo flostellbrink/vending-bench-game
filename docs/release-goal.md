@@ -6,7 +6,7 @@ A static, keyboard-first game of Vending Bench. The player selects a benchmark v
 
 About 24 weeks of work for one skilled developer. This is a size reference, not a deadline. Spend it on faithful operation, useful comparisons, art and responsiveness, not more content.
 
-- **Version selection and competition (4 weeks):** pin each engine with its run conditions and results. Never show another version's score as a target, or the scripted operator as an AI.
+- **Version selection and competition (4 weeks):** pin each engine with its run conditions and results. Never show another version's score as a target.
 - **Workbench (5 weeks):** one command vocabulary for buying, service, pricing, mail and analysis. The player can compare a quote, a depot receipt and a cabinet reading without paying twice.
 - **Art and animation (6 weeks):** three offices and a depot that each look like their purpose, and show the day passing and the result of each action.
 - **Run review (3 weeks):** link orders, deliveries, service, sales and bank movements by date. The player can answer "why did this site stop earning?"
