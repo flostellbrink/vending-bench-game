@@ -3,6 +3,7 @@ import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
 import { first, hasValue } from "games-common/language";
+import { useLocale } from "games-localize/react";
 import { useState } from "react";
 
 import { msg } from "@/dictionary/index.ts";
@@ -49,6 +50,7 @@ export default function SessionSetup({
   });
   const money = useCurrency(current.currency);
   const models = rankedModels(current.rivals);
+  const locale = useLocale();
   const savedParams = new URLSearchParams({ bench: current.revision });
   const selectedSlot =
     current.revision === (initialRevision ?? urlRevision)
@@ -120,7 +122,7 @@ export default function SessionSetup({
       </p>
       {!renderPage && (
         <p className="save-library-link">
-          <a href={`../?${savedParams}`}>{msg.session.mainMenu()}</a>
+          <a href={`/${locale}?${savedParams}`}>{msg.session.mainMenu()}</a>
         </p>
       )}
       {!renderPage && record === unavailable && <p role="alert">{msg.session.unavailable()}</p>}

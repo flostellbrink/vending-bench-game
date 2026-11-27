@@ -1,6 +1,7 @@
 import type { Release } from "games-common/benchmark";
 
 import { hasAny, hasValue, type Optional } from "games-common/language";
+import { useLocale } from "games-localize/react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import type { RunSlot } from "@/game/runs.ts";
@@ -199,6 +200,7 @@ function SaveAction({
   disabled: boolean;
   branch: (slot: string, day: number) => void;
 }) {
+  const locale = useLocale();
   if (selected === fresh) {
     return (
       <button type="submit" form={newForm}>
@@ -208,7 +210,7 @@ function SaveAction({
   }
   if (selected.result) {
     return (
-      <a href={`run/?${new URLSearchParams({ bench: revision, slot: selected.source })}`}>
+      <a href={`/${locale}/run?${new URLSearchParams({ bench: revision, slot: selected.source })}`}>
         {msg.session.reopen()}
       </a>
     );

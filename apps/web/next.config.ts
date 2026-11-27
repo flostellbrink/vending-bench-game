@@ -8,8 +8,6 @@ export default {
   output: "export",
   poweredByHeader: false,
   reactCompiler: true,
-  trailingSlash: true,
-  transpilePackages: ["games-localize", "games-common"],
   turbopack: {
     rules: {
       "*.css": { as: "*.css", loaders: ["@tailwindcss/turbopack"] },

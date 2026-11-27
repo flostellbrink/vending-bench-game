@@ -1,9 +1,5 @@
 {
   "name": "vending-bench-game",
   "compatibility_date": "2026-11-24",
-  "assets": {
-    "directory": "./apps/web/out",
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page",
-  },
+  "assets": { "directory": "./apps/web/out", "not_found_handling": "404-page" },
 }

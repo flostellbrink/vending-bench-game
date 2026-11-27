@@ -115,7 +115,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
             ? `${msg.operator.score()} · ${money(state.final.reward)}`
             : `Vending Bench / ${release.id} · Seed ${release.seed}`}
         </span>
-        <a href={`../?${new URLSearchParams({ bench: release.revision, slot })}`}>
+        <a href={`/${lang}?${new URLSearchParams({ bench: release.revision, slot })}`}>
           {msg.session.mainMenu()}
         </a>
       </footer>
