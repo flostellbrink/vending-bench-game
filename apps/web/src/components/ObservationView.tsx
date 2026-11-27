@@ -1,19 +1,22 @@
+import type { DirectoryEntry } from "games-common/benchmark";
 import type { ReactNode } from "react";
 
-import { msg } from "@/dictionary";
-import { priceOrder } from "@/game/commands";
-import { purchaseSupplier as supplierForPurchase } from "@/game/suppliers";
-import { orderStatus } from "@/localization/messages";
-import { clock, receiptEnd } from "@/scene/clock";
+import { hasAny, hasValue } from "games-common/language";
 
-import type { ObservationProps } from "./panel-props";
+import { msg } from "@/dictionary/index.ts";
+import { priceOrder } from "@/game/commands.ts";
+import { purchaseSupplier as supplierForPurchase } from "@/game/suppliers.ts";
+import { orderStatus } from "@/localization/messages.ts";
+import { clock, receiptEnd } from "@/scene/clock.ts";
 
-import CabinetBench from "./CabinetBench";
-import { DayStatement } from "./DayStatement";
-import { EmailComposer } from "./EmailComposer";
-import { Metrics } from "./Metrics";
-import { OrderSlip } from "./OrderSlip";
-import { ReportGrid } from "./ReportGrid";
+import type { ObservationProps } from "./panel-props.ts";
+
+import CabinetBench from "./CabinetBench.tsx";
+import { DayStatement } from "./DayStatement.tsx";
+import { EmailComposer } from "./EmailComposer.tsx";
+import { Metrics } from "./Metrics.tsx";
+import { OrderSlip } from "./OrderSlip.tsx";
+import { ReportGrid } from "./ReportGrid.tsx";
 function ReceiptHeading({
   report,
   action,
@@ -26,6 +29,41 @@ function ReceiptHeading({
         {receiptEnd(report, msg.operator.day())} · {report.minutes} min
       </small>
     </header>
+  );
+}
+
+function DirectoryCard({
+  entry,
+  openSupplier,
+}: {
+  entry: DirectoryEntry;
+  openSupplier?: (id: string) => void;
+}) {
+  return (
+    <article>
+      <header>
+        <h3>{entry.name}</h3>
+        <code>{entry.id}</code>
+      </header>
+      <p>{entry.description}</p>
+      <dl>
+        <div>
+          <dt>{msg.operator.minimum()}</dt>
+          <dd>{entry.minimum}</dd>
+        </div>
+      </dl>
+      <address>{entry.email}</address>
+      {openSupplier && (
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          className="receipt-link"
+          onClick={() => openSupplier(entry.id)}
+        >
+          {msg.operator.openSupplier()}
+        </button>
+      )}
+    </article>
   );
 }
 
@@ -50,17 +88,16 @@ export default function ObservationView({
   const estimate = refusedOrder
     ? priceOrder(
         report.line,
-        { day: report.day, cash: report.openingCash },
+        { cash: report.openingCash, day: report.day },
         reports.filter((r) => r.id < report.id),
       )
     : null;
   const purchaseSupplier = supplierForPurchase(report, reports);
-  const letterProps = runCommand && { reports, disabled, send: runCommand };
-  const contact =
-    report.terms?.minimum === undefined
-      ? undefined
-      : reports.flatMap((r) => r.directory).find((entry) => entry.id === report.args.supplier_id);
-  const from = report.mail?.from.match(/<([^<>\s]+@[^<>\s]+)>$/)?.[1];
+  const quoted = hasValue(report.terms?.minimum);
+  const contact = quoted
+    ? reports.flatMap((r) => r.directory).find((entry) => entry.id === report.args.supplier_id)
+    : undefined;
+  const from = report.mail?.from.match(/<(?<address>[^<>\s]+@[^<>\s]+)>$/)?.groups?.address;
   const sent =
     report.args.email_id &&
     reports.some(
@@ -73,7 +110,13 @@ export default function ObservationView({
     <section className="report">
       <ReceiptHeading report={report} action={action} />
       {report.endDay !== report.day && (
-        <DayStatement {...{ report, reports, state, money, openReport }} />
+        <DayStatement
+          money={money}
+          openReport={openReport}
+          report={report}
+          reports={reports}
+          state={state}
+        />
       )}
       {report.notices?.length > 0 && (
         <div className="overnight-notices">
@@ -89,15 +132,17 @@ export default function ObservationView({
             {report.mail.from} → {report.mail.to}
           </p>
           <pre>{report.mail.body}</pre>
-          {from && letterProps && (
+          {from && runCommand && (
             <EmailComposer
               key={report.id}
-              {...letterProps}
+              disabled={disabled}
+              reports={reports}
+              send={runCommand}
               to={sent ? report.mail.to : from}
               subject={
                 report.mail.subject.startsWith("Re: ")
                   ? report.mail.subject
-                  : "Re: " + report.mail.subject
+                  : `Re: ${report.mail.subject}`
               }
             />
           )}
@@ -108,56 +153,44 @@ export default function ObservationView({
             <ul className="directory-results">
               {report.directory.map((entry) => (
                 <li key={entry.id}>
-                  <article>
-                    <header>
-                      <h3>{entry.name}</h3>
-                      <code>{entry.id}</code>
-                    </header>
-                    <p>{entry.description}</p>
-                    <dl>
-                      <div>
-                        <dt>{msg.operator.minimum()}</dt>
-                        <dd>{entry.minimum}</dd>
-                      </div>
-                    </dl>
-                    <address>{entry.email}</address>
-                    {openSupplier && (
-                      <button
-                        type="button"
-                        aria-haspopup="dialog"
-                        className="receipt-link"
-                        onClick={() => openSupplier(entry.id)}
-                      >
-                        {msg.operator.openSupplier()}
-                      </button>
-                    )}
-                  </article>
+                  <DirectoryCard entry={entry} openSupplier={openSupplier} />
                 </li>
               ))}
             </ul>
           )}
-          {!action && contact && letterProps && (
+          {!action && contact && runCommand && (
             <div className="supplier-contact">
               <span>{contact.email}</span>
-              <EmailComposer key={contact.email} {...letterProps} to={contact.email} />
+              <EmailComposer
+                key={contact.email}
+                disabled={disabled}
+                reports={reports}
+                send={runCommand}
+                to={contact.email}
+              />
             </div>
           )}
-          {runCommand && report.terms?.minimum !== undefined && report.args.supplier_id ? (
+          {runCommand && quoted && report.args.supplier_id ? (
             <OrderSlip
               key={report.id}
               supplier={report.args.supplier_id}
               openReport={openReport}
-              {...{ report, reports, state, money, runCommand, disabled }}
+              disabled={disabled}
+              money={money}
+              report={report}
+              reports={reports}
+              runCommand={runCommand}
+              state={state}
             />
           ) : (
             <>
-              {!runCommand && report.terms?.minimum !== undefined && (
+              {!runCommand && hasValue(report.terms?.minimum) && (
                 <p className="terms">
                   {report.args.supplier_id} · {msg.operator.minimum()} {money(report.terms.minimum)}{" "}
                   · {msg.operator.expires()} {report.terms.until}
                 </p>
               )}
-              {report.terms?.order !== undefined && (
+              {hasValue(report.terms?.order) && (
                 <p className="terms">
                   {purchaseSupplier && openSupplier ? (
                     <button className="receipt-link" onClick={() => openSupplier(purchaseSupplier)}>
@@ -170,16 +203,27 @@ export default function ObservationView({
                   {msg.operator.expectedClose()} {report.terms.eta}
                 </p>
               )}
-              {!!report.rows.length &&
+              {hasAny(report.rows) &&
                 (report.tool === "get_machine_inventory" && runCommand ? (
                   <CabinetBench
-                    live={Boolean(action)}
+                    live={hasValue(action)}
                     openReport={openReport}
-                    {...{ report, reports, state, money, runCommand, disabled }}
+                    disabled={disabled}
+                    money={money}
+                    report={report}
+                    reports={reports}
+                    runCommand={runCommand}
+                    state={state}
                   />
                 ) : (
                   <ReportGrid
-                    {...{ report, reports, money, state, runCommand, disabled, openReport }}
+                    disabled={disabled}
+                    money={money}
+                    openReport={openReport}
+                    report={report}
+                    reports={reports}
+                    runCommand={runCommand}
+                    state={state}
                   />
                 ))}
             </>
@@ -205,7 +249,7 @@ export default function ObservationView({
           {text && <pre>{text}</pre>}
           {estimate && (
             <div className="terms">
-              {estimate.cost !== undefined && (
+              {estimate.status !== "needQuote" && estimate.status !== "expiredQuote" && (
                 <p>
                   {msg.operator.quoted()}: {money(estimate.cost)} · {msg.operator.minimum()}:{" "}
                   {money(estimate.minimum)}

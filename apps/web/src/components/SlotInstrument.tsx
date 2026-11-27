@@ -1,21 +1,25 @@
-import type { Report } from "games-common/benchmark";
+import type { CommandArgs, Report } from "games-common/benchmark";
 
+import { hasValue } from "games-common/language";
 import { useId, useState, type FormEvent, type ReactNode } from "react";
 
-import type { CabinetSlot } from "@/game/cabinet-layout";
+import type { CabinetSlot } from "@/game/cabinet-layout.ts";
 
-import { msg } from "@/dictionary";
-import { commandForMove } from "@/game/commands";
-import { slotChanges } from "@/game/slot-evidence";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove } from "@/game/commands.ts";
+import { slotChanges } from "@/game/slot-evidence.ts";
+import { clock } from "@/scene/clock.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
-import { ActionForm, ControlInput, Field, QuantityInput } from "./FormControls";
-import { GuiToolInfo } from "./GuiToolInfo";
-import { ProductInput } from "./ProductInput";
+import { ActionForm, Field, QuantityInput } from "./FormControls.tsx";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
+import { ProductInput } from "./ProductInput.tsx";
 
 const operations = ["restock_machine", "set_price", "clear_slot", "swap_item"] as const;
+type Operation = (typeof operations)[number];
+/** The amendment lists only the latest observations after the reading. */
+const shownChanges = 3;
 type Props = ObservationProps & {
   slot: CabinetSlot;
   live: boolean;
@@ -84,25 +88,27 @@ export function SlotInstrument({
       {changes.length > 0 && (
         <div className="slot-amendment">
           <b>{msg.operator.laterObservations()}</b>
-          {changes.slice(-3).map((change) => (
+          {changes.slice(-shownChanges).map((change) => (
             <div key={change.report.id}>
               <small>
                 {msg.operator.day()} {change.report.day} · {clock(change.report.minute)}
               </small>{" "}
               {change.observation
-                ? msg.fields.quantity() +
-                  ": " +
-                  change.observation.qty +
-                  "/" +
-                  (change.observation.capacity ?? slot.capacity)
-                : msg.fields.price() +
-                  ": " +
-                  (change.price === undefined ? "—" : money(change.price))}
+                ? `${msg.fields.quantity()}: ${change.observation.qty}/${
+                    change.observation.capacity ?? slot.capacity
+                  }`
+                : `${msg.fields.price()}: ${hasValue(change.price) ? money(change.price) : "—"}`}
             </div>
           ))}
         </div>
       )}
-      <SlotService slotId={slot.rawId} size={slot.size} {...{ reports, runCommand, disabled }} />
+      <SlotService
+        slotId={slot.rawId}
+        size={slot.size}
+        disabled={disabled}
+        reports={reports}
+        runCommand={runCommand}
+      />
     </section>
   );
 }
@@ -113,16 +119,19 @@ export function UninspectedMachine({
   machine,
   state,
   action,
-  ...props
+  reports,
+  disabled,
+  runCommand,
 }: ServiceProps & Pick<ObservationProps, "state"> & { machine: string; action: ReactNode }) {
-  const slots = state.slots.filter((id) => id.startsWith(machine + ":"));
+  const slots = state.slots.filter((id) => id.startsWith(`${machine}:`));
   const [slotId, setSlotId] = useState(slots[0] ?? "");
   const slotList = useId();
   return (
     <section className="sheet slot-instrument uninspected-machine">
       <div className="asset-actions">{action}</div>
       <Field label={msg.fields.slot()}>
-        <ControlInput
+        <input
+          className="control-input"
           list={slotList}
           value={slotId}
           onChange={(event) => setSlotId(event.currentTarget.value)}
@@ -133,9 +142,22 @@ export function UninspectedMachine({
           ))}
         </datalist>
       </Field>
-      <SlotService {...props} slotId={slotId} />
+      <SlotService reports={reports} disabled={disabled} runCommand={runCommand} slotId={slotId} />
     </section>
   );
+}
+
+function operationArgs(
+  verb: Operation,
+  { product, quantity, price }: { product: string; quantity: string; price: string },
+): CommandArgs {
+  if (verb === "restock_machine" || verb === "swap_item") {
+    return { product_id: product, quantity: Number(quantity) };
+  }
+  if (verb === "set_price") {
+    return { price: Number(price) };
+  }
+  return {};
 }
 
 function SlotService({
@@ -145,15 +167,15 @@ function SlotService({
   runCommand,
   disabled,
 }: ServiceProps & { slotId: string; size?: string }) {
-  const [verb, setVerb] = useState<(typeof operations)[number]>("restock_machine");
+  const [verb, setVerb] = useState<Operation>("restock_machine");
   const [product, setProduct] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const needsProduct = verb === "restock_machine" || verb === "swap_item";
   const labels = {
+    clear_slot: msg.commands.clear_slot(),
     restock_machine: msg.commands.restock_machine(),
     set_price: msg.commands.set_price(),
-    clear_slot: msg.commands.clear_slot(),
     swap_item: msg.commands.swap_item(),
   };
   const valid =
@@ -165,17 +187,13 @@ function SlotService({
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!disabled && valid) {
-      const args = needsProduct
-        ? { product_id: product, quantity: Number(quantity) }
-        : verb === "set_price"
-          ? { price: Number(price) }
-          : {};
+      const args = operationArgs(verb, { price, product, quantity });
       runCommand(commandForMove([verb, { slot: slotId, ...args }]));
     }
   }
   return (
     <div className="slot-service">
-      <div className="slot-operations" role="group" aria-label={msg.fields.slot() + " " + slotId}>
+      <div className="slot-operations" role="group" aria-label={`${msg.fields.slot()} ${slotId}`}>
         {operations.map((action) => (
           <button
             type="button"
@@ -192,10 +210,8 @@ function SlotService({
         onSubmit={submit}
         className={needsProduct ? "slot-inputs" : "slot-single"}
         actions={
-          <GuiToolInfo verb={verb}>
-            <button data-clock-verb={verb} disabled={disabled || !valid}>
-              {labels[verb]}
-            </button>
+          <GuiToolInfo verb={verb} disabled={disabled || !valid}>
+            {labels[verb]}
           </GuiToolInfo>
         }
       >
@@ -204,7 +220,6 @@ function SlotService({
             <Field label={msg.fields.product_id()}>
               <ProductInput
                 reports={reports}
-
                 label={msg.fields.product_id()}
                 preferSize={size}
                 disabled={disabled}
@@ -223,7 +238,8 @@ function SlotService({
         )}
         {verb === "set_price" && (
           <Field label={msg.fields.price()}>
-            <ControlInput
+            <input
+              className="control-input"
               type="number"
               min="0"
               step="any"

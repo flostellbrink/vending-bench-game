@@ -1,7 +1,7 @@
 import type { Report, Snapshot } from "games-common/benchmark";
 
-import type { GuiResponse } from "@/game/receipt-routing";
-import type { Money } from "@/localization/messages";
+import type { GuiResponse } from "@/game/receipt-routing.ts";
+import type { Money } from "@/localization/messages.ts";
 export interface ObservationProps {
   report: Report;
   reports: Report[];

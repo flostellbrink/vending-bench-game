@@ -1,21 +1,28 @@
 import { useState } from "react";
 
-import { msg } from "@/dictionary";
-import { salesRange } from "@/game/sales-range";
-import { useFormatters } from "@/localization/formatters";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { salesRange } from "@/game/sales-range.ts";
+import { useFormatters } from "@/localization/formatters.ts";
+import { clock } from "@/scene/clock.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
-import { ControlInput, Field } from "./FormControls";
-import { Metrics } from "./Metrics";
-import { ReportGrid } from "./ReportGrid";
+import { Field } from "./FormControls.tsx";
+import { Metrics } from "./Metrics.tsx";
+import { ReportGrid } from "./ReportGrid.tsx";
 import "./daily-revenue.css";
 
 type Props = ObservationProps & { openReport: (id: number) => void };
 
-export function DailyRevenue(props: Props) {
-  const { report, openReport, money } = props;
+export function DailyRevenue({
+  report,
+  reports,
+  state,
+  money,
+  runCommand,
+  disabled,
+  openReport,
+}: Props) {
   const { number } = useFormatters();
   const [from, setFrom] = useState("");
   const [through, setThrough] = useState("");
@@ -48,7 +55,8 @@ export function DailyRevenue(props: Props) {
         </legend>
         <div>
           <Field label={msg.operator.rangeFrom()}>
-            <ControlInput
+            <input
+              className="control-input"
               type="date"
               value={start}
               min={first}
@@ -57,7 +65,8 @@ export function DailyRevenue(props: Props) {
             />
           </Field>
           <Field label={msg.operator.rangeThrough()}>
-            <ControlInput
+            <input
+              className="control-input"
               type="date"
               value={end}
               min={start}
@@ -68,7 +77,13 @@ export function DailyRevenue(props: Props) {
         </div>
       </fieldset>
       <ReportGrid
-        {...props}
+        report={report}
+        reports={reports}
+        state={state}
+        money={money}
+        runCommand={runCommand}
+        disabled={disabled}
+        openReport={openReport}
         visibleRows={range.rows}
         footer={
           <>

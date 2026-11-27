@@ -1,25 +1,30 @@
-import type { ObservedSupplier } from "@/game/suppliers";
+import type { Report } from "games-common/benchmark";
 
-import { msg } from "@/dictionary";
-import { inspectionCommand, type ReadoutContext } from "@/game/readout-route";
+import { hasAny, hasValue, type Optional } from "games-common/language";
 
-import type { WorkspaceProps } from "./Workspace";
+import type { ObservedSupplier } from "@/game/suppliers.ts";
 
-import { BalanceScope } from "./BalanceScope";
-import { Mailbox, SalesReports } from "./BusinessReports";
-import { CommandIndex } from "./CommandIndex";
-import { DepotStock } from "./DepotStock";
-import { EmailComposer } from "./EmailComposer";
-import { GuiToolInfo } from "./GuiToolInfo";
-import ObservationView from "./ObservationView";
-import { OperationsDesk } from "./OperationsDesk";
-import { OperatorBrief } from "./OperatorBrief";
-import { OrderRegister } from "./OrderRegister";
-import { OrderSlip, QuoteRequest } from "./OrderSlip";
-import { ReportList } from "./ReportList";
-import { Scorecard } from "./Scorecard";
-import { UninspectedMachine } from "./SlotInstrument";
-import { SupplierDirectory } from "./SupplierDirectory";
+import { msg } from "@/dictionary/index.ts";
+import { inspectionCommand, type ReadoutContext } from "@/game/readout-route.ts";
+
+import type { ObservationProps } from "./panel-props.ts";
+import type { WorkspaceProps } from "./Workspace.tsx";
+
+import { BalanceScope } from "./BalanceScope.tsx";
+import { Mailbox, SalesReports } from "./BusinessReports.tsx";
+import { CommandIndex } from "./CommandIndex.tsx";
+import { DepotStock } from "./DepotStock.tsx";
+import { EmailComposer } from "./EmailComposer.tsx";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
+import ObservationView from "./ObservationView.tsx";
+import { OperationsDesk } from "./OperationsDesk.tsx";
+import { OperatorBrief } from "./OperatorBrief.tsx";
+import { OrderRegister } from "./OrderRegister.tsx";
+import { OrderSlip, QuoteRequest } from "./OrderSlip.tsx";
+import { ReportList } from "./ReportList.tsx";
+import { Scorecard } from "./Scorecard.tsx";
+import { UninspectedMachine } from "./SlotInstrument.tsx";
+import { SupplierDirectory } from "./SupplierDirectory.tsx";
 
 interface Props extends WorkspaceProps {
   tab: NavigationView;
@@ -27,6 +32,88 @@ interface Props extends WorkspaceProps {
   suppliers: ObservedSupplier[];
 }
 type NavigationView = WorkspaceProps["nav"]["tab"];
+const machinePrefix = "machine:";
+const supplierPrefix = "supplier:";
+const dayPrefix = "day:";
+
+/** One supplier: contact, quote, last reply, order slip and past orders. */
+function SupplierDesk({
+  supplier,
+  contact,
+  report,
+  state,
+  reports,
+  money,
+  disabled,
+  runCommand,
+  openReport,
+}: Omit<ObservationProps, "report"> & {
+  supplier: string;
+  contact: Optional<ObservedSupplier>;
+  report: Optional<Report>;
+  openReport: (id: number) => void;
+}) {
+  const purchases = contact?.orders ?? [];
+  const quote = hasValue(report?.terms?.minimum) ? report : undefined;
+  return (
+    <article className="supplier-desk">
+      {contact?.email && (
+        <div className="supplier-contact">
+          <span>{contact.email}</span>
+          <EmailComposer
+            to={contact.email}
+            disabled={disabled}
+            reports={reports}
+            send={runCommand}
+          />
+        </div>
+      )}
+      <QuoteRequest
+        report={quote}
+        supplier={supplier}
+        state={state}
+        disabled={disabled}
+        runCommand={runCommand}
+        supplierView
+      />
+      {report && !hasValue(report.terms?.minimum) && (
+        <ObservationView
+          disabled={disabled}
+          money={money}
+          reports={reports}
+          runCommand={runCommand}
+          report={report}
+          state={state}
+          openReport={openReport}
+        />
+      )}
+      <OrderSlip
+        disabled={disabled}
+        money={money}
+        reports={reports}
+        runCommand={runCommand}
+        report={quote}
+        supplier={supplier}
+        state={state}
+        openReport={openReport}
+        supplierView
+      />
+      {purchases.length > 0 && (
+        <section className="supplier-orders">
+          <h3>
+            {msg.operator.orders()} <small>{purchases.length}</small>
+          </h3>
+          <OrderRegister
+            money={money}
+            reports={reports}
+            supplier={contact?.name ?? supplier}
+            orders={purchases}
+          />
+        </section>
+      )}
+    </article>
+  );
+}
 export function WorkspaceReadout({
   run,
   nav,
@@ -40,8 +127,12 @@ export function WorkspaceReadout({
 }: Props) {
   const { state, reports } = run;
   const { setTab } = nav;
-  const disabled = run.busy || Boolean(run.runtimeError) || !state || state.over;
-  const controls = { money, reports, disabled, runCommand: shell.runCommand };
+  const { runCommand } = shell;
+  const disabled = run.busy || hasAny(run.runtimeError) || !state || state.over;
+  const showDay = (day: number) => {
+    nav.setBalanceDay(day);
+    setTab(`${dayPrefix}${day}`);
+  };
   if (
     state &&
     (tab === "status" ||
@@ -49,9 +140,21 @@ export function WorkspaceReadout({
       tab === "marketing" ||
       tab === "notes" ||
       tab === "reminders")
-  )
-    return <OperationsDesk {...controls} desk={tab} {...{ release, state }} openReport={setTab} />;
-  if (tab === "world")
+  ) {
+    return (
+      <OperationsDesk
+        disabled={disabled}
+        money={money}
+        reports={reports}
+        runCommand={runCommand}
+        desk={tab}
+        release={release}
+        state={state}
+        openReport={setTab}
+      />
+    );
+  }
+  if (tab === "world") {
     return (
       <BalanceScope
         embedded
@@ -62,173 +165,181 @@ export function WorkspaceReadout({
         release={release}
         selected={nav.balanceDay}
         setSelected={nav.setBalanceDay}
-        showReceipts={(day) => {
-          nav.setBalanceDay(day);
-          setTab("day:" + day);
-        }}
+        showReceipts={showDay}
       />
     );
-  if (state && tab === "suppliers")
+  }
+  if (state && tab === "suppliers") {
     return (
       <SupplierDirectory
-        {...controls}
-        state={state}
+        disabled={disabled}
+        runCommand={runCommand}
         suppliers={suppliers}
         openObject={nav.showResult}
       />
     );
+  }
   const cmd = inspectionCommand(tab);
   if (
     state &&
     typeof tab === "string" &&
-    (tab.startsWith("machine:") || tab === "site:depot") &&
+    (tab.startsWith(machinePrefix) || tab === "site:depot") &&
     cmd
   ) {
     const report = context.selected;
+    const machine = tab.startsWith(machinePrefix) ? tab.slice(machinePrefix.length) : undefined;
     const scoped =
-      report && tab.startsWith("machine:") && !report.args.machine_id
-        ? {
-            ...report,
-            rows: report.rows.filter((row) => String(row[0]).startsWith(tab.slice(8) + ":")),
-          }
+      report && hasValue(machine) && !report.args.machine_id
+        ? { ...report, rows: report.rows.filter((row) => String(row[0]).startsWith(`${machine}:`)) }
         : report;
     const verb = cmd.split(" ")[0] ?? "";
     const action = (
-      <GuiToolInfo verb={verb}>
-        <button
-          className="asset-check"
-          disabled={disabled}
-          data-clock-verb={verb}
-          onClick={() => shell.runCommand(cmd, "inline")}
-        >
-          {tab.startsWith("machine:") ? (
-            <>
-              {msg.commands.get_machine_inventory()} · {msg.operator.allMachines()}
-            </>
-          ) : undefined}
-        </button>
+      <GuiToolInfo
+        verb={verb}
+        className="asset-check"
+        disabled={disabled}
+        onClick={() => runCommand(cmd, "inline")}
+      >
+        {hasValue(machine) ? (
+          <>
+            {msg.commands.get_machine_inventory()} · {msg.operator.allMachines()}
+          </>
+        ) : undefined}
       </GuiToolInfo>
     );
-    const instrument = scoped ? (
-      <ObservationView
-        {...controls}
-        report={scoped}
-        state={state}
-        openReport={setTab}
-        action={action}
-      />
-    ) : tab.startsWith("machine:") ? (
-      <UninspectedMachine
-        machine={tab.slice(8)}
-        {...{ state, reports, disabled, action }}
-        runCommand={shell.runCommand}
-      />
-    ) : (
-      <section className="sheet asset-actions">{action}</section>
-    );
-    if (tab === "site:depot")
-      return <DepotStock report={report} action={action} openReport={setTab} {...{ money }} />;
-    return instrument;
-  }
-  if (state && typeof tab === "string" && tab.startsWith("supplier:")) {
-    const report = context.selected;
-    const supplier = tab.slice(9);
-    const contact = suppliers.find((entry) => entry.id === supplier);
-    const purchases = contact?.orders ?? [];
-    const compose = contact?.email && (
-      <EmailComposer to={contact.email} {...{ state, disabled, reports }} send={shell.runCommand} />
-    );
-    return (
-      <article className="supplier-desk">
-        {contact?.email && (
-          <div className="supplier-contact">
-            <span>{contact.email}</span>
-            {compose}
-          </div>
-        )}
-        <QuoteRequest
-          report={report?.terms?.minimum !== undefined ? report : undefined}
-          supplier={supplier}
-          state={state}
-          {...controls}
-          supplierView
-        />
-        {report && report.terms?.minimum === undefined && (
-          <ObservationView {...controls} report={report} state={state} openReport={setTab} />
-        )}
-        <OrderSlip
-          {...controls}
-          report={report?.terms?.minimum !== undefined ? report : undefined}
-          supplier={supplier}
+    if (tab === "site:depot") {
+      return <DepotStock report={report} action={action} openReport={setTab} money={money} />;
+    }
+    if (scoped) {
+      return (
+        <ObservationView
+          disabled={disabled}
+          money={money}
+          reports={reports}
+          runCommand={runCommand}
+          report={scoped}
           state={state}
           openReport={setTab}
-          supplierView
+          action={action}
         />
-        {purchases.length > 0 && (
-          <section className="supplier-orders">
-            <h3>
-              {msg.operator.orders()} <small>{purchases.length}</small>
-            </h3>
-            <OrderRegister
-              {...{ money, reports }}
-              supplier={contact?.name ?? supplier}
-              orders={purchases}
-            />
-          </section>
-        )}
-      </article>
+      );
+    }
+    if (hasValue(machine)) {
+      return (
+        <UninspectedMachine
+          machine={machine}
+          state={state}
+          reports={reports}
+          disabled={disabled}
+          action={action}
+          runCommand={runCommand}
+        />
+      );
+    }
+    return <section className="sheet asset-actions">{action}</section>;
+  }
+  if (state && typeof tab === "string" && tab.startsWith(supplierPrefix)) {
+    const supplier = tab.slice(supplierPrefix.length);
+    return (
+      <SupplierDesk
+        supplier={supplier}
+        contact={suppliers.find((entry) => entry.id === supplier)}
+        report={context.selected}
+        state={state}
+        reports={reports}
+        money={money}
+        disabled={disabled}
+        runCommand={runCommand}
+        openReport={setTab}
+      />
     );
   }
-  if (state && tab === "mail")
-    return <Mailbox {...controls} release={release} state={state} openReport={setTab} />;
-  if (state && tab === "sales")
-    return <SalesReports {...controls} release={release} state={state} openReport={setTab} />;
-  if (context.selected && state)
+  if (state && tab === "mail") {
+    return (
+      <Mailbox
+        disabled={disabled}
+        money={money}
+        reports={reports}
+        runCommand={runCommand}
+        release={release}
+        state={state}
+        openReport={setTab}
+      />
+    );
+  }
+  if (state && tab === "sales") {
+    return (
+      <SalesReports
+        disabled={disabled}
+        money={money}
+        reports={reports}
+        runCommand={runCommand}
+        release={release}
+        state={state}
+        openReport={setTab}
+      />
+    );
+  }
+  if (context.selected && state) {
     return (
       <ObservationView
-        {...controls}
+        disabled={disabled}
+        money={money}
+        reports={reports}
+        runCommand={runCommand}
         report={context.selected}
         state={state}
         openReport={setTab}
-        openSupplier={(id) => nav.showResult("supplier:" + id)}
+        openSupplier={(id) => nav.showResult(`${supplierPrefix}${id}`)}
       />
     );
-  if (typeof tab === "string" && tab.startsWith("past:"))
-    return <ReportList reports={context.history} {...{ money }} open={setTab} />;
-  if (cmd && state)
+  }
+  if (typeof tab === "string" && tab.startsWith("past:")) {
+    return <ReportList reports={context.history} money={money} open={setTab} />;
+  }
+  if (cmd && state) {
     return (
       <section className="sheet">
-        <GuiToolInfo verb={cmd.split(" ")[0] ?? ""}>
-          <button disabled={disabled} onClick={() => shell.runCommand(cmd)}>
-            {cmd}
-          </button>
+        <GuiToolInfo
+          verb={cmd.split(" ")[0] ?? ""}
+          disabled={disabled}
+          onClick={() => runCommand(cmd)}
+          preview={false}
+        >
+          {cmd}
         </GuiToolInfo>
       </section>
     );
-  if (tab === "help")
-    return <CommandIndex actions={run.actions} release={release} {...{ state }} />;
-  if (tab === "brief") return <OperatorBrief embedded {...{ release, state, money }} />;
-  if (tab === "scores")
+  }
+  if (tab === "help") {
+    return <CommandIndex actions={run.actions} release={release} state={state} />;
+  }
+  if (tab === "brief") {
+    return <OperatorBrief embedded release={release} state={state} money={money} />;
+  }
+  if (tab === "scores") {
     return (
       <Scorecard
         seed={release.seed}
         embedded
         history={run.history}
-        reviewDay={(day) => {
-          nav.setBalanceDay(day);
-          setTab("day:" + day);
-        }}
-        {...{ state, reports, money }}
+        reviewDay={showDay}
+        state={state}
+        reports={reports}
+        money={money}
         rivals={run.rivals}
         best={run.best}
         openReport={setTab}
       />
     );
-  const byDay = typeof tab === "string" && tab.startsWith("day:");
+  }
+  const byDay = typeof tab === "string" && tab.startsWith(dayPrefix);
   return (
     <ReportList
-      reports={byDay ? reports.filter((r) => r.day === Number(tab.slice(4))) : reports}
-      {...{ money }}
+      reports={
+        byDay ? reports.filter((r) => r.day === Number(tab.slice(dayPrefix.length))) : reports
+      }
+      money={money}
       open={setTab}
     />
   );

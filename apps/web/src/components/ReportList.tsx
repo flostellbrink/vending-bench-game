@@ -1,9 +1,9 @@
 import type { Report } from "games-common/benchmark";
 
-import type { Money } from "@/localization/messages";
+import type { Money } from "@/localization/messages.ts";
 
-import { msg } from "@/dictionary";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { clock } from "@/scene/clock.ts";
 
 interface Props {
   reports: Report[];

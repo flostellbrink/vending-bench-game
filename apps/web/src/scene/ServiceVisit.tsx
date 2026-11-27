@@ -1,7 +1,7 @@
 import type { Optional } from "games-common/language";
 
-import { concourse } from "./Atrium";
-import { Box, Line, project, steel, wood, type Position } from "./geometry";
+import { concourse } from "./Atrium.tsx";
+import { Box, Line, project, steel, wood, type Position } from "./geometry.tsx";
 
 export interface ServiceMotion {
   drink: boolean;
@@ -9,6 +9,35 @@ export interface ServiceMotion {
   inspecting: boolean;
   open: number;
 }
+
+const figure = {
+  footReach: 1.35,
+  hand: { lift: 4, reach: 5, x: 6, y: -18 },
+  lean: 16,
+  rearKnee: 0.5,
+  scale: 1.72,
+  shoe: -3,
+  stride: 2.1,
+};
+const visit = {
+  aisleSide: 6,
+  aisleTurn: 0.8,
+  behindTrolley: 9,
+  besideTrolley: 5,
+  drinkStandX: 51,
+  inspectStart: 0.25,
+  roomCabinetX: 126,
+  roomCabinetY: 49,
+  roomWalk: 37,
+  snackStandX: 15,
+  strides: 15,
+  walkSpeed: 1.25,
+};
+const trolley = {
+  base: { x: 8, y: 4 },
+  crate: { x: 9, y: 5 },
+  handle: { foot: 3, grip: 11, top: 31, x: 20, y: 5 },
+};
 
 export function Person({
   x,
@@ -19,32 +48,36 @@ export function Person({
   check = 0,
 }: Position & { walk?: number; coat?: string; facing?: number; check?: number }) {
   const [cx, cy] = project([x, y, 0]);
-  const step = Math.sin(walk) * 2.1;
+  const step = Math.sin(walk) * figure.stride;
+  const hand = {
+    x: figure.hand.x + check * figure.hand.reach,
+    y: figure.hand.y - check * figure.hand.lift,
+  };
   return (
-    <g transform={`translate(${cx} ${cy}) scale(${facing * 1.72} 1.72)`}>
+    <g transform={`translate(${cx} ${cy}) scale(${facing * figure.scale} ${figure.scale})`}>
       <ellipse cx="1.5" cy=".5" rx="6.6" ry="2.2" fill="#5f7064" opacity=".3" />
       <path
-        d={`M-2 -13 L${-2 - step} -5 L${-2 - step * 1.35} -1 M2 -13 L${2 + step * 0.5} -7 L${2 + step * 1.35} -1`}
+        d={`M-2 -13 L${-2 - step} -5 L${-2 - step * figure.footReach} -1 M2 -13 L${2 + step * figure.rearKnee} -7 L${2 + step * figure.footReach} -1`}
         fill="none"
         stroke="#43545a"
         strokeWidth="2.7"
       />
       <path
-        d={`M${-3 - step * 1.35} -.6 h3 M${1 + step * 1.35} -.6 h3`}
+        d={`M${figure.shoe - step * figure.footReach} -.6 h3 M${1 + step * figure.footReach} -.6 h3`}
         stroke="#364744"
         strokeWidth="1.6"
       />
-      <g transform={`rotate(${check * 16} 0 -12)`}>
+      <g transform={`rotate(${check * figure.lean} 0 -12)`}>
         <path d="M-3.8 -24 Q-.5 -26 3 -23 L4.5 -12 Q1 -10 -4 -12Z" fill={coat} />
         {check > 0 ? (
           <g>
             <path
-              d={`M1 -22 L5 -18 L${6 + check * 5} ${-18 - check * 4}`}
+              d={`M1 -22 L5 -18 L${hand.x} ${hand.y}`}
               fill="none"
               stroke={coat}
               strokeWidth="2.8"
             />
-            <circle cx={6 + check * 5} cy={-18 - check * 4} r="1.4" fill="#c09d80" />
+            <circle cx={hand.x} cy={hand.y} r="1.4" fill="#c09d80" />
           </g>
         ) : (
           <path d="M-3 -22 L-4 -17 L-1 -14" fill="none" stroke="#526567" strokeWidth="2.2" />
@@ -63,31 +96,50 @@ export function ServiceVisit({
   service: Optional<ServiceMotion>;
   atrium: boolean;
 }) {
-  if (!service) return null;
+  if (!service) {
+    return null;
+  }
   const offset = Math.max(0, 1 - Math.min(service.progress, 1 - service.progress) * 4);
-  const cabinetX = (atrium ? concourse.machineX : 126) + (service.drink ? 51 : 15);
+  const cabinetX =
+    (atrium ? concourse.machineX : visit.roomCabinetX) +
+    (service.drink ? visit.drinkStandX : visit.snackStandX);
   const x = atrium
-    ? cabinetX + (concourse.entry - cabinetX) * Math.min(1, offset * 1.25)
+    ? cabinetX + (concourse.entry - cabinetX) * Math.min(1, offset * visit.walkSpeed)
     : cabinetX;
   const y = atrium
-    ? concourse.aisle - 6 + Math.max(0, offset - 0.8) * 5 * (concourse.depth - concourse.aisle)
-    : 49 + offset * 37;
+    ? concourse.aisle -
+      visit.aisleSide +
+      Math.max(0, offset - visit.aisleTurn) * 5 * (concourse.depth - concourse.aisle)
+    : visit.roomCabinetY + offset * visit.roomWalk;
+  const { base, crate, handle } = trolley;
   return (
     <g>
       {!service.inspecting && (
         <>
-          <Box x={x + 8} y={y + 4} w={13} d={8} z={2} h={2} c={steel} />
-          <Box x={x + 9} y={y + 5} w={10} d={7} z={4} h={7} c={wood} />
-          <Line a={[x + 20, y + 5, 3]} b={[x + 20, y + 5, 31]} color="#586c63" width="1.5" />
-          <Line a={[x + 20, y + 5, 31]} b={[x + 20, y + 11, 31]} color="#67796e" width="1.5" />
+          <Box x={x + base.x} y={y + base.y} w={13} d={8} z={2} h={2} c={steel} />
+          <Box x={x + crate.x} y={y + crate.y} w={10} d={7} z={4} h={7} c={wood} />
+          <Line
+            a={[x + handle.x, y + handle.y, handle.foot]}
+            b={[x + handle.x, y + handle.y, handle.top]}
+            color="#586c63"
+            width="1.5"
+          />
+          <Line
+            a={[x + handle.x, y + handle.y, handle.top]}
+            b={[x + handle.x, y + handle.grip, handle.top]}
+            color="#67796e"
+            width="1.5"
+          />
         </>
       )}
       <Person
-        x={x + 5}
-        y={y + (service.inspecting ? 0 : 9)}
-        walk={offset * 15}
+        x={x + visit.besideTrolley}
+        y={y + (service.inspecting ? 0 : visit.behindTrolley)}
+        walk={offset * visit.strides}
         check={
-          service.inspecting && offset === 0 ? Math.sin((service.progress - 0.25) * Math.PI * 2) : 0
+          service.inspecting && offset === 0
+            ? Math.sin((service.progress - visit.inspectStart) * Math.PI * 2)
+            : 0
         }
         coat={service.inspecting ? "#9d6d46" : "#697e69"}
       />

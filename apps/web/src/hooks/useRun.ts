@@ -12,12 +12,12 @@ import {
   type WorkerReply,
   type WorkerRequest,
 } from "games-common/benchmark";
-import { errorToString } from "games-common/language";
+import { errorToString, hasValue, type Optional } from "games-common/language";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { shouldOpenReceipt, type ResponseDestination } from "@/game/receipt-routing";
-import { observation } from "@/game/reports";
-import { loadRival } from "@/game/rival-balances";
+import { shouldOpenReceipt, type ResponseDestination } from "@/game/receipt-routing.ts";
+import { observation } from "@/game/reports.ts";
+import { loadRival } from "@/game/rival-balances.ts";
 import {
   recordKey,
   runKey,
@@ -27,7 +27,7 @@ import {
   saveRun,
   withRunLock,
   type RunTimeline,
-} from "@/game/runs";
+} from "@/game/runs.ts";
 
 interface LocalLine {
   id: string;
@@ -45,30 +45,30 @@ type SimulatorResult = Extract<WorkerReply, { state: Snapshot }>;
 interface RunView {
   revision: string;
   journal: Entry[];
-  state: Snapshot | null;
+  state: Optional<Snapshot>;
   actions: Actions;
   reports: Report[];
   lines: LogLine[];
   history: number[];
-  best: PersonalBest | null;
+  best: Optional<PersonalBest>;
   busy: boolean;
   error: string;
-  boot: BootStage[] | null;
+  boot: Optional<BootStage[]>;
 }
 
 function initialView(): RunView {
   return {
-    revision: "",
-    journal: [],
-    state: null,
     actions: {},
-    reports: [],
-    lines: [],
-    history: [],
     best: null,
+    boot: null,
     busy: true,
     error: "",
-    boot: null,
+    history: [],
+    journal: [],
+    lines: [],
+    reports: [],
+    revision: "",
+    state: null,
   };
 }
 
@@ -76,91 +76,113 @@ function post(worker: Worker, request: WorkerRequest) {
   worker.postMessage(request);
 }
 
+function openWorker() {
+  try {
+    return { worker: new Worker("/worker.js") };
+  } catch (error) {
+    return { error };
+  }
+}
+
 async function recordScore(key: string, state: Snapshot, values: number[]) {
-  if (!state.over || state.failed || values.length !== state.days + 1) return;
-  if (!state.final) throw Error("Completed run is missing its final score");
+  if (!state.over || state.failed || values.length !== state.days + 1) {
+    return;
+  }
+  if (!state.final) {
+    throw new Error("Completed run is missing its final score");
+  }
   const score = state.final.reward;
   await withRunLock(key, () => {
     const previous = readRecord(localStorage.getItem(key));
-    if (!previous || score > previous.score)
+    if (!previous || score > previous.score) {
       localStorage.setItem(key, JSON.stringify({ score, values }));
+    }
   });
 }
 
 function reportsFor(data: SimulatorResult, entries: Entry[], offset: number): Report[] {
-  if (data.receipts.length !== entries.length)
-    throw Error("Simulator returned a different receipt count");
+  if (data.receipts.length !== entries.length) {
+    throw new Error("Simulator returned a different receipt count");
+  }
   return data.receipts.map((receipt, i) => {
     const entry = entries[i];
-    if (!entry) throw Error("Simulator returned a receipt without a command");
+    if (!entry) {
+      throw new Error("Simulator returned a receipt without a command");
+    }
     return observation(receipt, entry.move, offset + i + 1, entry.line);
   });
 }
 
 /** Keeps the selected run's simulator, journal and comparison record in sync. */
 export function useRun(release: Release, slot: string, onView: (id: View) => void) {
-  const [storedView, setView] = useState<RunView>(initialView);
+  const [storedView, setStoredView] = useState<RunView>(initialView);
   const view = storedView.revision === release.revision ? storedView : initialView();
-  const [rivalResult, setRivals] = useState<{ revision: string; rivals: Rival[] } | null>(null);
+  const [rivalResult, setRivalResult] =
+    useState<Optional<{ revision: string; rivals: Rival[] }>>(null);
   const rivals = rivalResult?.revision === release.revision ? rivalResult.rivals : [];
   const [saveIssue, setSaveIssue] = useState<SaveIssue>("");
   const [runtimeError, setRuntimeError] = useState("");
-  const [epoch, retry] = useState(0);
-  const worker = useRef<Worker | null>(null);
-  const pending = useRef<{ entry: Entry; destination: ResponseDestination } | null>(null);
+  const [epoch, setEpoch] = useState(0);
+  const worker = useRef<Optional<Worker>>(null);
+  const pending = useRef<Optional<{ entry: Entry; destination: ResponseDestination }>>(null);
   const saveKey = runKey(release, slot);
   const bestKey = recordKey(release);
-  const setError = useCallback((error: string) => setView((old) => ({ ...old, error })), []);
+  const setError = useCallback((error: string) => setStoredView((old) => ({ ...old, error })), []);
   const clearSaveIssue = useCallback(() => setSaveIssue(""), []);
 
   const startWorker = useCallback(() => {
     const abort = new AbortController();
-    let current: Worker;
-    try {
-      current = new Worker("/worker.js");
-    } catch (error) {
+    const opened = openWorker();
+    if (!hasValue(opened.worker)) {
+      const startError = opened.error;
       queueMicrotask(() => {
-        if (abort.signal.aborted) return;
-        setRuntimeError(errorToString(error));
-        setView({ ...initialView(), revision: release.revision, busy: false });
+        if (abort.signal.aborted) {
+          return;
+        }
+        setRuntimeError(errorToString(startError));
+        setStoredView({ ...initialView(), busy: false, revision: release.revision });
       });
       return () => abort.abort();
     }
+    const current = opened.worker;
     worker.current = current;
-    let serialized: string | null = null,
-      opponent: PersonalBest | null = null,
-      balances: number[] = [];
+    let serialized: Optional<string> = null;
+    let opponent: Optional<PersonalBest> = null;
+    let balances: number[] = [];
     let first = false;
     let entries: Entry[] = [];
-    let timeline: RunTimeline | undefined;
+    let timeline: Optional<RunTimeline> = undefined;
     pending.current = null;
 
     const fail = (error: unknown) => {
-      if (abort.signal.aborted) return;
+      if (abort.signal.aborted) {
+        return;
+      }
       abort.abort();
       current.terminate();
       worker.current = null;
       pending.current = null;
       setRuntimeError(errorToString(error));
-      setView((old) => ({
+      setStoredView((old) => ({
         ...(old.revision === release.revision ? old : initialView()),
-        revision: release.revision,
         busy: false,
         error: "",
+        revision: release.revision,
       }));
     };
 
     function replay() {
       first = !localStorage.getItem("vendix.booted");
       serialized = localStorage.getItem(saveKey);
-      if (serialized === null) throw Error("Saved run not found");
+      if (!hasValue(serialized)) {
+        throw new Error("Saved run not found");
+      }
       const saved = readRun(serialized, readRecord(localStorage.getItem(bestKey)));
-      opponent = saved.opponent;
+      ({ opponent, timeline } = saved);
       entries = saved.moves;
-      timeline = saved.timeline;
       balances = [];
       pending.current = null;
-      post(current, { release, moves: entries.map((e) => e.move) });
+      post(current, { moves: entries.map((e) => e.move), release });
     }
 
     async function accept(data: SimulatorResult) {
@@ -174,37 +196,45 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         const next = [...entries, entry];
         try {
           serialized = await withRunLock(saveKey, () =>
-            saveRun(localStorage, saveKey, serialized, next, opponent, data.state.over, timeline),
+            saveRun(localStorage, saveKey, serialized, {
+              finished: data.state.over,
+              moves: next,
+              opponent,
+              timeline,
+            }),
           );
         } catch (error) {
-          if (abort.signal.aborted) return;
+          if (abort.signal.aborted) {
+            return;
+          }
           setSaveIssue(
             error instanceof Error && error.message === "changed" ? "saveConflict" : "saveFailed",
           );
-          retry((n) => n + 1);
-          setView({ ...initialView(), revision: release.revision });
+          setEpoch((n) => n + 1);
+          setStoredView({ ...initialView(), revision: release.revision });
           onView("suppliers");
           replay();
           return;
         }
-        if (abort.signal.aborted) return;
+        if (abort.signal.aborted) {
+          return;
+        }
         entries = next;
       } else {
-        if (!previousTimeline && serialized !== null) {
+        if (!previousTimeline && hasValue(serialized)) {
           try {
             serialized = await withRunLock(saveKey, () =>
-              saveRun(
-                localStorage,
-                saveKey,
-                serialized,
-                entries,
+              saveRun(localStorage, saveKey, serialized, {
+                finished: data.state.over,
+                moves: entries,
                 opponent,
-                data.state.over,
                 timeline,
-              ),
+              }),
             );
           } catch (error) {
-            if (abort.signal.aborted) return;
+            if (abort.signal.aborted) {
+              return;
+            }
             if (error instanceof Error && error.message === "changed") {
               replay();
               return;
@@ -212,40 +242,53 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
             setSaveIssue("saveFailed");
           }
         }
-        if (first) localStorage.setItem("vendix.booted", "1");
+        if (first) {
+          localStorage.setItem("vendix.booted", "1");
+        }
       }
       if (data.state.over) {
         try {
           await recordScore(bestKey, data.state, balances);
         } catch {
-          if (!abort.signal.aborted) setSaveIssue("saveFailed");
+          if (!abort.signal.aborted) {
+            setSaveIssue("saveFailed");
+          }
         }
       }
-      if (abort.signal.aborted) return;
+      if (abort.signal.aborted) {
+        return;
+      }
       pending.current = null;
-      setView((old) => ({
-        ...old,
-        revision: release.revision,
-        journal: entries,
-        best: opponent,
-        state: data.state,
-        actions: data.actions,
-        history: balances,
-        busy: false,
-        reports: entry ? [...old.reports, ...reports] : reports,
-        lines: entry ? [...old.lines, ...reports] : reports,
-        boot: !entry ? (first ? [...(old.boot ?? []), "ready"] : null) : old.boot,
-      }));
-      if (data.state.over) onView("scores");
-      else if (request && reports[0] && shouldOpenReceipt(reports[0], request.destination))
+      setStoredView((old) => {
+        const replayBoot: Optional<BootStage[]> = first ? [...(old.boot ?? []), "ready"] : null;
+        return {
+          ...old,
+          actions: data.actions,
+          best: opponent,
+          boot: entry ? old.boot : replayBoot,
+          busy: false,
+          history: balances,
+          journal: entries,
+          lines: entry ? [...old.lines, ...reports] : reports,
+          reports: entry ? [...old.reports, ...reports] : reports,
+          revision: release.revision,
+          state: data.state,
+        };
+      });
+      if (data.state.over) {
+        onView("scores");
+      } else if (request && reports[0] && shouldOpenReceipt(reports[0], request.destination)) {
         onView(reports[0].id);
+      }
     }
 
     current.addEventListener("error", (e) => fail(e.message), { signal: abort.signal });
     current.addEventListener(
       "message",
       async (event: MessageEvent<unknown>) => {
-        if (abort.signal.aborted) return;
+        if (abort.signal.aborted) {
+          return;
+        }
         try {
           const data = parseWorkerReply(event.data);
           if ("error" in data) {
@@ -253,15 +296,16 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
             return;
           }
           if ("boot" in data) {
-            if (first)
-              setView((old) => {
+            if (first) {
+              setStoredView((old) => {
                 const active = old.revision === release.revision ? old : initialView();
                 return {
                   ...active,
-                  revision: release.revision,
                   boot: [...(active.boot ?? []), data.boot],
+                  revision: release.revision,
                 };
               });
+            }
             return;
           }
           await accept(data);
@@ -290,16 +334,18 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
       stop();
     }
     function restorePage(event: PageTransitionEvent) {
-      if (!event.persisted) return;
+      if (!event.persisted) {
+        return;
+      }
       setRuntimeError("");
-      setView((old) => ({ ...old, busy: true }));
+      setStoredView((old) => ({ ...old, busy: true }));
       stop = startWorker();
     }
-    window.addEventListener("pagehide", hidePage);
-    window.addEventListener("pageshow", restorePage);
+    globalThis.addEventListener("pagehide", hidePage);
+    globalThis.addEventListener("pageshow", restorePage);
     return () => {
-      window.removeEventListener("pagehide", hidePage);
-      window.removeEventListener("pageshow", restorePage);
+      globalThis.removeEventListener("pagehide", hidePage);
+      globalThis.removeEventListener("pageshow", restorePage);
       stop();
     };
   }, [startWorker]);
@@ -308,25 +354,30 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     const abort = new AbortController();
     Promise.all(release.rivals.map((rival) => loadRival(rival, abort.signal)))
       .then((data) => {
-        if (!abort.signal.aborted) setRivals({ revision: release.revision, rivals: data });
+        if (!abort.signal.aborted) {
+          setRivalResult({ revision: release.revision, rivals: data });
+        }
       })
       .catch((error: unknown) => {
-        if (!abort.signal.aborted) setError(errorToString(error));
+        if (!abort.signal.aborted) {
+          setError(errorToString(error));
+        }
       });
     return () => abort.abort();
   }, [release, setError]);
 
   function submit(entry: Entry, destination: ResponseDestination): boolean {
-    if (view.busy || !view.state || view.state.over || pending.current || !worker.current)
+    if (view.busy || !view.state || view.state.over || pending.current || !worker.current) {
       return false;
-    pending.current = { entry, destination };
+    }
+    pending.current = { destination, entry };
     clearSaveIssue();
-    setView((old) => ({ ...old, busy: true, error: "" }));
+    setStoredView((old) => ({ ...old, busy: true, error: "" }));
     post(worker.current, { moves: [entry.move] });
     return true;
   }
   function appendLocal(line: string, localText: string) {
-    setView((old) =>
+    setStoredView((old) =>
       !old.state
         ? old
         : {
@@ -334,10 +385,10 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
             lines: [
               ...old.lines,
               {
-                id: "help-" + old.lines.length,
+                day: old.state.day,
+                id: `help-${old.lines.length}`,
                 line,
                 localText,
-                day: old.state.day,
                 minute: old.state.minute,
               },
             ],
@@ -346,13 +397,13 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   }
   return {
     ...view,
-    rivals,
-    saveIssue,
-    runtimeError,
-    epoch,
-    submit,
     appendLocal,
-    setError,
     clearSaveIssue,
+    epoch,
+    rivals,
+    runtimeError,
+    saveIssue,
+    setError,
+    submit,
   };
 }

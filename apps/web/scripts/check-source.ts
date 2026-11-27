@@ -13,5 +13,5 @@ const unchecked = files
   .split("\0")
   .filter((file) => /\.(?:js|jsx|cjs|mjs)$/.test(file) && existsSync(join(root, file)));
 if (unchecked.length) {
-  throw new Error("First-party JavaScript bypasses the TypeScript check:\n" + unchecked.join("\n"));
+  throw new Error(`First-party JavaScript bypasses the TypeScript check:\n${unchecked.join("\n")}`);
 }

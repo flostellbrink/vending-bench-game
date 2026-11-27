@@ -1,11 +1,12 @@
 "use client";
 import type { Release } from "games-common/benchmark";
 
+import { hasValue } from "games-common/language";
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
-import { msg } from "@/dictionary";
-import { releases } from "@/game/releases";
+import { msg } from "@/dictionary/index.ts";
+import { releases } from "@/game/releases.ts";
 import {
   createRun,
   isSlotId,
@@ -13,9 +14,9 @@ import {
   readSlotSnapshot,
   recordedClosings,
   slotSnapshot,
-} from "@/game/runs";
+} from "@/game/runs.ts";
 
-import { Station } from "./Station";
+import { Station } from "./Station.tsx";
 export default function Game() {
   return (
     <Suspense fallback={<main className="run-loading">VENDIX/OS</main>}>
@@ -29,25 +30,31 @@ function ActiveRun() {
   const revision = query.get("bench");
   const slot = query.get("slot") ?? legacySlot;
   const release = releases.find((entry) => entry.revision === revision);
-  if (!release) redirect("../");
-  if (slot === "new") return <OpenNewRun release={release} />;
+  if (!release) {
+    redirect("../");
+  }
+  if (slot === "new") {
+    return <OpenNewRun release={release} />;
+  }
   return <SavedRun release={release} slot={slot} />;
 }
 
 function OpenNewRun({ release }: { release: Release }) {
-  const started = useRef(false),
-    [failed, setFailed] = useState(false);
+  const started = useRef(false);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    if (started.current) return;
+    if (started.current) {
+      return;
+    }
     started.current = true;
     // Commit a new slot only after navigation; merely loading the setup must not write a save.
     void Promise.resolve()
       .then(() => {
         const slot = createRun(localStorage, release);
-        window.history.replaceState(
+        globalThis.history.replaceState(
           null,
           "",
-          "?" + new URLSearchParams({ bench: release.revision, slot }),
+          `?${new URLSearchParams({ bench: release.revision, slot })}`,
         );
       })
       .catch(() => setFailed(true));
@@ -69,7 +76,9 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
   const snapshot = useSyncExternalStore(
     subscribe,
     () => {
-      if (!isSlotId(slot)) return "[]";
+      if (!isSlotId(slot)) {
+        return "[]";
+      }
       try {
         return slotSnapshot(localStorage, release);
       } catch {
@@ -78,34 +87,38 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
     },
     () => undefined,
   );
-  if (snapshot === undefined) return <main className="run-loading">VENDIX/OS</main>;
+  if (!hasValue(snapshot)) {
+    return <main className="run-loading">VENDIX/OS</main>;
+  }
   const slots = readSlotSnapshot(snapshot);
   const index = slots.findIndex((run) => run.id === slot);
-  if (index < 0) redirect("../");
+  if (index === -1) {
+    redirect("../");
+  }
   const parentId = slots[index]?.parent?.slot;
   const parentIndex = slots.findIndex((run) => run.id === parentId);
   const parent = slots[parentIndex];
   return (
     <Station
-      key={release.revision + ":" + slot}
+      key={`${release.revision}:${slot}`}
       release={release}
       slot={slot}
       newRun={slots[index]?.moves === 0 && !parentId}
       parentBalance={
-        parent && !parent.damaged && parent.cash !== null
+        parent && !parent.damaged && hasValue(parent.cash)
           ? { values: recordedClosings(parent) }
           : undefined
       }
 
       changeLang={(l) => {
         localStorage.language = l;
-        window.location.assign("/" + l + "/run/" + location.search + location.hash);
+        globalThis.location.assign(`/${l}/run/${location.search}${location.hash}`);
       }}
     />
   );
 }
 
 function subscribe(update: () => void) {
-  window.addEventListener("storage", update);
-  return () => window.removeEventListener("storage", update);
+  globalThis.addEventListener("storage", update);
+  return () => globalThis.removeEventListener("storage", update);
 }

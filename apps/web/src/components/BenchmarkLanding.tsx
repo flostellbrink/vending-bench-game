@@ -2,17 +2,23 @@
 import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
-import { msg } from "@/dictionary";
-import { rankedModels } from "@/game/model-rivals";
-import { useCurrency } from "@/localization/formatters";
-import { clock } from "@/scene/clock";
-import Office from "@/scene/Office";
+import { hoursPerDay } from "games-common/language";
 
-import { OperatorBrief } from "./OperatorBrief";
-import { SaveLibrarySection } from "./SaveLibrarySection";
-import SessionSetup from "./SessionSetup";
-import { StationFrame } from "./StationFrame";
+import { msg } from "@/dictionary/index.ts";
+import { rankedModels } from "@/game/model-rivals.ts";
+import { useCurrency } from "@/localization/formatters.ts";
+import { clock } from "@/scene/clock.ts";
+import Office from "@/scene/Office.tsx";
+
+import { OperatorBrief } from "./OperatorBrief.tsx";
+import { SaveLibrarySection } from "./SaveLibrarySection.tsx";
+import SessionSetup from "./SessionSetup.tsx";
+import { StationFrame } from "./StationFrame.tsx";
 import "./benchmark-landing.css";
+
+const minutesPerDay = hoursPerDay * 60;
+/** The length of a short Git commit hash. */
+const shortRevision = 7;
 
 interface Props {
   release: Release;
@@ -22,8 +28,8 @@ interface Props {
 
 function LandingDesk({ release, setup, slot }: Props) {
   const money = useCurrency(release.currency);
-  const leader = rankedModels(release.rivals)[0];
-  const source = "https://github.com/ProsusAI/vending-bench/tree/" + release.revision;
+  const [leader] = rankedModels(release.rivals);
+  const source = `https://github.com/ProsusAI/vending-bench/tree/${release.revision}`;
   return (
     <StationFrame revision={release.revision} slot={slot}>
       <div className="desk landing-desk">
@@ -43,7 +49,7 @@ function LandingDesk({ release, setup, slot }: Props) {
           <div className="surface landing-room">
             <Office
               site="lounge"
-              phase={release.network.opens / 1440}
+              phase={release.network.opens / minutesPerDay}
               light={0.8}
               slots={release.network.slots}
               depotCases={null}
@@ -71,7 +77,7 @@ function LandingDesk({ release, setup, slot }: Props) {
 
               money={(value) => money.format(value)}
             />
-            <a href={source + "/tasks/vending-bench/instruction.md"}>{msg.landing.source()}</a>
+            <a href={`${source}/tasks/vending-bench/instruction.md`}>{msg.landing.source()}</a>
           </div>
         </section>
         <SaveLibrarySection release={release} slot={slot} />
@@ -79,7 +85,7 @@ function LandingDesk({ release, setup, slot }: Props) {
       <footer className="landing-footer">
         <span>{msg.landing.local()}</span>
         <a href={source}>
-          {release.version} @ {release.revision.slice(0, 7)}
+          {release.version} @ {release.revision.slice(0, shortRevision)}
         </a>
       </footer>
     </StationFrame>
@@ -89,7 +95,9 @@ function LandingDesk({ release, setup, slot }: Props) {
 export default function BenchmarkLanding() {
   return (
     <SessionSetup
-      renderPage={(release, setup, slot) => <LandingDesk {...{ release, setup, slot }} />}
+      renderPage={(release, setup, slot) => (
+        <LandingDesk release={release} setup={setup} slot={slot} />
+      )}
     />
   );
 }

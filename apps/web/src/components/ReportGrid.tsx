@@ -1,16 +1,64 @@
+import { hasValue, type Optional } from "games-common/language";
 import { Fragment, useState, useMemo, type ReactNode } from "react";
 
-import { msg } from "@/dictionary";
-import { commandForMove } from "@/game/commands";
-import { displayCell } from "@/game/reports";
-import { useFormatters } from "@/localization/formatters";
-import { fieldLabel } from "@/localization/messages";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove } from "@/game/commands.ts";
+import { displayCell } from "@/game/reports.ts";
+import { useFormatters } from "@/localization/formatters.ts";
+import { fieldLabel } from "@/localization/messages.ts";
+import { clock } from "@/scene/clock.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
-import { GuiToolInfo } from "./GuiToolInfo";
-import { StorageBatches } from "./StorageBatches";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
+import { StorageBatches } from "./StorageBatches.tsx";
+
+interface Sort {
+  index: number;
+  dir: number;
+}
+function ariaSort(index: number, sort: Optional<Sort>) {
+  if (sort?.index !== index) {
+    return "none";
+  }
+  return sort.dir === 1 ? "ascending" : "descending";
+}
+
+/** Opens a letter of the mail list: free when an earlier read is on file. */
+function LetterAction({
+  command,
+  emailId,
+  cached,
+  disabled,
+  runCommand,
+  openReport,
+}: {
+  command: "read_email";
+  emailId: string;
+  cached: Optional<number>;
+  disabled: boolean;
+  runCommand?: ObservationProps["runCommand"];
+  openReport: (id: number) => void;
+}) {
+  if (hasValue(cached)) {
+    return (
+      <button className="receipt-link" onClick={() => openReport(cached)}>
+        #{cached} · {msg.operator.noCharge()}
+      </button>
+    );
+  }
+  if (!runCommand) {
+    return "—";
+  }
+  return (
+    <GuiToolInfo
+      verb={command}
+      disabled={disabled}
+      onClick={() => runCommand(commandForMove([command, { email_id: emailId }]))}
+    />
+  );
+}
+
 type Props = Pick<ObservationProps, "report" | "reports" | "money" | "state" | "disabled"> & {
   openReport: (id: number) => void;
   runCommand?: ObservationProps["runCommand"];
@@ -28,12 +76,12 @@ export function ReportGrid({
   footer,
 }: Props) {
   const { collator } = useFormatters();
-  const [sort, setSort] = useState<{ index: number; dir: number } | null>(null);
+  const [sort, setSort] = useState<Optional<Sort>>(null);
   const command = report.tool === "list_emails" ? "read_email" : null;
   const dailySales = report.tool === "get_sales_report" && report.columns[0] === "day";
-  const [evidenceDay, setEvidenceDay] = useState<number | null>(null);
+  const [evidenceDay, setEvidenceDay] = useState<Optional<number>>(null);
   const service =
-    dailySales && evidenceDay !== null
+    dailySales && hasValue(evidenceDay)
       ? reports.filter(
           (r) =>
             r.id < report.id &&
@@ -46,17 +94,20 @@ export function ReportGrid({
     const letters = new Map<string, number>();
     if (command) {
       for (const prior of reports) {
-        if (prior.mail && prior.args.email_id)
+        if (prior.mail && prior.args.email_id) {
           letters.set(prior.args.email_id.toLowerCase(), prior.id);
+        }
       }
     }
     return letters;
   }, [command, reports]);
   const rows = useMemo(() => {
-    if (!sort) return visibleRows;
+    if (!sort) {
+      return visibleRows;
+    }
     return visibleRows.toSorted((a, b) => {
-      const first = a[sort.index],
-        second = b[sort.index];
+      const first = a[sort.index];
+      const second = b[sort.index];
       const difference =
         typeof first === "number" && typeof second === "number"
           ? first - second
@@ -69,13 +120,8 @@ export function ReportGrid({
       <thead>
         <tr>
           {report.columns.map((c, i) => (
-            <th
-              key={c}
-              data-field={c}
-              scope="col"
-              aria-sort={sort?.index === i ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-            >
-              <button onClick={() => setSort({ index: i, dir: sort?.index === i ? -sort.dir : 1 })}>
+            <th key={c} data-field={c} scope="col" aria-sort={ariaSort(i, sort)}>
+              <button onClick={() => setSort({ dir: sort?.index === i ? -sort.dir : 1, index: i })}>
                 {fieldLabel(c)} {sort?.index === i && (sort.dir === 1 ? "↑" : "↓")}
               </button>
             </th>
@@ -95,9 +141,7 @@ export function ReportGrid({
                       <button
                         className="receipt-link"
                         aria-expanded={evidenceDay === Number(c)}
-                        aria-label={
-                          msg.operator.serviceReceipts() + " · " + msg.operator.day() + " " + c
-                        }
+                        aria-label={`${msg.operator.serviceReceipts()} · ${msg.operator.day()} ${c}`}
                         onClick={() => setEvidenceDay(evidenceDay === Number(c) ? null : Number(c))}
                       >
                         {c}
@@ -112,23 +156,14 @@ export function ReportGrid({
                 ))}
                 {command && (
                   <td>
-                    {cached !== undefined ? (
-                      <button className="receipt-link" onClick={() => openReport(cached)}>
-                        #{cached} · {msg.operator.noCharge()}
-                      </button>
-                    ) : runCommand ? (
-                      <GuiToolInfo verb={command}>
-                        <button
-                          data-clock-verb={command}
-                          disabled={disabled}
-                          onClick={() =>
-                            runCommand(commandForMove([command, { email_id: String(r[0]) }]))
-                          }
-                        />
-                      </GuiToolInfo>
-                    ) : (
-                      "—"
-                    )}
+                    <LetterAction
+                      command={command}
+                      emailId={String(r[0])}
+                      cached={cached}
+                      disabled={disabled}
+                      runCommand={runCommand}
+                      openReport={openReport}
+                    />
                   </td>
                 )}
               </tr>

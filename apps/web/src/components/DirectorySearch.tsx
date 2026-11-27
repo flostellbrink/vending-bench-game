@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-import { msg } from "@/dictionary";
-import { commandForMove } from "@/game/commands";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove } from "@/game/commands.ts";
 
-import { ActionForm, ControlInput, Field } from "./FormControls";
-import { GuiToolInfo } from "./GuiToolInfo";
+import { ActionForm, Field } from "./FormControls.tsx";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
 
 interface Props {
   disabled: boolean;
@@ -16,23 +16,20 @@ export function DirectorySearch({ disabled, runCommand }: Props) {
     <ActionForm
       className="supplier-search compact"
       aria-label={msg.commands.search_web()}
-      actions={
-        <GuiToolInfo verb="search_web">
-          <button
-            type="submit"
-            aria-haspopup="dialog"
-            disabled={disabled}
-            data-clock-verb="search_web"
-          />
-        </GuiToolInfo>
-      }
+      actions={<GuiToolInfo verb="search_web" type="submit" popup disabled={disabled} />}
       onSubmit={(e) => {
         e.preventDefault();
-        if (!disabled) runCommand(commandForMove(["search_web", { query }]));
+        if (!disabled) {
+          runCommand(commandForMove(["search_web", { query }]));
+        }
       }}
     >
       <Field label={msg.fields.query()}>
-        <ControlInput value={query} onChange={(e) => setQuery(e.currentTarget.value)} />
+        <input
+          className="control-input"
+          value={query}
+          onChange={(e) => setQuery(e.currentTarget.value)}
+        />
       </Field>
     </ActionForm>
   );

@@ -1,41 +1,43 @@
-import type { Locale } from "@/dictionary/runtime";
-import type { ToolName } from "@/game/commands";
+import { hasValue, type Optional } from "games-common/language";
 
-import { msg } from "@/dictionary";
+import type { Locale } from "@/dictionary/runtime.ts";
+import type { ToolName } from "@/game/commands.ts";
+
+import { msg } from "@/dictionary/index.ts";
 
 export type Lang = Locale;
 export type Money = (value: number) => string;
 
-export function commandLabel(tool: ToolName | undefined) {
-  return tool && msg.commands[tool]();
+export function commandLabel(tool: Optional<ToolName>) {
+  return hasValue(tool) ? msg.commands[tool]() : undefined;
 }
 
 export const orderStatus = {
-  needQuote: msg.operator.needQuote,
-  expiredQuote: msg.operator.expiredQuote,
   belowMinimum: msg.operator.belowMinimum,
+  expiredQuote: msg.operator.expiredQuote,
   lowCash: msg.operator.lowCash,
+  needQuote: msg.operator.needQuote,
   quoted: msg.operator.quoted,
 };
 
 const reportFields: Partial<Record<string, typeof msg.fields.slot>> = {
-  slot: msg.fields.slot,
+  averageCost: msg.operator.averageCost,
+  capacity: msg.operator.capacity,
+  date: msg.operator.dated,
+  day: msg.operator.day,
+  discount: msg.operator.discount,
+  email_id: msg.fields.email_id,
+  price: msg.fields.price,
+  product: msg.operator.product,
   product_id: msg.fields.product_id,
   quantity: msg.fields.quantity,
-  price: msg.fields.price,
-  subject: msg.fields.subject,
-  email_id: msg.fields.email_id,
-  product: msg.operator.product,
-  size: msg.operator.size,
-  capacity: msg.operator.capacity,
-  averageCost: msg.operator.averageCost,
-  day: msg.operator.day,
-  sender: msg.operator.sender,
-  discount: msg.operator.discount,
-  weather: msg.operator.weather,
-  units: msg.operator.units,
   revenue: msg.operator.revenue,
-  date: msg.operator.dated,
+  sender: msg.operator.sender,
+  size: msg.operator.size,
+  slot: msg.fields.slot,
+  subject: msg.fields.subject,
+  units: msg.operator.units,
+  weather: msg.operator.weather,
 };
 
 export function fieldLabel(key: string) {

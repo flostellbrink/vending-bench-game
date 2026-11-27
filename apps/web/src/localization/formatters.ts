@@ -6,9 +6,9 @@ export function useCurrency(currency: string, whole = false) {
   return useMemo(
     () =>
       new Intl.NumberFormat(locale, {
-        style: "currency",
         currency,
-        ...(whole && { minimumFractionDigits: 0, maximumFractionDigits: 0 }),
+        style: "currency",
+        ...(whole && { maximumFractionDigits: 0, minimumFractionDigits: 0 }),
       }),
     [locale, currency, whole],
   );
@@ -18,9 +18,9 @@ export function useFormatters() {
   const locale = useLocale();
   return useMemo(
     () => ({
-      number: new Intl.NumberFormat(locale),
-      date: new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" }),
       collator: new Intl.Collator(locale, { numeric: true }),
+      date: new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" }),
+      number: new Intl.NumberFormat(locale),
     }),
     [locale],
   );

@@ -2,17 +2,24 @@
 import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
-import { first } from "games-common/language";
+import { first, hasValue } from "games-common/language";
 import { useState } from "react";
 
-import { msg } from "@/dictionary";
-import { rankedModels } from "@/game/model-rivals";
-import { releases } from "@/game/releases";
-import { readRecord, recordKey } from "@/game/runs";
-import { unavailable, useLocationSearch, useStoredText } from "@/hooks/useSessionStorage";
-import { useCurrency } from "@/localization/formatters";
+import { msg } from "@/dictionary/index.ts";
+import { rankedModels } from "@/game/model-rivals.ts";
+import { releases } from "@/game/releases.ts";
+import { readRecord, recordKey } from "@/game/runs.ts";
+import { unavailable, useLocationSearch, useStoredText } from "@/hooks/useSessionStorage.ts";
+import { useCurrency } from "@/localization/formatters.ts";
 
 import "./session-setup.css";
+
+function setupTitle(compact: boolean) {
+  if (compact) {
+    return msg.session.next();
+  }
+  return releases.length === 1 ? msg.session.setup() : msg.session.choose();
+}
 
 interface Props {
   initialRevision?: string;
@@ -38,7 +45,7 @@ export default function SessionSetup({
     first(releases);
   const record = useStoredText(() => {
     const best = readRecord(localStorage.getItem(recordKey(current)));
-    return best === null ? null : String(best.score);
+    return hasValue(best) ? String(best.score) : null;
   });
   const money = useCurrency(current.currency);
   const models = rankedModels(current.rivals);
@@ -47,16 +54,14 @@ export default function SessionSetup({
     current.revision === (initialRevision ?? urlRevision)
       ? (activeSlot ?? params.get("slot"))
       : null;
-  if (selectedSlot) savedParams.set("slot", selectedSlot);
-  const setupTitle = compact
-    ? msg.session.next()
-    : releases.length === 1
-      ? msg.session.setup()
-      : msg.session.choose();
+  if (selectedSlot) {
+    savedParams.set("slot", selectedSlot);
+  }
+  const title = setupTitle(compact);
   const setup = (
-    <section className="session-setup" aria-label={setupTitle}>
+    <section className="session-setup" aria-label={title}>
       <header>
-        <h2>{setupTitle}</h2>
+        <h2>{title}</h2>
       </header>
       {releases.length === 1 ? (
         <div className="session-version">
@@ -115,7 +120,7 @@ export default function SessionSetup({
       </p>
       {!renderPage && (
         <p className="save-library-link">
-          <a href={"../?" + savedParams}>{msg.session.mainMenu()}</a>
+          <a href={`../?${savedParams}`}>{msg.session.mainMenu()}</a>
         </p>
       )}
       {!renderPage && record === unavailable && <p role="alert">{msg.session.unavailable()}</p>}

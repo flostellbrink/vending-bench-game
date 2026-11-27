@@ -26,54 +26,61 @@ import {
 } from "./benchmark-source.ts";
 
 const previousCatalogSchema = v.array(
-  v.object({ id: v.string(), revision: v.string(), engineArchive: v.optional(v.string()) }),
+  v.object({ engineArchive: v.optional(v.string()), id: v.string(), revision: v.string() }),
 );
 
 const repoURL = "https://github.com/ProsusAI/vending-bench/blob/";
+const hashPrefixLength = 16;
 
 function writeJSON(path: string, data: unknown) {
-  const temporary = path + ".tmp-" + process.pid;
-  writeFileSync(temporary, JSON.stringify(data, null, 2) + "\n");
+  const temporary = `${path}.tmp-${process.pid}`;
+  writeFileSync(temporary, `${JSON.stringify(data, null, 2)}\n`);
   renameSync(temporary, path);
 }
 
 function assets({ browserTools, ...release }: SnapshotRelease): Release {
   const { revision, adapter } = release;
-  const folder = "benchmarks/" + revision;
+  const folder = `benchmarks/${revision}`;
   mkdirSync(join(publicDir, folder), { recursive: true });
-  const source = (path: string) => repoURL + revision + "/" + path;
+  const source = (path: string) => `${repoURL}${revision}/${path}`;
   const rivals = release.rivals.map(({ values, sourcePath, replay, ...rival }, i) => {
     const published = { ...rival, source: source(sourcePath) };
-    if (replay && !values) throw Error("A replayed run needs its daily balances: " + sourcePath);
-    if (!values) return published;
-    const balances = folder + "/rival-" + i + ".json";
+    if (replay && !values) {
+      throw new Error(`A replayed run needs its daily balances: ${sourcePath}`);
+    }
+    if (!values) {
+      return published;
+    }
+    const balances = `${folder}/rival-${i}.json`;
     writeJSON(join(publicDir, balances), values);
-    if (!replay) return { ...published, balances };
-    const moves = folder + "/replay-" + i + ".json";
+    if (!replay) {
+      return { ...published, balances };
+    }
+    const moves = `${folder}/replay-${i}.json`;
     writeJSON(join(publicDir, moves), { revision, ...replay });
-    return { ...published, balances, values, replay: moves };
+    return { ...published, balances, replay: moves, values };
   });
   const mtime = git("show", "-s", "--format=%cI", revision).toString().trim();
-  const engineArchive = folder + "/engine.zip";
+  const engineArchive = `${folder}/engine.zip`;
   const zip = join(publicDir, engineArchive);
-  const temporary = zip + ".tmp-" + process.pid;
+  const temporary = `${zip}.tmp-${process.pid}`;
   git(
     "archive",
     "--format=zip",
-    "--mtime=" + mtime,
-    "--output=" + temporary,
-    revision + ":" + engine,
+    `--mtime=${mtime}`,
+    `--output=${temporary}`,
+    `${revision}:${engine}`,
     "vending",
   );
   renameSync(temporary, zip);
   for (const notice of ["LICENSE", "NOTICE"]) {
-    writeFileSync(join(publicDir, folder, notice), git("show", revision + ":" + notice));
+    writeFileSync(join(publicDir, folder, notice), git("show", `${revision}:${notice}`));
   }
-  const adapterSource = readFileSync(join(publicDir, adapter), "utf8") + "\n" + browserTools + "\n";
+  const adapterSource = `${readFileSync(join(publicDir, adapter), "utf8")}\n${browserTools}\n`;
   const hash = createHash("sha256").update(adapterSource).digest("hex");
-  const adapterAsset = folder + "/adapter-" + hash.slice(0, 16) + ".py";
+  const adapterAsset = `${folder}/adapter-${hash.slice(0, hashPrefixLength)}.py`;
   writeFileSync(join(publicDir, adapterAsset), adapterSource);
-  return { ...release, engineArchive, adapter: adapterAsset, rivals };
+  return { ...release, adapter: adapterAsset, engineArchive, rivals };
 }
 
 if (import.meta.main) {
@@ -90,13 +97,13 @@ if (import.meta.main) {
       JSON.parse(readFileSync(oldCatalog, "utf8")),
     )) {
       if (!old.engineArchive && /^[\w.+-]+$/.test(old.id)) {
-        rmSync(join(publicDir, old.id + ".zip"), { force: true });
+        rmSync(join(publicDir, `${old.id}.zip`), { force: true });
       }
       if (
         /^[0-9a-f]{40}$/.test(old.revision) &&
         !catalog.some((r) => r.revision === old.revision)
       ) {
-        rmSync(join(publicDir, "benchmarks", old.revision), { recursive: true, force: true });
+        rmSync(join(publicDir, "benchmarks", old.revision), { force: true, recursive: true });
       }
     }
   }

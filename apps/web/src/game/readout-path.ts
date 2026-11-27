@@ -6,8 +6,9 @@ export function enterReadout(path: readonly View[], next: View, inspectObject = 
     !next.startsWith("past:") &&
     !next.startsWith("day:") &&
     !(inspectObject && (next.startsWith("machine:") || next.startsWith("supplier:")))
-  )
+  ) {
     return [next];
+  }
   const existing = path.indexOf(next);
-  return existing < 0 ? [...path, next] : path.slice(0, existing + 1);
+  return existing === -1 ? [...path, next] : path.slice(0, existing + 1);
 }

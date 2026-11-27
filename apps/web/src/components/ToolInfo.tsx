@@ -1,13 +1,13 @@
 import type { Actions, Release } from "games-common/benchmark";
 
+import { hasValue } from "games-common/language";
 import { useId, useRef } from "react";
 
-import { msg } from "@/dictionary";
-import { syntax } from "@/game/commands";
-import { toolDefaults } from "@/game/tool-defaults";
+import { msg } from "@/dictionary/index.ts";
+import { syntax } from "@/game/commands.ts";
+import { toolDefaults } from "@/game/tool-defaults.ts";
 
 import "./tool-info.css";
-import { ActionButton } from "./FormControls";
 
 interface Props {
   release: Release;
@@ -21,34 +21,36 @@ export function ToolInfo({ release, verb: tool, actions, prediction }: Props) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  if (release.tools[tool] === undefined) return null;
+  if (!hasValue(release.tools[tool])) {
+    return null;
+  }
   const heading = msg.operator.toolInformation();
-  const label = heading + ": " + tool;
+  const label = `${heading}: ${tool}`;
   const defaults = toolDefaults(release, tool);
 
   function position() {
     const card = panel.current;
     const button = trigger.current;
-    if (!card || !button || !card.matches(":popover-open")) return;
+    if (!card || !button || !card.matches(":popover-open")) {
+      return;
+    }
     const rect = button.getBoundingClientRect();
     const gap = 6;
-    card.style.left =
-      Math.max(gap, Math.min(rect.left, innerWidth - card.offsetWidth - gap)) + "px";
+    card.style.left = `${Math.max(gap, Math.min(rect.left, innerWidth - card.offsetWidth - gap))}px`;
     const below = rect.bottom + gap;
-    card.style.top =
-      Math.max(
-        gap,
-        below + card.offsetHeight <= innerHeight
-          ? below
-          : Math.min(innerHeight - card.offsetHeight - gap, rect.top - card.offsetHeight - gap),
-      ) + "px";
+    card.style.top = `${Math.max(
+      gap,
+      below + card.offsetHeight <= innerHeight
+        ? below
+        : Math.min(innerHeight - card.offsetHeight - gap, rect.top - card.offsetHeight - gap),
+    )}px`;
   }
 
   return (
     <>
-      <ActionButton
+      <button
         ref={trigger}
-        className="tool-info-trigger"
+        className="workbench-button tool-info-trigger"
         type="button"
         aria-label={label}
         title={label}
@@ -61,7 +63,7 @@ export function ToolInfo({ release, verb: tool, actions, prediction }: Props) {
           <circle cx="8" cy="5" r=".9" fill="currentColor" />
           <path d="M8 7v4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </svg>
-      </ActionButton>
+      </button>
       <div
         ref={panel}
         id={id}

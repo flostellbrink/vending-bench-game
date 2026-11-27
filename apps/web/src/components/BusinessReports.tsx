@@ -1,17 +1,18 @@
-import type { Release } from "games-common/benchmark";
+import type { Release, Report } from "games-common/benchmark";
 
+import { type Optional } from "games-common/language";
 import { useId, useState } from "react";
 
-import { msg } from "@/dictionary";
-import { commandForMove } from "@/game/commands";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove } from "@/game/commands.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
-import { DailyRevenue } from "./DailyRevenue";
-import { EmailComposer } from "./EmailComposer";
-import { ActionForm, ControlInput, Field } from "./FormControls";
-import { GuiToolInfo } from "./GuiToolInfo";
-import ObservationView from "./ObservationView";
+import { DailyRevenue } from "./DailyRevenue.tsx";
+import { EmailComposer } from "./EmailComposer.tsx";
+import { ActionForm, Field } from "./FormControls.tsx";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
+import ObservationView from "./ObservationView.tsx";
 import "./business-reports.css";
 
 type Props = Omit<ObservationProps, "report"> & {
@@ -19,9 +20,16 @@ type Props = Omit<ObservationProps, "report"> & {
   openReport: (id: number) => void;
 };
 
-export function Mailbox(props: Props) {
-  const { reports, runCommand, disabled } = props;
-  const defaults = props.release.toolDefaults.list_emails;
+export function Mailbox({
+  release,
+  state,
+  reports,
+  money,
+  runCommand,
+  disabled,
+  openReport,
+}: Props) {
+  const defaults = release.toolDefaults.list_emails;
   const [folder, setFolder] = useState<string>(defaults.folder);
   const folders = useId();
   const emailIds = useId();
@@ -37,30 +45,28 @@ export function Mailbox(props: Props) {
     <section className="business-report sheet">
       <div className="mail-workbench">
         <div className="mail-composition">
-          <EmailComposer to="" {...{ disabled, reports }} send={runCommand} />
+          <EmailComposer to="" disabled={disabled} reports={reports} send={runCommand} />
         </div>
         <ActionForm
           className="mail-list-controls"
           aria-label={msg.commands.list_emails()}
-          actions={
-            <GuiToolInfo verb="list_emails">
-              <button type="submit" disabled={disabled} data-clock-verb="list_emails" />
-            </GuiToolInfo>
-          }
+          actions={<GuiToolInfo verb="list_emails" type="submit" disabled={disabled} />}
           onSubmit={(event) => {
             event.preventDefault();
-            if (!disabled)
+            if (!disabled) {
               runCommand(
                 commandForMove([
                   "list_emails",
-                  { folder, unread_only: unread, limit: props.release.reportLimits.mailCount },
+                  { folder, limit: release.reportLimits.mailCount, unread_only: unread },
                 ]),
                 "inline",
               );
+            }
           }}
         >
           <Field label={msg.fields.folder()}>
-            <ControlInput
+            <input
+              className="control-input"
               value={folder}
               list={folders}
               onChange={(e) => setFolder(e.currentTarget.value)}
@@ -71,7 +77,8 @@ export function Mailbox(props: Props) {
             </datalist>
           </Field>
           <Field inline className="report-breakdown" label={msg.fields.unread_only()}>
-            <ControlInput
+            <input
+              className="control-input"
               type="checkbox"
               checked={unread}
               onChange={(e) => setUnread(e.currentTarget.checked)}
@@ -80,7 +87,15 @@ export function Mailbox(props: Props) {
         </ActionForm>
       </div>
       {report ? (
-        <ObservationView {...props} report={report} />
+        <ObservationView
+          report={report}
+          reports={reports}
+          state={state}
+          money={money}
+          runCommand={runCommand}
+          disabled={disabled}
+          openReport={openReport}
+        />
       ) : (
         <p className="readout-empty">{msg.operator.folderNotChecked()}</p>
       )}
@@ -89,23 +104,18 @@ export function Mailbox(props: Props) {
           className="compact"
           aria-label={msg.commands.read_email()}
           actions={
-            <GuiToolInfo verb="read_email">
-              <button
-                type="submit"
-                aria-haspopup="dialog"
-                disabled={disabled || !emailId}
-                data-clock-verb="read_email"
-              />
-            </GuiToolInfo>
+            <GuiToolInfo verb="read_email" type="submit" popup disabled={disabled || !emailId} />
           }
           onSubmit={(event) => {
             event.preventDefault();
-            if (!disabled && emailId)
+            if (!disabled && emailId) {
               runCommand(commandForMove(["read_email", { email_id: emailId }]));
+            }
           }}
         >
           <Field label={msg.fields.email_id()}>
-            <ControlInput
+            <input
+              className="control-input"
               required
               list={emailIds}
               value={emailId}
@@ -129,9 +139,58 @@ export function Mailbox(props: Props) {
   );
 }
 
-export function SalesReports(props: Props) {
-  const { state, reports, runCommand, disabled } = props;
-  const defaults = props.release.toolDefaults.get_sales_report;
+/** The latest sales report for the chosen site and breakdown. */
+function SalesReading({
+  report,
+  daily,
+  site,
+  reports,
+  state,
+  money,
+  runCommand,
+  disabled,
+  openReport,
+}: Omit<Props, "release"> & { report: Optional<Report>; daily: boolean; site: string }) {
+  if (!report) {
+    return <p className="readout-empty">{msg.operator.noSalesObservation()}</p>;
+  }
+  if (daily && report.rows.length) {
+    return (
+      <DailyRevenue
+        key={site}
+        report={report}
+        reports={reports}
+        state={state}
+        money={money}
+        runCommand={runCommand}
+        disabled={disabled}
+        openReport={openReport}
+      />
+    );
+  }
+  return (
+    <ObservationView
+      report={report}
+      reports={reports}
+      state={state}
+      money={money}
+      runCommand={runCommand}
+      disabled={disabled}
+      openReport={openReport}
+    />
+  );
+}
+
+export function SalesReports({
+  release,
+  state,
+  reports,
+  money,
+  runCommand,
+  disabled,
+  openReport,
+}: Props) {
+  const defaults = release.toolDefaults.get_sales_report;
   const siteList = useId();
   const [site, setSite] = useState(defaults.location);
   const [days, setDays] = useState(String(defaults.days));
@@ -149,29 +208,27 @@ export function SalesReports(props: Props) {
       <ActionForm
         className={byProduct ? "sales-controls by-product" : "sales-controls"}
         aria-label={msg.commands.get_sales_report()}
-        actions={
-          <GuiToolInfo verb="get_sales_report">
-            <button disabled={disabled || !valid} data-clock-verb="get_sales_report" />
-          </GuiToolInfo>
-        }
+        actions={<GuiToolInfo verb="get_sales_report" disabled={disabled || !valid} />}
         onSubmit={(e) => {
           e.preventDefault();
-          if (!disabled && valid)
+          if (!disabled && valid) {
             runCommand(
               commandForMove([
                 "get_sales_report",
                 {
-                  days: byProduct ? Number(days) : props.release.reportLimits.salesDays,
-                  location: site,
                   by_product: byProduct,
+                  days: byProduct ? Number(days) : release.reportLimits.salesDays,
+                  location: site,
                 },
               ]),
               "inline",
             );
+          }
         }}
       >
         <Field label={msg.fields.location()}>
-          <ControlInput
+          <input
+            className="control-input"
             list={siteList}
             value={site}
             placeholder={msg.operator.allSites()}
@@ -187,7 +244,8 @@ export function SalesReports(props: Props) {
         </Field>
         {byProduct && (
           <Field label={msg.fields.days()}>
-            <ControlInput
+            <input
+              className="control-input"
               type="number"
               step="1"
               required
@@ -197,20 +255,25 @@ export function SalesReports(props: Props) {
           </Field>
         )}
         <Field inline className="report-breakdown" label={msg.operator.productBreakdown()}>
-          <ControlInput
+          <input
+            className="control-input"
             type="checkbox"
             checked={byProduct}
             onChange={(e) => setByProduct(e.currentTarget.checked)}
           />
         </Field>
       </ActionForm>
-      {report && !byProduct && report.rows.length ? (
-        <DailyRevenue key={site} {...props} report={report} />
-      ) : report ? (
-        <ObservationView {...props} report={report} />
-      ) : (
-        <p className="readout-empty">{msg.operator.noSalesObservation()}</p>
-      )}
+      <SalesReading
+        report={report}
+        daily={!byProduct}
+        site={site}
+        reports={reports}
+        state={state}
+        money={money}
+        runCommand={runCommand}
+        disabled={disabled}
+        openReport={openReport}
+      />
     </section>
   );
 }

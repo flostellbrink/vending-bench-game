@@ -1,45 +1,116 @@
 import { memo } from "react";
 
-import { Box, Floor, Front, Line, Polygon, project, repeat, steel, wood } from "./geometry";
-import { Plant } from "./Plant";
-import { StreetTree } from "./Street";
+import {
+  Box,
+  Floor,
+  Front,
+  Line,
+  Polygon,
+  project,
+  repeat,
+  steel,
+  wood,
+  type Material,
+} from "./geometry.tsx";
+import { Plant } from "./Plant.tsx";
+import { StreetTree } from "./Street.tsx";
 
 const width = 322;
 const depth = 90;
 const height = 104;
-const aisle = depth - 36;
+/** A walkway runs along the concourse, this far behind its front edge. */
+const walkway = { fromFront: 36, width: 23 };
+const aisle = depth - walkway.fromFront;
 const entry = 28;
-const machineX = width - 88;
-const bay = width / 7;
+/** The vending cabinets stand in the right-hand corner of this width. */
+const vendingCorner = 88;
+const machineX = width - vendingCorner;
 const [left, top] = project([0, depth, height]);
 const [right, bottom] = project([width, 0, 0]);
+/** Space around the drawn concourse in the small preview and in the full view. */
+const previewMargin = { bottom: 10, side: 8, top: 6 };
+const viewMargin = { bottom: 37, left: 55, right: 53, top: 12 };
 
 export const concourse = {
-  width,
-  depth,
   aisle,
+  depth,
   entry,
   machineX,
-  viewBox: `${left - 55} ${top - depth / 2 - 12} ${right - left + 108} ${bottom + depth / 2 - top + depth / 2 + 49}`,
-  previewBox: `${left - 8} ${top - depth / 2 - 6} ${right - left + 16} ${bottom + depth - top + 16}`,
+  previewBox: `${left - previewMargin.side} ${top - depth / 2 - previewMargin.top} ${right - left + 2 * previewMargin.side} ${bottom + depth - top + (previewMargin.top + previewMargin.bottom)}`,
+  viewBox: `${left - viewMargin.left} ${top - depth / 2 - viewMargin.top} ${right - left + (viewMargin.left + viewMargin.right)} ${bottom + depth / 2 - top + depth / 2 + (viewMargin.top + viewMargin.bottom)}`,
+  width,
 };
+
+/** Lines on a floor sit just above it, so that they draw over it. */
+const floorMarkLift = { edge: 0.2, seam: 0.3 };
+const floorTiles = { count: 15, pitch: 23 };
+/** The glass side wall stands on a low plinth, with two transoms below the roof. */
+const sideGlazing = { highTransom: 77, lowTransom: 42, plinth: 15 };
+/** Above the solid back wall, glass bays run up to the roof, with one clerestory transom. */
+const backWall = { clerestoryTransom: 83, glassBays: 7, height: 58 };
+const bay = width / backWall.glassBays;
+/** A slanted streak of reflected light on each back wall pane, from its foot to its head. */
+const glare = { foot: 63, footLeft: 2, footRight: 8, head: 99, headLeft: 29, headRight: 35 };
+/** The direction sign hangs on the back wall this far from the right end. */
+const sign = { fromRight: 98, lift: 0.25, z: 67 };
+/** Framed posters on the back wall, each with a mountain print and a caption line. */
+const posters = {
+  frameX: 30,
+  paperX: 31,
+  peakFoot: 26,
+  peakLeft: 33,
+  peakRight: 47,
+  peakTop: 45,
+  peakX: 43,
+  pitch: 24,
+  printLift: 0.5,
+};
+const oxblood: Material = ["#965e56", "#804a43", "#603a38"];
+const seatLeather: Material = ["#cb9080", "#ac7163", "#8c584e"];
+/** A banquette: its back on the side away from the table and two seat cushions. */
+const banquette = { backInset: 21, cushionInset: 7, cushionPitch: 21, cushionY: 7 };
+/** The booth table and the pendant lamp above it, hung from an arm on the back wall. */
+const booth = { armHeight: 71, centreX: 111, lampHeight: 59, lampY: 26, tableTop: 24, tableY: 28 };
+/** The rail opening at the entry reaches this far each side of the entry. */
+const entryHalfWidth = 15;
+/** A street tree in a square pit with a grating, in front of the entry. */
+const treePit = { barEnd: 18, barStart: 7, bars: 6, firstBar: 32, front: 6, treeX: 38, treeY: 12 };
+/** A planter by the right end of the forecourt. */
+const planter = { firstPlant: 68, fromRight: 72, front: 4, plantFront: 7 };
+/** The pavement around the concourse and the paving joints in front of it. */
+const pavement = { back: 26, front: 22, jointLift: -2.6, jointPitch: 23, joints: 17, side: 27 };
+const firstJoint = -25;
+/** Street trees behind the concourse: near the entry, near the middle and near the right end. */
+const streetTrees = { fromEntry: 18, fromRight: 26, middle: 0.53 };
+const puddle = { fromRight: 80, front: 8 };
 
 export const AtriumShell = memo(function AtriumShell() {
   return (
     <g>
       <Box x={0} y={0} z={-4} w={width} d={depth} h={4} c={["#d7d4bf", "#a7ad9a", "#879383"]} />
       <Floor x={0} y={aisle} w={width} d={23} fill="#adb5a6" />
-      {[aisle, aisle + 23].map((y) => (
-        <Line key={y} a={[0, y, 0.2]} b={[width, y, 0.2]} color="#f1e5c9" width="2" />
+      {[aisle, aisle + walkway.width].map((y) => (
+        <Line
+          key={y}
+          a={[0, y, floorMarkLift.edge]}
+          b={[width, y, floorMarkLift.edge]}
+          color="#f1e5c9"
+          width="2"
+        />
       ))}
-      {repeat(15, (i) => (
-        <Line a={[i * 23, 0, 0.3]} b={[i * 23, depth, 0.3]} color="#abb09e" width=".6" />
+      {repeat(floorTiles.count, (i) => (
+        <Line
+          a={[i * floorTiles.pitch, 0, floorMarkLift.seam]}
+          b={[i * floorTiles.pitch, depth, floorMarkLift.seam]}
+          color="#abb09e"
+          width=".6"
+        />
       ))}
       <Box x={-3} y={0} w={3} d={depth} h={15} c={steel} />
       <Polygon
         v={[
-          [0, 0, 15],
-          [0, depth, 15],
+          [0, 0, sideGlazing.plinth],
+          [0, depth, sideGlazing.plinth],
           [0, depth, height],
           [0, 0, height],
         ]}
@@ -49,26 +120,26 @@ export const AtriumShell = memo(function AtriumShell() {
       {repeat(4, (i) => (
         <Box x={-3} y={(i * (depth - 2)) / 3} w={3} d={2} h={height} c={steel} />
       ))}
-      {[42, 77, height].map((z) => (
+      {[sideGlazing.lowTransom, sideGlazing.highTransom, height].map((z) => (
         <Box key={z} x={-3} y={0} z={z} w={3} d={depth} h={2} c={steel} />
       ))}
       <Box x={0} y={-3} w={width} d={3} h={58} c={["#eee6ce", "#ded8c1", "#a7ad9e"]} />
-      {repeat(7, (i) => (
+      {repeat(backWall.glassBays, (i) => (
         <g>
-          <Front x={i * bay} y={0} z={58} w={bay} h={height - 58} fill="#aec5c2" />
+          <Front x={i * bay} y={0} z={58} w={bay} h={height - backWall.height} fill="#aec5c2" />
           <Polygon
             v={[
-              [i * bay + 2, 0, 63],
-              [i * bay + 8, 0, 63],
-              [i * bay + 35, 0, 99],
-              [i * bay + 29, 0, 99],
+              [i * bay + glare.footLeft, 0, glare.foot],
+              [i * bay + glare.footRight, 0, glare.foot],
+              [i * bay + glare.headRight, 0, glare.head],
+              [i * bay + glare.headLeft, 0, glare.head],
             ]}
             fill="#cbdad3"
           />
-          <Box x={i * bay} y={-3} z={58} w={2.5} d={4} h={height - 58} c={steel} />
+          <Box x={i * bay} y={-3} z={58} w={2.5} d={4} h={height - backWall.height} c={steel} />
         </g>
       ))}
-      {[58, 83, height].map((z) => (
+      {[backWall.height, backWall.clerestoryTransom, height].map((z) => (
         <Box key={z} x={0} y={-3} z={z} w={width} d={4} h={2} c={steel} />
       ))}
     </g>
@@ -76,7 +147,7 @@ export const AtriumShell = memo(function AtriumShell() {
 });
 
 export const AtriumFurniture = memo(function AtriumFurniture() {
-  const [signX, signY] = project([width - 98, 0.25, 67]);
+  const [signX, signY] = project([width - sign.fromRight, sign.lift, sign.z]);
   return (
     <g>
       <g transform={`matrix(1 .5 0 1 ${signX} ${signY})`}>
@@ -94,21 +165,24 @@ export const AtriumFurniture = memo(function AtriumFurniture() {
         </text>
         <path d="M62 -4 h14 m-4 -3 4 3 -4 3" stroke="#d6c6a1" fill="none" />
       </g>
-      {repeat(3, (i) => (
-        <g>
-          <Front x={30 + i * 24} y={0.3} z={21} w={20} h={28} fill="#a59777" />
-          <Front x={31 + i * 24} y={0.4} z={22} w={18} h={26} fill="#efe6d0" />
-          <Polygon
-            v={[
-              [33 + i * 24, 0.5, 26],
-              [43 + i * 24, 0.5, 45],
-              [47 + i * 24, 0.5, 26],
-            ]}
-            fill={i === 1 ? "#a56f54" : "#7d9584"}
-          />
-          <Front x={33 + i * 24} y={0.6} z={24} w={11} h={1} fill="#8e927d" />
-        </g>
-      ))}
+      {repeat(3, (i) => {
+        const offset = i * posters.pitch;
+        return (
+          <g>
+            <Front x={posters.frameX + offset} y={0.3} z={21} w={20} h={28} fill="#a59777" />
+            <Front x={posters.paperX + offset} y={0.4} z={22} w={18} h={26} fill="#efe6d0" />
+            <Polygon
+              v={[
+                [posters.peakLeft + offset, posters.printLift, posters.peakFoot],
+                [posters.peakX + offset, posters.printLift, posters.peakTop],
+                [posters.peakRight + offset, posters.printLift, posters.peakFoot],
+              ]}
+              fill={i === 1 ? "#a56f54" : "#7d9584"}
+            />
+            <Front x={posters.peakLeft + offset} y={0.6} z={24} w={11} h={1} fill="#8e927d" />
+          </g>
+        );
+      })}
       <DiningBooth />
       <Plant x={17} y={25} size={1.2} />
       <Box x={192} y={8} w={24} d={10} h={12} c={wood} />
@@ -118,11 +192,8 @@ export const AtriumFurniture = memo(function AtriumFurniture() {
   );
 });
 
-const oxblood = ["#965e56", "#804a43", "#603a38"] as const;
-const seatLeather = ["#cb9080", "#ac7163", "#8c584e"] as const;
-
 function Banquette({ x, facesRight }: { x: number; facesRight: boolean }) {
-  const back = facesRight ? x : x + 21;
+  const back = facesRight ? x : x + banquette.backInset;
   return (
     <g>
       <Box x={x + 2} y={8} w={24} d={40} h={8} c={steel} />
@@ -131,8 +202,8 @@ function Banquette({ x, facesRight }: { x: number; facesRight: boolean }) {
       {[0, 1].map((seat) => (
         <Box
           key={seat}
-          x={facesRight ? x + 7 : x}
-          y={7 + seat * 21}
+          x={facesRight ? x + banquette.cushionInset : x}
+          y={banquette.cushionY + seat * banquette.cushionPitch}
           z={15}
           w={21}
           d={20}
@@ -147,8 +218,8 @@ function Banquette({ x, facesRight }: { x: number; facesRight: boolean }) {
 }
 
 function DiningBooth() {
-  const [cx, cy] = project([111, 28, 24]);
-  const [lx, ly] = project([111, 26, 59]);
+  const [cx, cy] = project([booth.centreX, booth.tableY, booth.tableTop]);
+  const [lx, ly] = project([booth.centreX, booth.lampY, booth.lampHeight]);
   return (
     <g>
       <Floor x={48} y={3} w={127} d={49} fill="#9aa59a" />
@@ -160,8 +231,18 @@ function DiningBooth() {
         <ellipse rx={38} ry={22} fill="#ecddba" stroke="#c4b08c" strokeWidth="1" />
       </g>
       <Banquette x={140} facesRight={false} />
-      <Line a={[111, 0, 71]} b={[111, 26, 71]} color="#525e54" width="2.4" />
-      <Line a={[111, 26, 71]} b={[111, 26, 59]} color="#3b4c44" width="1.5" />
+      <Line
+        a={[booth.centreX, 0, booth.armHeight]}
+        b={[booth.centreX, booth.lampY, booth.armHeight]}
+        color="#525e54"
+        width="2.4"
+      />
+      <Line
+        a={[booth.centreX, booth.lampY, booth.armHeight]}
+        b={[booth.centreX, booth.lampY, booth.lampHeight]}
+        color="#3b4c44"
+        width="1.5"
+      />
       <g transform={`translate(${lx} ${ly})`}>
         <path
           d="M-16 7 Q-13 -6 0 -7 Q13 -6 16 7 Q0 15 -16 7 Z"
@@ -175,13 +256,21 @@ function DiningBooth() {
   );
 }
 
+const railing: Material = ["#e9e2ce", "#c3c4b2", "#a1ac9d"];
+
 export const AtriumRail = memo(function AtriumRail() {
-  const c = ["#e9e2ce", "#c3c4b2", "#a1ac9d"] as const;
   return (
     <g>
-      <Box x={0} y={depth - 2} w={entry - 15} d={2} h={8} c={c} />
-      <Box x={entry + 15} y={depth - 2} w={width - entry - 15} d={2} h={8} c={c} />
-      <Box x={width - 2} y={0} w={2} d={depth} h={8} c={c} />
+      <Box x={0} y={depth - 2} w={entry - entryHalfWidth} d={2} h={8} c={railing} />
+      <Box
+        x={entry + entryHalfWidth}
+        y={depth - 2}
+        w={width - entry - entryHalfWidth}
+        d={2}
+        h={8}
+        c={railing}
+      />
+      <Box x={width - 2} y={0} w={2} d={depth} h={8} c={railing} />
     </g>
   );
 });
@@ -189,19 +278,19 @@ export const AtriumRail = memo(function AtriumRail() {
 export function AtriumForecourt({ phase, light }: { phase: number; light: number }) {
   return (
     <g>
-      <Floor x={31} y={depth + 6} w={14} d={14} fill="#a6ae9f" />
-      {repeat(6, (i) => (
+      <Floor x={31} y={depth + treePit.front} w={14} d={14} fill="#a6ae9f" />
+      {repeat(treePit.bars, (i) => (
         <Line
-          a={[32 + i * 2, depth + 7, 0.2]}
-          b={[32 + i * 2, depth + 18, 0.2]}
+          a={[treePit.firstBar + i * 2, depth + treePit.barStart, floorMarkLift.edge]}
+          b={[treePit.firstBar + i * 2, depth + treePit.barEnd, floorMarkLift.edge]}
           color="#7c897b"
           width=".6"
         />
       ))}
-      <StreetTree x={38} y={depth + 12} phase={phase} light={light} />
-      <Box x={width - 72} y={depth + 4} w={30} d={7} h={6} c={wood} />
+      <StreetTree x={treePit.treeX} y={depth + treePit.treeY} phase={phase} light={light} />
+      <Box x={width - planter.fromRight} y={depth + planter.front} w={30} d={7} h={6} c={wood} />
       {repeat(3, (i) => (
-        <Plant x={width - 68 + i * 10} y={depth + 7} size={0.47} />
+        <Plant x={width - planter.firstPlant + i * 10} y={depth + planter.plantFront} size={0.47} />
       ))}
     </g>
   );
@@ -222,24 +311,35 @@ export function AtriumOutside({
         x={-27}
         y={-26}
         z={-6}
-        w={width + 54}
-        d={depth + 48}
+        w={width + 2 * pavement.side}
+        d={depth + (pavement.back + pavement.front)}
         h={3}
         c={["#d2d7cb", "#a3ac9d", "#87978a"]}
       />
-      <Floor x={-27} y={-26} w={width + 54} d={10} z={-2.8} fill="#8d9c94" />
-      {repeat(17, (i) => (
+      <Floor x={-27} y={-26} w={width + 2 * pavement.side} d={10} z={-2.8} fill="#8d9c94" />
+      {repeat(pavement.joints, (i) => (
         <Line
-          a={[-25 + i * 23, depth, -2.6]}
-          b={[-25 + i * 23, depth + 22, -2.6]}
+          a={[firstJoint + i * pavement.jointPitch, depth, pavement.jointLift]}
+          b={[firstJoint + i * pavement.jointPitch, depth + pavement.front, pavement.jointLift]}
           color="#b2bbad"
         />
       ))}
-      {[entry - 18, width * 0.53, width - 26].map((x) => (
+      {[
+        entry - streetTrees.fromEntry,
+        width * streetTrees.middle,
+        width - streetTrees.fromRight,
+      ].map((x) => (
         <StreetTree key={x} x={x} y={-13} phase={phase} light={light} />
       ))}
       {weather === "rainy" && (
-        <Floor x={width - 80} y={depth + 8} w={31} d={3} z={-2.5} fill="#acbfbd" />
+        <Floor
+          x={width - puddle.fromRight}
+          y={depth + puddle.front}
+          w={31}
+          d={3}
+          z={-2.5}
+          fill="#acbfbd"
+        />
       )}
     </g>
   );

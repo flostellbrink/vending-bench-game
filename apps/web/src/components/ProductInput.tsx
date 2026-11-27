@@ -1,14 +1,28 @@
 import type { Report } from "games-common/benchmark";
 
+import { hasAny } from "games-common/language";
 import { useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
 
-import { msg } from "@/dictionary";
-import { observedProducts, type ObservedProduct } from "@/game/observed-products";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { observedProducts, type ObservedProduct } from "@/game/observed-products.ts";
+import { clock } from "@/scene/clock.ts";
 
-import { ControlInput } from "./FormControls";
 import "./product-input.css";
+
+/** The tallest the list of choices grows before it scrolls, in pixels. */
+const panelMaxHeight = 240;
+
+/** The choice that the arrow keys move to; the list wraps at both ends. */
+function nextHighlight(active: number, count: number, down: boolean) {
+  if (!count) {
+    return -1;
+  }
+  if (active < 0) {
+    return down ? 0 : count - 1;
+  }
+  return (active + (down ? 1 : -1) + count) % count;
+}
 
 interface Props {
   reports: readonly Report[];
@@ -30,18 +44,24 @@ export function ProductInput({
   preferSize,
 }: Props) {
   const key = useId();
-  const input = useRef<HTMLInputElement>(null),
-    panel = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false),
-    [highlight, setHighlight] = useState(-1);
+  const input = useRef<HTMLInputElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(-1);
   const all = useMemo(() => observedProducts(reports), [reports]);
   const query = value.trim().toLowerCase();
   function rank(product: ObservedProduct) {
-    if (!query) return 0;
-    const id = product.id.toLowerCase(),
-      name = product.name?.toLowerCase();
-    if (id === query || name === query) return 0;
-    if (id.startsWith(query) || name?.startsWith(query)) return 1;
+    if (!query) {
+      return 0;
+    }
+    const id = product.id.toLowerCase();
+    const name = product.name?.toLowerCase();
+    if (id === query || name === query) {
+      return 0;
+    }
+    if (id.startsWith(query) || name?.startsWith(query)) {
+      return 1;
+    }
     return 2;
   }
   const choices = all
@@ -49,27 +69,29 @@ export function ProductInput({
     .toSorted(
       (a, b) =>
         rank(a) - rank(b) ||
-        Number(!!preferSize && b.size === preferSize) -
-          Number(!!preferSize && a.size === preferSize) ||
+        Number(hasAny(preferSize) && b.size === preferSize) -
+          Number(hasAny(preferSize) && a.size === preferSize) ||
         a.id.localeCompare(b.id),
     );
   const active = highlight >= 0 && highlight < choices.length ? highlight : -1;
   useLayoutEffect(() => {
-    if (!open || !panel.current || !input.current) return undefined;
-    const popup = panel.current,
-      anchor = input.current;
+    if (!open || !panel.current || !input.current) {
+      return undefined;
+    }
+    const popup = panel.current;
+    const anchor = input.current;
     function position() {
-      const bounds = anchor.getBoundingClientRect(),
-        gap = 4;
-      const below = innerHeight - bounds.bottom - gap,
-        above = bounds.top - gap;
-      popup.style.maxHeight = Math.max(1, Math.min(240, Math.max(below, above) - gap)) + "px";
-      popup.style.left =
-        Math.max(gap, Math.min(bounds.left, innerWidth - popup.offsetWidth - gap)) + "px";
-      popup.style.top =
-        (below >= popup.offsetHeight
+      const bounds = anchor.getBoundingClientRect();
+      const gap = 4;
+      const below = innerHeight - bounds.bottom - gap;
+      const above = bounds.top - gap;
+      popup.style.maxHeight = `${Math.max(1, Math.min(panelMaxHeight, Math.max(below, above) - gap))}px`;
+      popup.style.left = `${Math.max(gap, Math.min(bounds.left, innerWidth - popup.offsetWidth - gap))}px`;
+      popup.style.top = `${
+        below >= popup.offsetHeight
           ? bounds.bottom + gap
-          : Math.max(gap, bounds.top - popup.offsetHeight - gap)) + "px";
+          : Math.max(gap, bounds.top - popup.offsetHeight - gap)
+      }px`;
     }
     popup.showPopover();
     position();
@@ -84,11 +106,14 @@ export function ProductInput({
     };
   }, [open]);
   useLayoutEffect(() => {
-    if (active >= 0)
+    if (active >= 0) {
       panel.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: "nearest" });
+    }
   }, [active]);
   function show() {
-    if (disabled || readOnly) return;
+    if (disabled || readOnly) {
+      return;
+    }
     setHighlight(-1);
     setOpen(true);
   }
@@ -98,30 +123,28 @@ export function ProductInput({
     setOpen(false);
   }
   function keys(e: KeyboardEvent<HTMLInputElement>) {
-    if (disabled || readOnly || e.nativeEvent.isComposing) return;
+    if (disabled || readOnly || e.nativeEvent.isComposing) {
+      return;
+    }
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       setOpen(true);
-      setHighlight(
-        choices.length
-          ? active < 0
-            ? e.key === "ArrowDown"
-              ? 0
-              : choices.length - 1
-            : (active + (e.key === "ArrowDown" ? 1 : -1) + choices.length) % choices.length
-          : -1,
-      );
+      setHighlight(nextHighlight(active, choices.length, e.key === "ArrowDown"));
     } else if (open && (e.key === "Escape" || e.key === "Enter")) {
       e.preventDefault();
       e.stopPropagation();
       const selected = choices[active];
-      if (e.key === "Enter" && selected) choose(selected.id);
-      else setOpen(false);
+      if (e.key === "Enter" && selected) {
+        choose(selected.id);
+      } else {
+        setOpen(false);
+      }
     }
   }
   return (
     <span className="product-picker">
-      <ControlInput
+      <input
+        className="control-input"
         ref={input}
         value={value}
         disabled={disabled}
@@ -134,10 +157,12 @@ export function ProductInput({
         aria-autocomplete="list"
         aria-expanded={open}
         aria-controls={open ? key : undefined}
-        aria-activedescendant={open && active >= 0 ? key + "-" + active : undefined}
+        aria-activedescendant={open && active >= 0 ? `${key}-${active}` : undefined}
         onFocus={show}
         onClick={() => {
-          if (!open) show();
+          if (!open) {
+            show();
+          }
         }}
         onBlur={() => setOpen(false)}
         onKeyDown={keys}
@@ -153,7 +178,7 @@ export function ProductInput({
               {choices.map((p, i) => (
                 <li
                   key={p.id}
-                  id={key + "-" + i}
+                  id={`${key}-${i}`}
                   role="option"
                   aria-selected={i === active}
                   onMouseDown={(e) => e.preventDefault()}
@@ -164,7 +189,7 @@ export function ProductInput({
                   {p.depot && (
                     <small>
                       {msg.operator.depot()} · {p.depot.quantity}
-                      {p.size && " · " + p.size} · {msg.operator.day()} {p.depot.day} /{" "}
+                      {p.size && ` · ${p.size}`} · {msg.operator.day()} {p.depot.day} /{" "}
                       {clock(p.depot.minute)} · #{p.depot.receipt}
                     </small>
                   )}

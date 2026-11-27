@@ -1,15 +1,17 @@
 import type { Snapshot } from "games-common/benchmark";
 import type { KeyboardEvent, ReactNode } from "react";
 
-import type { ObservedSupplier } from "@/game/suppliers";
+import { type Optional } from "games-common/language";
 
-import { msg } from "@/dictionary";
-import { address } from "@/game/commands";
+import type { ObservedSupplier } from "@/game/suppliers.ts";
+
+import { msg } from "@/dictionary/index.ts";
+import { address } from "@/game/commands.ts";
 
 import "./object-navigator.css";
 
 interface Props {
-  state: Snapshot | null;
+  state: Optional<Snapshot>;
   suppliers: ObservedSupplier[];
 
   value: string;
@@ -23,25 +25,32 @@ interface Destination {
 }
 
 function navigate(event: KeyboardEvent<HTMLElement>) {
-  if (!(event.target instanceof HTMLButtonElement)) return;
+  if (!(event.target instanceof HTMLButtonElement)) {
+    return;
+  }
   const buttons = Array.from(event.currentTarget.querySelectorAll("button"));
   const index = buttons.indexOf(event.target);
-  let next: HTMLButtonElement | undefined;
+  let next: Optional<HTMLButtonElement> = undefined;
   switch (event.key) {
-    case "ArrowUp":
+    case "ArrowUp": {
       next = buttons[index - 1];
       break;
-    case "ArrowDown":
+    }
+    case "ArrowDown": {
       next = buttons[index + 1];
       break;
-    case "Home":
-      next = buttons[0];
+    }
+    case "Home": {
+      [next] = buttons;
       break;
-    case "End":
+    }
+    case "End": {
       next = buttons.at(-1);
       break;
-    default:
+    }
+    default: {
       return;
+    }
   }
   event.preventDefault();
   next?.focus();
@@ -50,23 +59,23 @@ function navigate(event: KeyboardEvent<HTMLElement>) {
 export function ObjectNavigator({ state, suppliers, value, onOpen }: Props) {
   const items: Destination[] = [
     {
-      id: "world",
-      label: msg.operator.bank(),
       children: [
         { id: "status", label: msg.operator.status() },
         { id: "payments", label: msg.operator.payments() },
       ],
+      id: "world",
+      label: msg.operator.bank(),
     },
     { id: "scores", label: msg.operator.standings() },
     {
+      children: state?.machines.map((id) => ({ id: `machine:${id}`, label: address(id) })) ?? [],
       id: "site:depot",
       label: msg.operator.depot(),
-      children: state?.machines.map((id) => ({ id: "machine:" + id, label: address(id) })) ?? [],
     },
     {
+      children: suppliers.map((s) => ({ id: `supplier:${s.id}`, label: s.name })),
       id: "suppliers",
       label: msg.operator.supply(),
-      children: suppliers.map((s) => ({ id: "supplier:" + s.id, label: s.name })),
     },
     { id: "mail", label: msg.operator.mailbox() },
     { id: "sales", label: msg.operator.revenue() },

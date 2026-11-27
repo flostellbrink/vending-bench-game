@@ -1,24 +1,47 @@
 import type { Release } from "games-common/benchmark";
 
+import { hasAny, type Optional } from "games-common/language";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
-import type { ParentBalance } from "@/game/runs";
-import type { CommandLine, Run } from "@/hooks/useCommandLine";
-import type { Navigation } from "@/hooks/useNavigation";
-import type { Money } from "@/localization/messages";
+import type { ParentBalance } from "@/game/runs.ts";
+import type { CommandLine, Run } from "@/hooks/useCommandLine.ts";
+import type { Navigation } from "@/hooks/useNavigation.ts";
+import type { Money } from "@/localization/messages.ts";
 
-import { msg } from "@/dictionary";
-import { readoutContext } from "@/game/readout-route";
-import { observedSuppliers } from "@/game/suppliers";
+import { msg } from "@/dictionary/index.ts";
+import { readoutContext } from "@/game/readout-route.ts";
+import { observedSuppliers } from "@/game/suppliers.ts";
 
-import { ActionButton } from "./FormControls";
-import { ToolReferenceContext } from "./GuiToolInfo";
-import { ObjectNavigator } from "./ObjectNavigator";
-import { OfficeDisplay } from "./OfficeDisplay";
-import { QuoteDrafts } from "./QuoteDrafts";
-import { ResultDialog, resultTitle } from "./ResultDialog";
-import { WorkspaceReadout } from "./WorkspaceReadout";
+import { ToolReferenceContext } from "./GuiToolInfo.tsx";
+import { ObjectNavigator } from "./ObjectNavigator.tsx";
+import { OfficeDisplay } from "./OfficeDisplay.tsx";
+import { QuoteDrafts } from "./QuoteDrafts.tsx";
+import { ResultDialog, resultTitle } from "./ResultDialog.tsx";
+import { WorkspaceReadout } from "./WorkspaceReadout.tsx";
 import "./mobile-workbench.css";
+
+const supplierPrefix = "supplier:";
+
+/** The alerts of a run that could not continue or could not save. */
+function RunAlerts({ run }: { run: Run }) {
+  return (
+    <>
+      {hasAny(run.runtimeError) && (
+        <p role="alert">
+          {run.runtimeError}{" "}
+          <button onClick={() => location.reload()}>{msg.operator.resumeSavedRun()}</button>
+        </p>
+      )}
+      {hasAny(run.saveIssue) && (
+        <p role="alert">
+          {run.saveIssue === "saveConflict"
+            ? msg.operator.saveConflict()
+            : msg.operator.saveFailed()}
+        </p>
+      )}
+    </>
+  );
+}
 
 export interface WorkspaceProps {
   run: Run;
@@ -30,10 +53,9 @@ export interface WorkspaceProps {
   parentBalance?: ParentBalance;
 }
 
-export function Workspace(props: WorkspaceProps) {
-  const { run, nav, shell, release } = props;
+export function Workspace({ run, nav, shell, release, money, parentBalance }: WorkspaceProps) {
   const toolReference = useMemo(
-    () => ({ release, state: run.state, actions: run.actions }),
+    () => ({ actions: run.actions, release, state: run.state }),
     [release, run.state, run.actions],
   );
   const [preview, setPreview] = useState("");
@@ -51,7 +73,9 @@ export function Workspace(props: WorkspaceProps) {
   const selected = useRef(false);
   const [directoryOpen, setDirectoryOpen] = useState(false);
   useEffect(() => {
-    if (!directoryOpen) return;
+    if (!directoryOpen) {
+      return;
+    }
     directory.current?.showModal();
     directory.current?.querySelector<HTMLButtonElement>("button[aria-current]")?.focus();
   }, [directoryOpen]);
@@ -60,12 +84,18 @@ export function Workspace(props: WorkspaceProps) {
     const station = directory.current?.closest<HTMLElement>(".station");
     const phone = matchMedia("(max-width: 760px)");
     const viewport = window.visualViewport;
-    if (!station) return undefined;
+    if (!station) {
+      return undefined;
+    }
     function sizeWorkbench() {
-      if (!phone.matches && directory.current?.open) directory.current.close();
-      if (phone.matches && viewport?.scale === 1)
-        station?.style.setProperty("--phone-height", viewport.height + "px");
-      else station?.style.removeProperty("--phone-height");
+      if (!phone.matches && directory.current?.open) {
+        directory.current.close();
+      }
+      if (phone.matches && viewport?.scale === 1) {
+        station?.style.setProperty("--phone-height", `${viewport.height}px`);
+      } else {
+        station?.style.removeProperty("--phone-height");
+      }
     }
     sizeWorkbench();
     phone.addEventListener("change", sizeWorkbench);
@@ -76,12 +106,11 @@ export function Workspace(props: WorkspaceProps) {
       station.style.removeProperty("--phone-height");
     };
   }, []);
-  const directoryProps = { state: run.state, suppliers, value: context.object };
-  const supplier = context.object.startsWith("supplier:")
-    ? suppliers.find((entry) => entry.id === context.object.slice(9))
+  const supplier = context.object.startsWith(supplierPrefix)
+    ? suppliers.find((entry) => entry.id === context.object.slice(supplierPrefix.length))
     : undefined;
   const title = supplier?.name ?? context.name ?? context.label();
-  function previewFor(target: EventTarget | null) {
+  function previewFor(target: Optional<EventTarget>) {
     const button = target instanceof Element ? target.closest("[data-clock-verb]") : null;
     setPreview(button?.getAttribute("data-clock-verb") ?? "");
   }
@@ -90,15 +119,19 @@ export function Workspace(props: WorkspaceProps) {
       <section
         className="workspace"
         onClickCapture={(event) => {
-          const target = event.target;
+          const { target } = event;
           if (target instanceof Element) {
             const control = target.closest<HTMLElement>("button, a[href], input, select, textarea");
-            if (control) opener.current = control;
+            if (control) {
+              opener.current = control;
+            }
           }
         }}
         onSubmitCapture={(event) => {
-          const submitter = event.nativeEvent.submitter;
-          if (submitter instanceof HTMLElement) opener.current = submitter;
+          const { submitter } = event.nativeEvent;
+          if (submitter instanceof HTMLElement) {
+            opener.current = submitter;
+          }
         }}
         onPointerOver={(e) => previewFor(e.target)}
         onPointerLeave={() => setPreview("")}
@@ -110,7 +143,7 @@ export function Workspace(props: WorkspaceProps) {
           release={release}
 
           reports={run.reports}
-          disabled={run.busy || Boolean(run.runtimeError)}
+          disabled={run.busy || hasAny(run.runtimeError)}
           closeDay={() => shell.runCommand("wait_for_next_day")}
           previewVerb={preview || shell.verb || shell.steps[0]?.verb || ""}
           sceneObject={
@@ -141,7 +174,7 @@ export function Workspace(props: WorkspaceProps) {
             <button
               className="history-key"
               aria-haspopup="dialog"
-              onClick={() => nav.setTab("past:" + context.object)}
+              onClick={() => nav.setTab(`past:${context.object}`)}
             >
               {msg.operator.history()} ({context.history.length})
             </button>
@@ -169,7 +202,9 @@ export function Workspace(props: WorkspaceProps) {
           </header>
           {directoryOpen && (
             <ObjectNavigator
-              {...directoryProps}
+              state={run.state}
+              suppliers={suppliers}
+              value={context.object}
               onOpen={(id) => {
                 selected.current = true;
                 nav.openObject(id);
@@ -179,30 +214,33 @@ export function Workspace(props: WorkspaceProps) {
           )}
         </dialog>
         <div className="work-surface">
-          <ObjectNavigator {...directoryProps} onOpen={nav.openObject} />
+          <ObjectNavigator
+            state={run.state}
+            suppliers={suppliers}
+            value={context.object}
+            onOpen={nav.openObject}
+          />
           <QuoteDrafts>
             <section className="readout" aria-labelledby={headingId} key={section}>
-              {run.runtimeError && (
-                <p role="alert">
-                  {run.runtimeError}{" "}
-                  <button onClick={() => location.reload()}>{msg.operator.resumeSavedRun()}</button>
-                </p>
-              )}
-              {run.saveIssue && (
-                <p role="alert">
-                  {run.saveIssue === "saveConflict"
-                    ? msg.operator.saveConflict()
-                    : msg.operator.saveFailed()}
-                </p>
-              )}
-              <WorkspaceReadout {...props} tab={section} context={context} suppliers={suppliers} />
+              <RunAlerts run={run} />
+              <WorkspaceReadout
+                run={run}
+                nav={nav}
+                shell={shell}
+                release={release}
+                money={money}
+                parentBalance={parentBalance}
+                tab={section}
+                context={context}
+                suppliers={suppliers}
+              />
             </section>
             {nav.path.slice(1).map((view) => {
               const detail = readoutContext(view, run.reports);
               const report = detail.selected;
-              const historyView = "past:" + detail.object;
+              const historyView = `past:${detail.object}`;
               const owner =
-                suppliers.find((entry) => "supplier:" + entry.id === detail.object)?.name ??
+                suppliers.find((entry) => `supplier:${entry.id}` === detail.object)?.name ??
                 detail.name ??
                 detail.label();
               return (
@@ -216,13 +254,23 @@ export function Workspace(props: WorkspaceProps) {
                     report &&
                     detail.history.length > 1 &&
                     !nav.path.includes(historyView) && (
-                      <ActionButton onClick={() => nav.setTab(historyView)}>
+                      <button className="workbench-button" onClick={() => nav.setTab(historyView)}>
                         {msg.operator.history()} ({detail.history.length})
-                      </ActionButton>
+                      </button>
                     )
                   }
                 >
-                  <WorkspaceReadout {...props} tab={view} context={detail} suppliers={suppliers} />
+                  <WorkspaceReadout
+                    run={run}
+                    nav={nav}
+                    shell={shell}
+                    release={release}
+                    money={money}
+                    parentBalance={parentBalance}
+                    tab={view}
+                    context={detail}
+                    suppliers={suppliers}
+                  />
                 </ResultDialog>
               );
             })}

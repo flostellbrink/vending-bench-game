@@ -1,11 +1,68 @@
+import type { Report } from "games-common/benchmark";
+
+import { hasValue, type Optional } from "games-common/language";
 import { memo, useState } from "react";
 
-import type { LogLine } from "@/hooks/useRun";
-import type { Money } from "@/localization/messages";
+import type { LogLine } from "@/hooks/useRun.ts";
+import type { Money } from "@/localization/messages.ts";
 
-import { msg } from "@/dictionary";
-import { isReadReceipt } from "@/game/receipt-routing";
-import { clock, receiptEnd } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { isReadReceipt } from "@/game/receipt-routing.ts";
+import { clock, receiptEnd } from "@/scene/clock.ts";
+
+/** The longest part of a reply that the receipt line shows. */
+const summaryLength = 110;
+/** The peek shows this many report rows when the reply has no text. */
+const peekRows = 3;
+
+function receiptSummary(r: Report) {
+  if (r.mail) {
+    return r.mail.subject;
+  }
+  if (hasValue(r.terms?.order)) {
+    return r.terms.order;
+  }
+  if (r.directory.length) {
+    return r.directory.map((entry) => entry.name).join(" · ");
+  }
+  if (r.rows.length) {
+    return `${r.rows.length} ${msg.operator.results()}`;
+  }
+  if (r.tool === "wait_for_next_day") {
+    return `${msg.operator.statement()} · ${msg.operator.day()} ${r.day}`;
+  }
+  return (r.display.split("\n")[0] ?? "").slice(0, summaryLength);
+}
+
+function PeekText({ report }: { report: Report }) {
+  if (report.mail) {
+    return (
+      <p>
+        {report.mail.from}
+        <br />
+        {report.mail.body}
+      </p>
+    );
+  }
+  if (report.terms?.order) {
+    return (
+      <p>
+        {report.terms.order} · {msg.operator.expectedClose()} {report.terms.eta}
+      </p>
+    );
+  }
+  return (
+    <p>
+      {report.display ||
+        report.rows
+          .slice(0, peekRows)
+          .map((row) => row.join(" · "))
+          .join("\n") ||
+        report.directory.map((entry) => entry.name).join("\n")}
+    </p>
+  );
+}
+
 export const Receipts = memo(function Receipts({
   lines,
   openReport,
@@ -16,9 +73,8 @@ export const Receipts = memo(function Receipts({
   openReport: (id: number) => void;
   money: Money;
 }) {
-  const [peek, setPeek] = useState<number | null>(null);
-  const day = msg.operator.day(),
-    result = msg.operator.results();
+  const [peek, setPeek] = useState<Optional<number>>(null);
+  const day = msg.operator.day();
   return lines.map((r) => (
     <div className="receipt" key={r.id}>
       <small>
@@ -31,23 +87,14 @@ export const Receipts = memo(function Receipts({
         <pre className="shell-reply">{r.localText}</pre>
       ) : (
         <button aria-expanded={peek === r.id} onClick={() => setPeek(peek === r.id ? null : r.id)}>
-          #{r.id}{" "}
-          {r.mail?.subject ??
-            r.terms?.order ??
-            (r.directory.length
-              ? r.directory.map((entry) => entry.name).join(" · ")
-              : r.rows.length
-                ? r.rows.length + " " + result
-                : r.tool === "wait_for_next_day"
-                  ? msg.operator.statement() + " · " + day + " " + r.day
-                  : (r.display.split("\n")[0] ?? "").slice(0, 110))}
+          #{r.id} {receiptSummary(r)}
         </button>
       )}
       {!("localText" in r) && !isReadReceipt(r) && (
         <div className="write-ack">
           <small>
             {clock(r.minute)} → {receiptEnd(r, day)} · {r.minutes} min
-            {r.closingCash !== r.openingCash && " · " + money(r.closingCash - r.openingCash)}
+            {r.closingCash !== r.openingCash && ` · ${money(r.closingCash - r.openingCash)}`}
           </small>
           {r.terms?.order && (
             <span>
@@ -71,26 +118,7 @@ export const Receipts = memo(function Receipts({
           <small>
             {clock(r.minute)} → {receiptEnd(r, day)} · {r.minutes} min
           </small>
-          {r.mail ? (
-            <p>
-              {r.mail.from}
-              <br />
-              {r.mail.body}
-            </p>
-          ) : r.terms?.order ? (
-            <p>
-              {r.terms.order} · {msg.operator.expectedClose()} {r.terms.eta}
-            </p>
-          ) : (
-            <p>
-              {r.display ||
-                r.rows
-                  .slice(0, 3)
-                  .map((row) => row.join(" · "))
-                  .join("\n") ||
-                r.directory.map((entry) => entry.name).join("\n")}
-            </p>
-          )}
+          <PeekText report={r} />
           <button aria-haspopup="dialog" onClick={() => openReport(r.id)}>
             {msg.operator.openReceipt()} #{r.id}
           </button>

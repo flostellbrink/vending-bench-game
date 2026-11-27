@@ -3,7 +3,7 @@ import type { Release } from "games-common/benchmark";
 
 import { useId, useState } from "react";
 
-import { msg } from "@/dictionary";
+import { msg } from "@/dictionary/index.ts";
 import {
   forkReferenceRun,
   forkRun,
@@ -14,10 +14,10 @@ import {
   readSlotSnapshot,
   slotSnapshot,
   withRunLock,
-} from "@/game/runs";
-import { unavailable, useStoredText } from "@/hooks/useSessionStorage";
+} from "@/game/runs.ts";
+import { unavailable, useStoredText } from "@/hooks/useSessionStorage.ts";
 
-import SaveTree from "./SaveTree";
+import SaveTree from "./SaveTree.tsx";
 import "./save-tree.css";
 
 export function SaveLibrarySection({
@@ -34,17 +34,19 @@ export function SaveLibrarySection({
   const closings = reference?.values?.slice(1, release.days + 1) ?? [];
   const snapshot = useStoredText(() => slotSnapshot(localStorage, release));
   const runs = typeof snapshot === "string" ? readSlotSnapshot(snapshot) : [];
-  const [problem, setProblem] = useState(false),
-    [sending, setSending] = useState(false);
+  const [problem, setProblem] = useState(false);
+  const [sending, setSending] = useState(false);
   const newForm = useId();
   const resume = (id: string) =>
-    "run/?" + new URLSearchParams({ bench: release.revision, slot: id });
+    `run/?${new URLSearchParams({ bench: release.revision, slot: id })}`;
   async function branch(id: string, startDay: number) {
-    if (sending || typeof snapshot !== "string") return;
+    if (sending || typeof snapshot !== "string") {
+      return;
+    }
     setSending(true);
     try {
-      const child = await withRunLock(runKey(release) + ":fork:" + id + ":" + startDay, () => {
-        const existing = listRuns(localStorage, release)
+      const child = await withRunLock(`${runKey(release)}:fork:${id}:${startDay}`, () => {
+        const [existing] = listRuns(localStorage, release)
           .filter(
             (run) =>
               !run.damaged &&
@@ -59,8 +61,10 @@ export function SaveLibrarySection({
             (a, b) =>
               Number(b.id === slot) - Number(a.id === slot) ||
               (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
-          )[0];
-        if (existing) return existing.id;
+          );
+        if (existing) {
+          return existing.id;
+        }
         return id === referenceSlot
           ? forkReferenceRun(localStorage, release, startDay)
           : forkRun(localStorage, release, id, startDay);
@@ -85,7 +89,7 @@ export function SaveLibrarySection({
         <p role="alert">{msg.session.unavailable()}</p>
       ) : (
         <SaveTree
-          key={release.revision + ":" + (slot ?? "latest") + ":" + (day ?? "tip")}
+          key={`${release.revision}:${slot ?? "latest"}:${day ?? "tip"}`}
           release={release}
           slots={runs}
           closings={closings}

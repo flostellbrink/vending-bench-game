@@ -1,25 +1,25 @@
 import { useState } from "react";
 
-import type { ObservedSupplier } from "@/game/suppliers";
+import type { ObservedSupplier } from "@/game/suppliers.ts";
 
-import { msg } from "@/dictionary";
+import { msg } from "@/dictionary/index.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
 import "./supplier-desk.css";
-import { DirectorySearch } from "./DirectorySearch";
-import { ActionButton, ActionForm, ControlInput, Field } from "./FormControls";
+import { DirectorySearch } from "./DirectorySearch.tsx";
+import { ActionForm, Field } from "./FormControls.tsx";
 
-type Props = Pick<ObservationProps, "state" | "runCommand" | "disabled"> & {
+type Props = Pick<ObservationProps, "runCommand" | "disabled"> & {
   openObject: (id: string) => void;
   suppliers: ObservedSupplier[];
 };
-export function SupplierDirectory({ suppliers, openObject, ...props }: Props) {
+export function SupplierDirectory({ suppliers, openObject, runCommand, disabled }: Props) {
   const [supplierId, setSupplierId] = useState("");
   return (
     <section className="sheet supplier-index">
       <div className="supplier-tools">
-        <DirectorySearch {...props} />
+        <DirectorySearch disabled={disabled} runCommand={runCommand} />
       </div>
       {suppliers.length > 0 && (
         <ul className="supplier-directory">
@@ -28,7 +28,7 @@ export function SupplierDirectory({ suppliers, openObject, ...props }: Props) {
               <button
                 type="button"
                 aria-haspopup="dialog"
-                onClick={() => openObject("supplier:" + s.id)}
+                onClick={() => openObject(`supplier:${s.id}`)}
               >
                 <span>
                   <b>{s.name}</b>
@@ -49,17 +49,25 @@ export function SupplierDirectory({ suppliers, openObject, ...props }: Props) {
           className="compact"
           aria-label={msg.operator.openSupplier()}
           actions={
-            <ActionButton type="submit" aria-haspopup="dialog" disabled={!supplierId.trim()}>
+            <button
+              className="workbench-button"
+              type="submit"
+              aria-haspopup="dialog"
+              disabled={!supplierId.trim()}
+            >
               {msg.operator.openSupplier()}
-            </ActionButton>
+            </button>
           }
           onSubmit={(event) => {
             event.preventDefault();
-            if (supplierId.trim()) openObject("supplier:" + supplierId.trim());
+            if (supplierId.trim()) {
+              openObject(`supplier:${supplierId.trim()}`);
+            }
           }}
         >
           <Field label={msg.fields.supplier_id()}>
-            <ControlInput
+            <input
+              className="control-input"
               required
               value={supplierId}
               onChange={(event) => setSupplierId(event.currentTarget.value)}

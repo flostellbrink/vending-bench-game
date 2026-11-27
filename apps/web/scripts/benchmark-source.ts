@@ -10,9 +10,9 @@ export const pinSchema = v.object({ revision: v.string() });
 type Pin = v.InferOutput<typeof pinSchema>;
 export const sourceRivalSchema = v.object({
   ...v.omit(rivalSchema, ["source", "balances", "values", "replay"]).entries,
+  replay: v.optional(v.omit(replaySchema, ["revision"])),
   sourcePath: v.string(),
   values: v.nullish(v.array(v.number())),
-  replay: v.optional(v.omit(replaySchema, ["revision"])),
 });
 const metadataSchema = v.object({
   ...v.pick(releaseSchema, [
@@ -25,6 +25,7 @@ const metadataSchema = v.object({
     "network",
     "tools",
     "toolDefaults",
+    "toolParameters",
     "reportLimits",
   ]).entries,
   rivals: v.array(sourceRivalSchema),
@@ -51,14 +52,30 @@ const upstream = join(root, "vendor/vending-bench");
 export const publicDir = join(app, "public");
 export const engine = "tasks/vending-bench/environment/sim-server";
 
+const bytesPerMebibyte = 1_048_576;
+const maxGitOutputMebibytes = 128;
+const shortHashLength = 12;
+
 export function git(...args: string[]) {
-  return execFileSync("git", ["-C", upstream, ...args], { maxBuffer: 128 * 1024 * 1024 });
+  return execFileSync("git", ["-C", upstream, ...args], {
+    maxBuffer: maxGitOutputMebibytes * bytesPerMebibyte,
+  });
+}
+
+function resolveCommit(ref: string) {
+  try {
+    return git("rev-parse", "--verify", `${ref}^{commit}`).toString().trim();
+  } catch (error) {
+    throw new Error(`Missing submodule commit ${ref}. Fetch the submodule history.`, {
+      cause: error,
+    });
+  }
 }
 
 function evaluationFile(path: string) {
   return (
-    (path.startsWith(engine + "/") && /\.(py|toml)$/.test(path)) ||
-    /^(scripts|tests)\/[^/]+\.py$/.test(path) ||
+    (path.startsWith(`${engine}/`) && /\.(?:py|toml)$/.test(path)) ||
+    /^(?:scripts|tests)\/[^/]+\.py$/.test(path) ||
     /^tasks\/vending-bench\/instruction[^/]*\.md$/.test(path)
   );
 }
@@ -96,47 +113,46 @@ async function metadata(revision: string) {
   const python = await readSnapshot(revision);
   const release = v.parse(metadataSchema, pythonJSON(python, "metadata()"));
   if (!/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(release.version)) {
-    throw Error("Invalid upstream task version: " + release.version);
+    throw new Error(`Invalid upstream task version: ${release.version}`);
   }
   return { ...release, browserTools: v.parse(v.string(), python.runPython("browser_tools()")) };
 }
 
 export async function readReleases(pins: Pin[]): Promise<SnapshotRelease[]> {
-  if (!pins.length) throw Error("Configure at least one benchmark source in releases.json.");
+  if (!pins.length) {
+    throw new Error("Configure at least one benchmark source in releases.json.");
+  }
   if (!existsSync(join(upstream, ".git"))) {
-    throw Error(
+    throw new Error(
       "The Vending Bench submodule is missing. Run git submodule update --init --recursive.",
     );
   }
   const releases: Omit<SnapshotRelease, "id">[] = [];
   for (const pin of pins) {
     if (pin.revision !== "submodule" && !/^[0-9a-f]{40}$/.test(pin.revision)) {
-      throw Error("A historical release requires a full commit hash: " + pin.revision);
+      throw new Error(`A historical release requires a full commit hash: ${pin.revision}`);
     }
     const ref = pin.revision === "submodule" ? "HEAD" : pin.revision;
-    let revision: string;
-    try {
-      revision = git("rev-parse", "--verify", ref + "^{commit}")
-        .toString()
-        .trim();
-    } catch (error) {
-      throw new Error("Missing submodule commit " + ref + ". Fetch the submodule history.", {
-        cause: error,
-      });
+    const revision = resolveCommit(ref);
+    if (releases.some((r) => r.revision === revision)) {
+      continue;
     }
-    if (releases.some((r) => r.revision === revision)) continue;
     try {
       const release = await metadata(revision);
-      const adapter = "v" + release.version.split(".")[0] + ".py";
-      if (!existsSync(join(publicDir, adapter))) throw Error("Missing browser adapter: " + adapter);
-      releases.push({ ...release, revision, adapter });
+      const adapter = `v${release.version.split(".")[0]}.py`;
+      if (!existsSync(join(publicDir, adapter))) {
+        throw new Error(`Missing browser adapter: ${adapter}`);
+      }
+      releases.push({ ...release, adapter, revision });
     } catch (error) {
-      throw new Error("Cannot build the Vending Bench catalog at " + revision, { cause: error });
+      throw new Error(`Cannot build the Vending Bench catalog at ${revision}`, { cause: error });
     }
   }
   return releases.map((release) => {
     const collision = releases.some((r) => r !== release && r.version === release.version);
-    const id = collision ? release.version + "+" + release.revision.slice(0, 12) : release.version;
+    const id = collision
+      ? `${release.version}+${release.revision.slice(0, shortHashLength)}`
+      : release.version;
     return { ...release, id };
   });
 }

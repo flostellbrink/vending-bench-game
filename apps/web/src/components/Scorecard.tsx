@@ -1,24 +1,60 @@
 import type { Snapshot, Rival, PersonalBest, Report } from "games-common/benchmark";
 
-import { msg } from "@/dictionary";
-import { rankedModels } from "@/game/model-rivals";
-import { type Money } from "@/localization/messages";
-import { clock } from "@/scene/clock";
+import { hasValue, type Optional } from "games-common/language";
 
-import { PaceReview } from "./PaceReview";
+import { msg } from "@/dictionary/index.ts";
+import { rankedModels } from "@/game/model-rivals.ts";
+import { type Money } from "@/localization/messages.ts";
+import { clock } from "@/scene/clock.ts";
+
+import { PaceReview } from "./PaceReview.tsx";
 import "./financial-readouts.css";
 interface Props {
   embedded?: boolean;
   seed: number;
-  state: Snapshot | null;
+  state: Optional<Snapshot>;
   rivals: Rival[];
-  best: PersonalBest | null;
+  best: Optional<PersonalBest>;
 
   reports: Report[];
   openReport: (id: number) => void;
   money: Money;
   history: number[];
   reviewDay: (day: number) => void;
+}
+function standingsTitle(state: Optional<Snapshot>) {
+  if (!state?.over) {
+    return msg.operator.standings();
+  }
+  return state.failed ? msg.operator.bankrupt() : msg.screen.complete();
+}
+function CashEventRow({
+  report,
+  money,
+  openReport,
+}: {
+  report: Report;
+  money: Money;
+  openReport: (id: number) => void;
+}) {
+  return (
+    <tr>
+      <td>
+        {report.day} · {clock(report.minute)}
+      </td>
+      <td>
+        <button
+          aria-haspopup="dialog"
+          className="receipt-link"
+          onClick={() => openReport(report.id)}
+        >
+          #{report.id} {report.line}
+        </button>
+      </td>
+      <td>{money(report.closingCash - report.openingCash)}</td>
+      <td>{money(report.closingCash)}</td>
+    </tr>
+  );
 }
 export function Scorecard({
   embedded,
@@ -32,19 +68,11 @@ export function Scorecard({
   history,
   reviewDay,
 }: Props) {
-  const score = state?.final?.reward ?? null;
+  const score = state?.final?.reward;
   const models = rankedModels(rivals);
   return (
     <section className="sheet scorecard">
-      {!embedded && (
-        <h2>
-          {state?.over
-            ? state.failed
-              ? msg.operator.bankrupt()
-              : msg.screen.complete()
-            : msg.operator.standings()}
-        </h2>
-      )}
+      {!embedded && <h2>{standingsTitle(state)}</h2>}
       {state?.final && (
         <dl className="end-totals">
           <div>
@@ -73,7 +101,7 @@ export function Scorecard({
           <tr className="player-score">
             <th scope="row">{msg.fields.player()}</th>
             <td>
-              <strong>{score === null ? "—" : money(score)}</strong>
+              <strong>{hasValue(score) ? money(score) : "—"}</strong>
             </td>
             <td>—</td>
           </tr>
@@ -84,17 +112,21 @@ export function Scorecard({
             <tr key={row.name}>
               <th scope="row">{row.name}</th>
               <td>{money(row.score)}</td>
-              <td>{score === null ? "—" : money(score - row.score)}</td>
+              <td>{hasValue(score) ? money(score - row.score) : "—"}</td>
             </tr>
           ))}
         </tbody>
       </table>
       <div className="score-notes">
-        {score === null && <p>{msg.operator.unfinished()}</p>}
+        {!hasValue(score) && <p>{msg.operator.unfinished()}</p>}
         <p>{models.length ? msg.session.soloSeed({ seed }) : msg.operator.noRivals()}</p>
       </div>
       <PaceReview
-        {...{ history, rivals, best, money, reviewDay }}
+        best={best}
+        history={history}
+        money={money}
+        reviewDay={reviewDay}
+        rivals={rivals}
         playerName={msg.fields.player()}
       />
       {reports.some((r) => r.openingCash !== r.closingCash) && (
@@ -113,22 +145,7 @@ export function Scorecard({
               {reports
                 .filter((r) => r.openingCash !== r.closingCash)
                 .map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      {r.day} · {clock(r.minute)}
-                    </td>
-                    <td>
-                      <button
-                        aria-haspopup="dialog"
-                        className="receipt-link"
-                        onClick={() => openReport(r.id)}
-                      >
-                        #{r.id} {r.line}
-                      </button>
-                    </td>
-                    <td>{money(r.closingCash - r.openingCash)}</td>
-                    <td>{money(r.closingCash)}</td>
-                  </tr>
+                  <CashEventRow key={r.id} report={r} money={money} openReport={openReport} />
                 ))}
             </tbody>
           </table>
