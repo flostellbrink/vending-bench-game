@@ -28,7 +28,7 @@ interface Props {
 
 function LandingDesk({ release, setup, slot }: Props) {
   const money = useCurrency(release.currency);
-  const [leader] = rankedModels(release.rivals);
+  const scored = rankedModels(release.rivals).length > 0;
   const source = `https://github.com/ProsusAI/vending-bench/tree/${release.revision}`;
   return (
     <StationFrame revision={release.revision} slot={slot}>
@@ -36,7 +36,9 @@ function LandingDesk({ release, setup, slot }: Props) {
         <article className="shell landing-console">
           <div className="landing-intro">
             <h1>
-              {leader?.name ? msg.landing.lead({ model: leader.name }) : msg.landing.fallback()}
+              {scored
+                ? msg.landing.lead({ days: release.days })
+                : msg.landing.fallback({ days: release.days })}
             </h1>
             <p>{msg.landing.context()}</p>
             <a className="landing-repo" href="https://github.com/flostellbrink/vending-bench-game">
