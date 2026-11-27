@@ -40,7 +40,7 @@ interface LocalLine {
 export type LogLine = Report | LocalLine;
 type BootStage = "runtime" | "mount" | "ready";
 type SaveIssue = "" | "saveConflict" | "saveFailed";
-type View = number | "scores" | "suppliers";
+type View = number | "suppliers";
 type SimulatorResult = Extract<WorkerReply, { state: Snapshot }>;
 
 interface RunView {
@@ -278,9 +278,13 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           state: data.state,
         };
       });
-      if (data.state.over) {
-        onView("scores");
-      } else if (request && reports[0] && shouldOpenReceipt(reports[0], request.destination)) {
+      // A finished run opens the result screen instead of a receipt.
+      if (
+        !data.state.over &&
+        request &&
+        reports[0] &&
+        shouldOpenReceipt(reports[0], request.destination)
+      ) {
         onView(reports[0].id);
       }
     }

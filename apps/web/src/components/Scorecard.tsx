@@ -10,7 +10,6 @@ import { clock } from "@/scene/clock.ts";
 import { PaceReview } from "./PaceReview.tsx";
 import "./financial-readouts.css";
 interface Props {
-  embedded?: boolean;
   seed: number;
   state: Optional<Snapshot>;
   rivals: Rival[];
@@ -81,7 +80,6 @@ function CashEventRow({
   );
 }
 export function Scorecard({
-  embedded,
   seed,
   state,
   rivals,
@@ -97,7 +95,7 @@ export function Scorecard({
   const models = rankedModels(rivals);
   return (
     <section className="sheet scorecard">
-      {!embedded && <h2>{standingsTitle(state)}</h2>}
+      <h2>{standingsTitle(state)}</h2>
       {state?.final && (
         <dl className="end-totals">
           <div>
