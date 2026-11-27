@@ -170,6 +170,10 @@ def recorded_balances(path, result):
     return balances if len(balances) > 1 else None
 
 
+def trial_key(result):
+    return result["model_requested"], result["timestamp_utc"]
+
+
 def model_results(version):
     models = []
     for aggregate in sorted(BASELINES.glob("models-*/aggregate.json")):
@@ -194,7 +198,8 @@ def model_results(version):
                           and days == config.SIM_DAYS and seed == config.SEED
                           and comparable_config(read_json(result_path.parent / "config.json")))
             if comparable:
-                models.append({"kind": "model", "name": name, "score": result["reward"],
+                models.append({"trial": trial_key(result),
+                               "kind": "model", "name": name, "score": result["reward"],
                                "endDay": days if result["completed"] else result.get("days_operated"),
                                "finalBalance": result["final_balance"],
                                "sourcePath": source,
@@ -248,7 +253,7 @@ def study_results(version):
             if model in latest and latest[model][0]["timestamp_utc"] >= result["timestamp_utc"]:
                 continue
             latest[model] = (result, result_path, names[model]["name"].split(": ", 1)[-1])
-    return [{"kind": "model", "name": name, "score": result["reward"],
+    return [{"trial": trial_key(result), "kind": "model", "name": name, "score": result["reward"],
              "endDay": result["days_operated"], "finalBalance": result["final_balance"],
              "sourcePath": path.relative_to(ROOT).as_posix(),
              "values": recorded_balances(path.parent / "conversation.jsonl", result)}
@@ -261,6 +266,13 @@ def metadata():
     brief = render()
     script, replay = reference_trace(version)
     tools, defaults = tool_metadata()
+    # Baselines reuse study trials; the first copy wins because baselines record daily balances.
+    models, trials = [], set()
+    for rival in [*model_results(version), *study_results(version)]:
+        trial = rival.pop("trial")
+        if trial not in trials:
+            trials.add(trial)
+            models.append(rival)
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
                        "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
@@ -271,5 +283,5 @@ def metadata():
                        "reportLimits": {"mailCount": config.EMAIL_LIST_LIMIT_MAX,
                                         "salesDays": config.SALES_REPORT_MAX_DAYS},
                        "scriptedReplay": replay,
-                       "rivals": [script, *model_results(version), *study_results(version)]},
+                       "rivals": [script, *models]},
                       allow_nan=False)
