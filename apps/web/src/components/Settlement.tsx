@@ -1,22 +1,23 @@
 import type { Release } from "games-common/benchmark";
 
+import { hasValue, type Optional } from "games-common/language";
 import { useState } from "react";
 
-import type { ParentBalance } from "@/game/runs";
-import type { Run } from "@/hooks/useCommandLine";
-import type { Money } from "@/localization/messages";
+import type { ParentBalance } from "@/game/runs.ts";
+import type { Run } from "@/hooks/useCommandLine.ts";
+import type { Money } from "@/localization/messages.ts";
 
-import { msg } from "@/dictionary";
-import { useNavigation } from "@/hooks/useNavigation";
+import { msg } from "@/dictionary/index.ts";
+import { useNavigation } from "@/hooks/useNavigation.ts";
 
-import { BalanceScope } from "./BalanceScope";
-import { DayStatement } from "./DayStatement";
-import ObservationView from "./ObservationView";
-import { ReportList } from "./ReportList";
-import { ResultDialog, resultTitle } from "./ResultDialog";
-import { Scorecard } from "./Scorecard";
-import SessionSetup from "./SessionSetup";
-import { StationFrame } from "./StationFrame";
+import { BalanceScope } from "./BalanceScope.tsx";
+import { DayStatement } from "./DayStatement.tsx";
+import ObservationView from "./ObservationView.tsx";
+import { ReportList } from "./ReportList.tsx";
+import { ResultDialog, resultTitle } from "./ResultDialog.tsx";
+import { Scorecard } from "./Scorecard.tsx";
+import SessionSetup from "./SessionSetup.tsx";
+import { StationFrame } from "./StationFrame.tsx";
 
 interface Props {
   parentBalance?: ParentBalance;
@@ -27,18 +28,23 @@ interface Props {
   money: Money;
 }
 export function Settlement({ run, release, slot, money, parentBalance }: Props) {
-  const [balanceDay, setBalanceDay] = useState<number | null>(null);
+  const [balanceDay, setBalanceDay] = useState<Optional<number>>(null);
   const nav = useNavigation("scores");
   const { state, rivals, best, reports, history } = run;
   const finalReceipt = reports.at(-1);
-  const openDay = (day: number) => nav.setTab("day:" + day);
+  const openDay = (day: number) => nav.setTab(`day:${day}`);
   return (
     <StationFrame revision={release.revision} slot={slot} page="run">
       <div className="dossier settlement-desks">
         <section className="bench-paper">
           <Scorecard
             seed={release.seed}
-            {...{ state, rivals, best, reports, money, history }}
+            best={best}
+            history={history}
+            money={money}
+            reports={reports}
+            rivals={rivals}
+            state={state}
             reviewDay={openDay}
             openReport={nav.setTab}
           />
@@ -53,7 +59,11 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
             </button>
           )}
           <BalanceScope
-            {...{ history, rivals, best, parentBalance, release }}
+            best={best}
+            history={history}
+            parentBalance={parentBalance}
+            release={release}
+            rivals={rivals}
             selected={
               balanceDay ??
               (parentBalance ? Math.min(parentBalance.values.length, history.length) - 1 : null)
@@ -64,7 +74,7 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
           {state &&
             nav.path.slice(1).map((view) => {
               const day = typeof view === "string" ? Number(view.slice(4)) : null;
-              const entries = day === null ? [] : reports.filter((r) => r.day === day);
+              const entries = hasValue(day) ? reports.filter((r) => r.day === day) : [];
               const closing = entries.find((r) => r.endDay !== r.day);
               const receipt =
                 typeof view === "number" ? reports.find((r) => r.id === view) : undefined;
@@ -83,7 +93,9 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
                       </p>
                       <ObservationView
                         report={receipt}
-                        {...{ reports, state, money }}
+                        money={money}
+                        reports={reports}
+                        state={state}
                         disabled
                         openReport={nav.setTab}
                       />
@@ -93,7 +105,9 @@ export function Settlement({ run, release, slot, money, parentBalance }: Props) 
                       {closing && (
                         <DayStatement
                           report={closing}
-                          {...{ reports, state, money }}
+                          money={money}
+                          reports={reports}
+                          state={state}
                           openReport={nav.setTab}
                         />
                       )}

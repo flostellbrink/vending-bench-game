@@ -64,6 +64,12 @@ def tool_metadata():
     return descriptions, defaults
 
 
+def tool_parameters():
+    return {node.name: [arg.arg for arg in [*node.args.posonlyargs, *node.args.args,
+                                            *node.args.kwonlyargs]]
+            for node, _ in published_tools()}
+
+
 def browser_tools():
     functions = []
     for node, _ in published_tools():
@@ -220,6 +226,7 @@ def metadata():
                                    "fee":config.DAILY_SPOT_FEE, "opens":config.DAY_START_MINUTE,
                                    "closes":config.DAY_END_MINUTE, "refill":config.TOOL_MINUTES.get("restock_machine",config.DEFAULT_TOOL_MINUTES)},
                        "brief": brief.strip(), "tools": tools, "toolDefaults": defaults,
+                       "toolParameters": tool_parameters(),
                        "reportLimits": {"mailCount": config.EMAIL_LIST_LIMIT_MAX,
                                         "salesDays": config.SALES_REPORT_MAX_DAYS},
                        "rivals": models},

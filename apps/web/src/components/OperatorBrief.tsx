@@ -1,21 +1,23 @@
 import type { Release, Snapshot } from "games-common/benchmark";
 import type { ReactNode } from "react";
 
-import type { Money } from "@/localization/messages";
+import { type Optional } from "games-common/language";
 
-import { msg } from "@/dictionary";
-import { clock } from "@/scene/clock";
+import type { Money } from "@/localization/messages.ts";
+
+import { msg } from "@/dictionary/index.ts";
+import { clock } from "@/scene/clock.ts";
 
 interface Props {
   embedded?: boolean;
   release: Release;
-  state: Snapshot | null;
+  state: Optional<Snapshot>;
 
   money: Money;
 }
 function inline(text: string) {
   return text
-    .split(/(\*\*[^*]+\*\*)/)
+    .split(/(?<bold>\*\*[^*]+\*\*)/)
     .map((word, i) =>
       word.startsWith("**") ? <strong key={i}>{word.slice(2, -2)}</strong> : word,
     );
@@ -24,9 +26,9 @@ function briefBody(source: string) {
   const sections: ReactNode[] = [];
   for (const block of source.split(/\n\s*\n/)) {
     const lines = block.trim().split("\n");
-    const heading = /^\*\*([^*]+)\*\*$/.exec(lines[0] ?? "");
+    const heading = /^\*\*(?<title>[^*]+)\*\*$/.exec(lines[0] ?? "")?.groups?.title;
     if (heading) {
-      sections.push(<h3 key={sections.length}>{heading[1]}</h3>);
+      sections.push(<h3 key={sections.length}>{heading}</h3>);
       lines.shift();
     }
     const [paragraph, ...items] = lines.join("\n").split(/^- /m);

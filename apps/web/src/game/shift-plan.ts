@@ -1,5 +1,7 @@
 import type { Entry, Snapshot } from "games-common/benchmark";
 
+import { hasValue } from "games-common/language";
+
 import { timing } from "./commands.ts";
 
 export interface PlannedCommand extends Entry {
@@ -15,21 +17,27 @@ type ShiftClock = Pick<
 
 /** Forecast only the shared clock. Actions can still fail or terminate a run. */
 export function projectPlan(steps: readonly PlannedCommand[], state: ShiftClock) {
-  let day = state.day,
-    minute = state.minute;
+  let { day } = state;
+  let { minute } = state;
   return steps.map((step) => {
-    if (day > state.days) return { step, span: null };
+    if (day > state.days) {
+      return { span: null, step };
+    }
     const time = timing(step.verb, { ...state, minute });
-    if (!time) throw Error("Unknown planned operation: " + step.verb);
+    if (!time) {
+      throw new Error(`Unknown planned operation: ${step.verb}`);
+    }
     const fromDay = day;
-    if (time.rolls) day++;
+    if (time.rolls) {
+      day++;
+    }
     minute = time.to;
-    return { step, span: { ...time, day: fromDay, final: day > state.days } };
+    return { span: { ...time, day: fromDay, final: day > state.days }, step };
   });
 }
 
 export function remainingPlan(plan: readonly PlannedCommand[], journal: readonly Entry[]) {
   return plan.filter(
-    (step) => step.dispatchedAt === undefined || journal[step.dispatchedAt]?.line !== step.line,
+    (step) => !hasValue(step.dispatchedAt) || journal[step.dispatchedAt]?.line !== step.line,
   );
 }

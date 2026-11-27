@@ -1,6 +1,8 @@
 import * as v from "valibot";
 
-export type JSONValue = string | number | boolean | null | JSONObject | JSONValue[];
+import { type Optional } from "./language.ts";
+
+export type JSONValue = Optional<string | number | boolean | JSONObject | JSONValue[]>;
 export interface JSONObject {
   [key: string]: JSONValue;
 }
@@ -18,43 +20,52 @@ const jsonObjectSchema = v.record(v.string(), jsonValueSchema);
 
 export type Rival = v.InferOutput<typeof rivalSchema>;
 export const rivalSchema = v.object({
-  name: v.string(),
-  score: v.number(),
+  balances: v.optional(v.string()),
   endDay: v.optional(v.nullable(v.number())),
   finalBalance: v.optional(v.number()),
-  source: v.string(),
-  balances: v.optional(v.string()),
-  values: v.optional(v.array(v.number())),
+  name: v.string(),
   replay: v.optional(v.string()),
+  score: v.number(),
+  source: v.string(),
+  values: v.optional(v.array(v.number())),
 });
 export type Release = v.InferOutput<typeof releaseSchema>;
 export const releaseSchema = v.object({
-  id: v.string(),
-  version: v.string(),
-  revision: v.string(),
-  seed: v.number(),
-  days: v.number(),
-  startingBalance: v.number(),
-  currency: v.string(),
+  adapter: v.string(),
   brief: v.string(),
+  currency: v.string(),
+  days: v.number(),
+  engineArchive: v.string(),
+  id: v.string(),
   network: v.object({
-    slots: v.array(v.string()),
-    sites: v.number(),
-    machines: v.number(),
-    fee: v.number(),
-    opens: v.number(),
     closes: v.number(),
+    fee: v.number(),
+    machines: v.number(),
+    opens: v.number(),
     refill: v.number(),
+    sites: v.number(),
+    slots: v.array(v.string()),
   }),
-  tools: v.record(v.string(), v.string()),
   reportLimits: v.object({
     mailCount: v.pipe(v.number(), v.integer(), v.minValue(1)),
     salesDays: v.pipe(v.number(), v.integer(), v.minValue(1)),
   }),
+  revision: v.string(),
+  rivals: v.array(rivalSchema),
+  seed: v.number(),
+  startingBalance: v.number(),
   toolDefaults: v.objectWithRest(
     {
       check_offers: v.objectWithRest(
         { quantity: v.pipe(v.number(), v.integer(), v.minValue(1)) },
+        jsonValueSchema,
+      ),
+      get_sales_report: v.objectWithRest(
+        {
+          by_product: v.boolean(),
+          days: v.pipe(v.number(), v.integer(), v.minValue(1)),
+          location: v.string(),
+        },
         jsonValueSchema,
       ),
       list_emails: v.objectWithRest(
@@ -65,55 +76,48 @@ export const releaseSchema = v.object({
         },
         jsonValueSchema,
       ),
-      get_sales_report: v.objectWithRest(
-        {
-          days: v.pipe(v.number(), v.integer(), v.minValue(1)),
-          location: v.string(),
-          by_product: v.boolean(),
-        },
-        jsonValueSchema,
-      ),
     },
     v.record(v.string(), jsonValueSchema),
   ),
-  engineArchive: v.string(),
-  adapter: v.string(),
-  rivals: v.array(rivalSchema),
+  /** The parameter names of each tool, in the order of its published signature. */
+  toolParameters: v.record(v.string(), v.array(v.string())),
+  tools: v.record(v.string(), v.string()),
+  version: v.string(),
 });
 export function parseReleases(input: unknown): Release[] {
   return v.parse(v.pipe(v.array(releaseSchema), v.minLength(1)), input);
 }
 
 const finalScoreSchema = v.object({
-  reward: v.number(),
-  gross_revenue: v.number(),
-  fees_paid: v.number(),
-  units_sold: v.number(),
-  final_balance: v.number(),
   completed: v.boolean(),
+  fees_paid: v.number(),
+  final_balance: v.number(),
+  gross_revenue: v.number(),
+  reward: v.number(),
+  units_sold: v.number(),
 });
 const siteSchema = v.object({ id: v.string(), name: v.string() });
 export const progressSchema = v.object({
+  cash: v.number(),
   day: v.number(),
   minute: v.number(),
-  cash: v.number(),
   over: v.boolean(),
 });
 export type Snapshot = v.InferOutput<typeof snapshotSchema>;
 export const snapshotSchema = v.object({
   ...progressSchema.entries,
-  failed: v.boolean(),
-  startDate: v.string(),
-  slots: v.array(v.string()),
-  sites: v.array(siteSchema),
-  machines: v.array(v.string()),
-  costs: v.record(v.string(), v.number()),
-  defaultCost: v.number(),
-  opens: v.number(),
   closes: v.number(),
-  fee: v.number(),
+  costs: v.record(v.string(), v.number()),
   days: v.number(),
+  defaultCost: v.number(),
+  failed: v.boolean(),
+  fee: v.number(),
   final: v.nullable(finalScoreSchema),
+  machines: v.array(v.string()),
+  opens: v.number(),
+  sites: v.array(siteSchema),
+  slots: v.array(v.string()),
+  startDate: v.string(),
 });
 
 export type CommandArgs = v.InferOutput<typeof commandArgsSchema>;
@@ -121,45 +125,45 @@ const optionalText = v.optional(v.string());
 const optionalNumber = v.optional(v.number());
 export const commandArgsSchema = v.objectWithRest(
   {
-    supplier_id: optionalText,
-    product_id: optionalText,
-    machine_id: optionalText,
-    slot: optionalText,
-    items: v.optional(v.record(v.string(), v.number())),
-    query: optionalText,
-    quantity: optionalNumber,
-    price: optionalNumber,
+    amount: optionalNumber,
+    body: optionalText,
+    by_product: v.optional(v.boolean()),
+    channel: optionalText,
     days: optionalNumber,
-    location: optionalText,
     email_id: optionalText,
     folder: optionalText,
-    to: optionalText,
-    subject: optionalText,
-    body: optionalText,
-    recipient: optionalText,
-    amount: optionalNumber,
-    reference: optionalText,
-    channel: optionalText,
-    message: optionalText,
-    key: optionalText,
-    text: optionalText,
     in_days: optionalNumber,
-    unread_only: v.optional(v.boolean()),
-    by_product: v.optional(v.boolean()),
+    items: v.optional(v.record(v.string(), v.number())),
+    key: optionalText,
     limit: optionalNumber,
+    location: optionalText,
+    machine_id: optionalText,
+    message: optionalText,
+    price: optionalNumber,
+    product_id: optionalText,
+    quantity: optionalNumber,
+    query: optionalText,
+    recipient: optionalText,
+    reference: optionalText,
+    slot: optionalText,
+    subject: optionalText,
+    supplier_id: optionalText,
+    text: optionalText,
+    to: optionalText,
+    unread_only: v.optional(v.boolean()),
   },
   v.optional(jsonValueSchema),
 );
 export type Move = v.InferOutput<typeof moveSchema>;
 export const moveSchema = v.tuple([v.string(), commandArgsSchema]);
 export const replaySchema = v.object({
+  checkpoints: v.array(v.object({ cash: v.number(), day: v.number(), moveCount: v.number() })),
+  moves: v.array(moveSchema),
   revision: v.string(),
   seed: v.number(),
-  moves: v.array(moveSchema),
-  checkpoints: v.array(v.object({ day: v.number(), moveCount: v.number(), cash: v.number() })),
 });
 export type Entry = v.InferOutput<typeof entrySchema>;
-export const entrySchema = v.object({ move: moveSchema, line: v.string() });
+export const entrySchema = v.object({ line: v.string(), move: moveSchema });
 export type PersonalBest = v.InferOutput<typeof personalBestSchema>;
 export const personalBestSchema = v.object({ score: v.number(), values: v.array(v.number()) });
 
@@ -170,20 +174,20 @@ export const actionsSchema = v.record(
 );
 export const adapterReceiptSchema = v.object({
   body: v.string(),
-  notices: v.array(v.string()),
   demand: v.optional(v.nullable(jsonObjectSchema)),
+  notices: v.array(v.string()),
 });
 export type Receipt = v.InferOutput<typeof receiptSchema>;
 const receiptSchema = v.object({
   ...adapterReceiptSchema.entries,
-  output: v.string(),
+  closingCash: v.number(),
   day: v.number(),
-  minute: v.number(),
   endDay: v.number(),
   endMinute: v.number(),
-  openingCash: v.number(),
-  closingCash: v.number(),
+  minute: v.number(),
   minutes: v.number(),
+  openingCash: v.number(),
+  output: v.string(),
 });
 export type WorkerRequest = v.InferOutput<typeof workerRequestSchema>;
 export const workerRequestSchema = v.object({
@@ -195,10 +199,10 @@ const workerReplySchema = v.union([
   v.object({ boot: v.picklist(["runtime", "mount"]) }),
   v.object({ error: v.string() }),
   v.object({
-    state: snapshotSchema,
+    actions: actionsSchema,
     history: v.array(v.number()),
     receipts: v.array(receiptSchema),
-    actions: actionsSchema,
+    state: snapshotSchema,
   }),
 ]);
 export function parseWorkerReply(input: unknown): WorkerReply {
@@ -222,9 +226,9 @@ export interface OrderTerms {
   until?: never;
 }
 export interface SlotObservation {
-  item: string | null;
+  item: Optional<string>;
   qty: number;
-  capacity: number | null;
+  capacity: Optional<number>;
 }
 export interface Mail {
   from: string;
@@ -242,11 +246,11 @@ export interface DirectoryEntry {
 }
 export type Campaigns = v.InferOutput<typeof campaignsSchema>;
 export const campaignsSchema = v.object({
-  traffic: jsonObjectSchema,
-  rules: jsonObjectSchema,
   recent: v.array(
-    v.object({ day: v.number(), location: v.string(), channel: v.string(), message: v.string() }),
+    v.object({ channel: v.string(), day: v.number(), location: v.string(), message: v.string() }),
   ),
+  rules: jsonObjectSchema,
+  traffic: jsonObjectSchema,
 });
 export type ReportRow = (string | number)[];
 export interface Report extends Receipt {
@@ -260,14 +264,14 @@ export interface Report extends Receipt {
   products: string[];
   suppliers: string[];
   slots: Record<string, SlotObservation>;
-  terms: OrderTerms | QuoteTerms | null;
+  terms: Optional<OrderTerms | QuoteTerms>;
   display: string;
-  channels: Campaigns | null;
-  mail: Mail | null;
+  channels: Optional<Campaigns>;
+  mail: Optional<Mail>;
   directory: DirectoryEntry[];
 }
 export interface KnownOrder extends OrderTerms {
   id: number;
   supplier: string;
-  arrival: { id: number; day: number; short: boolean } | null;
+  arrival: Optional<{ id: number; day: number; short: boolean }>;
 }

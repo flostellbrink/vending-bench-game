@@ -1,10 +1,13 @@
 import type { Snapshot } from "games-common/benchmark";
-import type { Optional } from "games-common/language";
 
+import { hasValue, hoursPerDay, type Optional } from "games-common/language";
 import { useEffect, useRef, useState } from "react";
 
-const opening = 9 * 60;
-export const minutesPerDay = 24 * 60;
+const openingHour = 9;
+const opening = openingHour * 60;
+export const minutesPerDay = hoursPerDay * 60;
+/** Animation lengths in milliseconds. */
+const motion = { actionBase: 500, actionMax: 3200, actionPerRootMinute: 180, night: 2000 };
 
 /** Animate only the interval between two observed simulator timestamps. */
 export function useClock(state: Optional<Snapshot>, visitEnd?: number): number {
@@ -15,8 +18,8 @@ export function useClock(state: Optional<Snapshot>, visitEnd?: number): number {
   useEffect(() => {
     const from = shown.current;
     if (
-      target === null ||
-      from == null ||
+      !hasValue(target) ||
+      !hasValue(from) ||
       from > target ||
       matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
@@ -24,15 +27,22 @@ export function useClock(state: Optional<Snapshot>, visitEnd?: number): number {
       setValue(target ?? opening);
       return undefined;
     }
-    if (from === target) return undefined;
+    if (from === target) {
+      return undefined;
+    }
     const actionEnd =
-      visitEnd !== undefined && from < visitEnd && visitEnd < target ? visitEnd : target;
-    const actionDuration = Math.min(3200, 500 + 180 * Math.sqrt(actionEnd - from));
-    const nightDuration = actionEnd < target ? 2000 : 0;
+      hasValue(visitEnd) && from < visitEnd && visitEnd < target ? visitEnd : target;
+    const actionDuration = Math.min(
+      motion.actionMax,
+      motion.actionBase + motion.actionPerRootMinute * Math.sqrt(actionEnd - from),
+    );
+    const nightDuration = actionEnd < target ? motion.night : 0;
     const start = performance.now();
-    let frame: number;
+    let frame = 0;
     function tick(now: number) {
-      if (target === null || from == null) return;
+      if (!hasValue(target) || !hasValue(from)) {
+        return;
+      }
       const elapsed = now - start;
       const night = nightDuration > 0 && elapsed >= actionDuration;
       const progress = Math.min(
@@ -44,7 +54,9 @@ export function useClock(state: Optional<Snapshot>, visitEnd?: number): number {
       const minute = begin + (finish - begin) * progress * progress * (3 - 2 * progress);
       shown.current = minute;
       setValue(minute);
-      if (elapsed < actionDuration + nightDuration) frame = requestAnimationFrame(tick);
+      if (elapsed < actionDuration + nightDuration) {
+        frame = requestAnimationFrame(tick);
+      }
     }
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);

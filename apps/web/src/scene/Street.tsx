@@ -10,7 +10,83 @@ import {
   project,
   steel,
   type Position,
-} from "./geometry";
+  type Vertex,
+} from "./geometry.tsx";
+
+/** A tree's shadow leans with the sun over the day and is strongest in full daylight. */
+const treeShadow = { lean: -0.2, strength: 0.4, sweep: 0.8 };
+const bicycleWheelbase = 18;
+/** Heights of the marks on the pavement surface. Marks drawn later sit higher. */
+const surface = {
+  frontPatch: -1.6,
+  glint: -1.5,
+  joints: -1.7,
+  kerbLine: -1.5,
+  puddles: -1.6,
+  sidePatch: -1.5,
+};
+/** Joints across the pavement in front of the building, from its front wall to the edge. */
+const frontJoints = { count: 15, edge: 177, first: -39, pitch: 20, wall: 145 };
+/** The two joints along the front pavement. */
+const frontRows = { count: 2, first: 152, left: -42, pitch: 17, right: 241 };
+/** Joints of the pavement along the right side of the building. */
+const rightJoints = { count: 12, edge: 242, first: -14, pitch: 16, wall: 222 };
+/** Joints of the pavement behind the building, between the kerb and the back wall. */
+const backJoints = { count: 18, first: -43, kerb: -32, pitch: 15 };
+/** Joints of the pavement along the left side of the building. */
+const leftJoints = { count: 12, edge: -43, first: -8, pitch: 13 };
+const kerbLine = { left: -43, right: 222, y: -31 };
+/** The dashed centre line of the road behind the building. */
+const roadDashes = { count: 8, first: -40, length: 15, pitch: 34, y: -41 };
+/** After rain: a puddle on the front pavement with a glint, and one on the right side. */
+const frontPuddle = [
+  { x: 98, y: 150 },
+  { x: 105, y: 149 },
+  { x: 122, y: 151 },
+  { x: 125, y: 154 },
+  { x: 111, y: 156 },
+  { x: 97, y: 154 },
+];
+const puddleGlint = { left: 102, right: 116, y: 152 };
+const sidePuddle = [
+  { x: 225, y: 24 },
+  { x: 233, y: 31 },
+  { x: 231, y: 47 },
+  { x: 226, y: 49 },
+  { x: 223, y: 41 },
+];
+/** Worn, paler paving on the front and the left pavement. */
+const frontPatch = [
+  { x: 11, y: 153 },
+  { x: 36, y: 151 },
+  { x: 43, y: 157 },
+  { x: 67, y: 157 },
+  { x: 71, y: 164 },
+  { x: 42, y: 166 },
+  { x: 18, y: 163 },
+];
+const sidePatch = [
+  { x: -41, y: 0 },
+  { x: -30, y: 2 },
+  { x: -25, y: 25 },
+  { x: -28, y: 39 },
+  { x: -36, y: 65 },
+  { x: -41, y: 70 },
+];
+const streetTrees = [
+  { x: -23, y: 26 },
+  { x: 91, y: -18 },
+  { x: 201, y: -17 },
+];
+/** A square tree pit around each street tree, covered by a grating. */
+const treePit = { bars: 6, firstBar: 6, halfSize: 7, lift: 0.3, reach: 5 };
+/** The street lamp is on while daylight is below this level. */
+const lampOnBelow = 0.25;
+
+/** The vertices of an outline that lies flat at height z. */
+function flat(z: number, outline: readonly Position[]): Vertex[] {
+  return outline.map(({ x, y }) => [x, y, z]);
+}
 
 export function StreetTree({ x, y, phase, light }: Position & { phase: number; light: number }) {
   const [cx, cy] = project([x, y, 0]);
@@ -19,8 +95,8 @@ export function StreetTree({ x, y, phase, light }: Position & { phase: number; l
   return (
     <g transform={`translate(${cx} ${cy})`}>
       <g
-        transform={`matrix(.7 .32 ${-0.2 - Math.cos(phase * Math.PI) * 0.8} -.24 1 0)`}
-        opacity={light * 0.4}
+        transform={`matrix(.7 .32 ${treeShadow.lean - Math.cos(phase * Math.PI) * treeShadow.sweep} -.24 1 0)`}
+        opacity={light * treeShadow.strength}
       >
         <path d={branches} fill="none" stroke="#67726c" strokeWidth="2.5" />
       </g>
@@ -34,7 +110,7 @@ function Bicycle({ x, y }: Position) {
   const [cx, cy] = project([x, y, 0]);
   return (
     <g transform={`matrix(.85 .42 0 1 ${cx} ${cy})`}>
-      {[0, 18].map((k) => (
+      {[0, bicycleWheelbase].map((k) => (
         <g key={k}>
           <circle cx={k} cy="-5" r="5.5" fill="none" stroke="#43554e" strokeWidth="1.6" />
           <path d={`M${k - 5} -5 h10 M${k} -10 v10`} stroke="#93a095" strokeWidth=".6" />
@@ -56,97 +132,76 @@ const Pavement = memo(function Pavement({ weather }: { weather?: string }) {
       <Floor x={-43} y={-45} w={265} d={13} z={-1.8} fill="#86958d" />
       {weather === "rainy" && (
         <g>
-          <Polygon
-            v={[
-              [98, 150, -1.6],
-              [105, 149, -1.6],
-              [122, 151, -1.6],
-              [125, 154, -1.6],
-              [111, 156, -1.6],
-              [97, 154, -1.6],
-            ]}
-            fill="#a9bdbb"
+          <Polygon v={flat(surface.puddles, frontPuddle)} fill="#a9bdbb" />
+          <Line
+            a={[puddleGlint.left, puddleGlint.y, surface.glint]}
+            b={[puddleGlint.right, puddleGlint.y, surface.glint]}
+            color="#e1e7dd"
+            width=".7"
           />
-          <Line a={[102, 152, -1.5]} b={[116, 152, -1.5]} color="#e1e7dd" width=".7" />
-          <Polygon
-            v={[
-              [225, 24, -1.6],
-              [233, 31, -1.6],
-              [231, 47, -1.6],
-              [226, 49, -1.6],
-              [223, 41, -1.6],
-            ]}
-            fill="#afc2bf"
-          />
+          <Polygon v={flat(surface.puddles, sidePuddle)} fill="#afc2bf" />
         </g>
       )}
-      {repeat(15, (i) => (
+      {repeat(frontJoints.count, (i) => (
         <Line
-          a={[-39 + i * 20, 145, -1.7]}
-          b={[-39 + i * 20, 177, -1.7]}
+          a={[frontJoints.first + i * frontJoints.pitch, frontJoints.wall, surface.joints]}
+          b={[frontJoints.first + i * frontJoints.pitch, frontJoints.edge, surface.joints]}
           color="#b6beb0"
           width=".55"
         />
       ))}
-      {repeat(2, (i) => (
+      {repeat(frontRows.count, (i) => (
         <Line
-          a={[-42, 152 + i * 17, -1.7]}
-          b={[241, 152 + i * 17, -1.7]}
+          a={[frontRows.left, frontRows.first + i * frontRows.pitch, surface.joints]}
+          b={[frontRows.right, frontRows.first + i * frontRows.pitch, surface.joints]}
           color="#b6beb0"
           width=".65"
         />
       ))}
-      {repeat(12, (i) => (
+      {repeat(rightJoints.count, (i) => (
         <Line
-          a={[222, i * 16 - 14, -1.7]}
-          b={[242, i * 16 - 14, -1.7]}
+          a={[rightJoints.wall, i * rightJoints.pitch + rightJoints.first, surface.joints]}
+          b={[rightJoints.edge, i * rightJoints.pitch + rightJoints.first, surface.joints]}
           color="#bcc3b5"
           width=".65"
         />
       ))}
-      <Polygon
-        v={[
-          [11, 153, -1.6],
-          [36, 151, -1.6],
-          [43, 157, -1.6],
-          [67, 157, -1.6],
-          [71, 164, -1.6],
-          [42, 166, -1.6],
-          [18, 163, -1.6],
-        ]}
-        fill="#eef0e4"
-      />
-      {repeat(18, (i) => (
+      <Polygon v={flat(surface.frontPatch, frontPatch)} fill="#eef0e4" />
+      {repeat(backJoints.count, (i) => (
         <Line
-          a={[-43 + i * 15, -32, -1.7]}
-          b={[-43 + i * 15, 0, -1.7]}
+          a={[backJoints.first + i * backJoints.pitch, backJoints.kerb, surface.joints]}
+          b={[backJoints.first + i * backJoints.pitch, 0, surface.joints]}
           color="#b2bbae"
           width=".65"
         />
       ))}
-      {repeat(12, (i) => (
-        <Line a={[-43, i * 13 - 8, -1.7]} b={[0, i * 13 - 8, -1.7]} color="#aeb9ad" width=".65" />
-      ))}
-      <Line a={[-43, -31, -1.5]} b={[222, -31, -1.5]} color="#eef0df" width="2" />
-      {repeat(8, (i) => (
+      {repeat(leftJoints.count, (i) => (
         <Line
-          a={[-40 + i * 34, -41, -1.7]}
-          b={[-25 + i * 34, -41, -1.7]}
+          a={[leftJoints.edge, i * leftJoints.pitch + leftJoints.first, surface.joints]}
+          b={[0, i * leftJoints.pitch + leftJoints.first, surface.joints]}
+          color="#aeb9ad"
+          width=".65"
+        />
+      ))}
+      <Line
+        a={[kerbLine.left, kerbLine.y, surface.kerbLine]}
+        b={[kerbLine.right, kerbLine.y, surface.kerbLine]}
+        color="#eef0df"
+        width="2"
+      />
+      {repeat(roadDashes.count, (i) => (
+        <Line
+          a={[roadDashes.first + i * roadDashes.pitch, roadDashes.y, surface.joints]}
+          b={[
+            roadDashes.first + roadDashes.length + i * roadDashes.pitch,
+            roadDashes.y,
+            surface.joints,
+          ]}
           color="#cfd5c8"
           width="1"
         />
       ))}
-      <Polygon
-        v={[
-          [-41, 0, -1.5],
-          [-30, 2, -1.5],
-          [-25, 25, -1.5],
-          [-28, 39, -1.5],
-          [-36, 65, -1.5],
-          [-41, 70, -1.5],
-        ]}
-        fill="#e6eada"
-      />
+      <Polygon v={flat(surface.sidePatch, sidePatch)} fill="#e6eada" />
     </g>
   );
 });
@@ -165,24 +220,29 @@ export function Outside({
   return (
     <g>
       <Pavement weather={weather} />
-      {(
-        [
-          [-23, 26],
-          [91, -18],
-          [201, -17],
-        ] as const
-      ).map(([x, y]) => (
+      {streetTrees.map(({ x, y }) => (
         <g key={x}>
-          <Floor x={x - 7} y={y - 7} w={14} d={14} fill="#a4b09e" />
-          {repeat(6, (i) => (
-            <Line a={[x - 6 + i * 2, y - 5, 0.3]} b={[x - 6 + i * 2, y + 5, 0.3]} color="#889488" />
+          <Floor x={x - treePit.halfSize} y={y - treePit.halfSize} w={14} d={14} fill="#a4b09e" />
+          {repeat(treePit.bars, (i) => (
+            <Line
+              a={[x - treePit.firstBar + i * 2, y - treePit.reach, treePit.lift]}
+              b={[x - treePit.firstBar + i * 2, y + treePit.reach, treePit.lift]}
+              color="#889488"
+            />
           ))}
-          <StreetTree {...{ x, y, phase, light }} />
+          <StreetTree light={light} phase={phase} x={x} y={y} />
         </g>
       ))}
       <Box x={19} y={-21} w={2} d={2} h={46} c={steel} />
       <Box x={17} y={-21} z={45} w={9} d={4} h={2} c={steel} />
-      <Front x={18} y={-17} z={44.7} w={7} h={1.3} fill={light < 0.25 ? "#fff3ba" : "#c5caba"} />
+      <Front
+        x={18}
+        y={-17}
+        z={44.7}
+        w={7}
+        h={1.3}
+        fill={light < lampOnBelow ? "#fff3ba" : "#c5caba"}
+      />
       {!depot && <Bicycle x={145} y={-16} />}
     </g>
   );

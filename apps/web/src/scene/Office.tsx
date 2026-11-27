@@ -1,10 +1,9 @@
-import type { Optional } from "games-common/language";
-
+import { hoursPerDay, type Optional } from "games-common/language";
 import { useId, useMemo, memo } from "react";
 
-import { address } from "@/game/commands";
+import { address } from "@/game/commands.ts";
 
-import { RoomShell, Sunlight, BackWall, WallClock } from "./Architecture";
+import { RoomShell, Sunlight, BackWall, WallClock } from "./Architecture.tsx";
 import {
   AtriumForecourt,
   AtriumShell,
@@ -12,20 +11,20 @@ import {
   AtriumOutside,
   AtriumRail,
   concourse,
-} from "./Atrium";
-import { Machine, type CabinetStock } from "./Cabinet";
-import { cabinetLayout } from "./cabinet-layout";
-import { Depot } from "./Depot";
-import { Furniture } from "./Furniture";
-import { Polygon } from "./geometry";
-import { HouseShell, HouseWorkstations } from "./House";
-import { Plant } from "./Plant";
-import { ServiceVisit, Person, type ServiceMotion } from "./ServiceVisit";
-import { StreetTree, Outside } from "./Street";
+} from "./Atrium.tsx";
+import { cabinetLayout } from "./cabinet-layout.ts";
+import { Machine, type CabinetStock } from "./Cabinet.tsx";
+import { Depot } from "./Depot.tsx";
+import { Furniture } from "./Furniture.tsx";
+import { Polygon } from "./geometry.tsx";
+import { HouseShell, HouseWorkstations } from "./House.tsx";
+import { Plant } from "./Plant.tsx";
+import { ServiceVisit, Person, type ServiceMotion } from "./ServiceVisit.tsx";
+import { StreetTree, Outside } from "./Street.tsx";
 
 interface OfficeProps {
   slots: Optional<readonly string[]>;
-  depotCases: number | null;
+  depotCases: Optional<number>;
   site: string;
   phase: number;
   light: number;
@@ -36,6 +35,31 @@ interface OfficeProps {
   weather?: string;
   machines?: string[];
   onMachineSelect?: (id: string) => void;
+}
+
+const room = { depth: 145, width: 222 };
+const roomCabinetX = 126;
+const cabinetSpacing = 36;
+/** The clickable outline of a cabinet: its body from the back face to the front face. */
+const cabinetOutline = { back: 11, front: 32, height: 66, width: 32 };
+/** A passer-by on the pavement during the day. */
+const passerby = {
+  appears: 0.32,
+  atriumStart: 88,
+  depotStart: 126,
+  leaves: 0.8,
+  offset: -15,
+  pacePerHour: 5,
+  roomStart: 27,
+  strides: 170,
+};
+const sunDrift = 33;
+
+function passerbyStart(communal: boolean, depot: boolean) {
+  if (communal) {
+    return passerby.atriumStart;
+  }
+  return depot ? passerby.depotStart : passerby.roomStart;
 }
 
 export default function Office({
@@ -55,16 +79,17 @@ export default function Office({
   const drawingId = useId().replaceAll(":", "");
   const layouts = useMemo(
     () => ({
-      snack: cabinetLayout(slots ?? [], site + ".snack"),
-      drinks: cabinetLayout(slots ?? [], site + ".drinks"),
+      drinks: cabinetLayout(slots ?? [], `${site}.drinks`),
+      snack: cabinetLayout(slots ?? [], `${site}.snack`),
     }),
     [slots, site],
   );
-  const depot = site === "depot",
-    house = site === "house",
-    communal = site === "main-lounge";
-  const width = communal ? concourse.width : 222;
-  const depth = communal ? concourse.depth : 145;
+  const depot = site === "depot";
+  const house = site === "house";
+  const communal = site === "main-lounge";
+  const width = communal ? concourse.width : room.width;
+  const depth = communal ? concourse.depth : room.depth;
+  const cabinetsX = communal ? concourse.machineX : roomCabinetX;
   return (
     <svg
       className="office-drawing"
@@ -73,7 +98,7 @@ export default function Office({
       aria-label={site}
     >
       <defs>
-        <clipPath id={drawingId + "floor"}>
+        <clipPath id={`${drawingId}floor`}>
           <Polygon
             v={[
               [0, 0, 0],
@@ -85,15 +110,19 @@ export default function Office({
         </clipPath>
       </defs>
       {communal ? (
-        <AtriumOutside {...{ phase, light, weather }} />
+        <AtriumOutside light={light} phase={phase} weather={weather} />
       ) : (
-        <Outside {...{ phase, light, depot, weather }} />
+        <Outside depot={depot} light={light} phase={phase} weather={weather} />
       )}
-      {phase > 0.32 && phase < 0.8 && (
+      {phase > passerby.appears && phase < passerby.leaves && (
         <Person
-          x={-15 + ((phase * 24 * 5 + (communal ? 88 : depot ? 126 : 27)) % (width - 2))}
+          x={
+            passerby.offset +
+            ((phase * hoursPerDay * passerby.pacePerHour + passerbyStart(communal, depot)) %
+              (width - 2))
+          }
           y={-24}
-          walk={phase * 170}
+          walk={phase * passerby.strides}
           coat={depot ? "#877861" : "#6f7c86"}
         />
       )}
@@ -104,8 +133,16 @@ export default function Office({
         </>
       ) : (
         <>
-          {communal ? <AtriumShell /> : house ? <HouseShell /> : <RoomShell id={drawingId} />}
-          <Sunlight id={drawingId} x={phase * 33} {...{ light, phase }} atrium={communal} />
+          {communal && <AtriumShell />}
+          {house && <HouseShell />}
+          {!communal && !house && <RoomShell id={drawingId} />}
+          <Sunlight
+            id={drawingId}
+            x={phase * sunDrift}
+            light={light}
+            phase={phase}
+            atrium={communal}
+          />
           {communal ? <AtriumFurniture /> : !house && <BackWall />}
         </>
       )}
@@ -113,7 +150,7 @@ export default function Office({
         [false, true].map((drink, i) => (
           <Machine
             key={i}
-            x={(communal ? concourse.machineX : 126) + i * 36}
+            x={cabinetsX + i * cabinetSpacing}
             drink={drink}
             layout={layouts[drink ? "drinks" : "snack"]}
             stock={stock?.[drink ? "drinks" : "snack"]}
@@ -138,10 +175,14 @@ export default function Office({
       {!depot &&
         onMachineSelect &&
         machines?.map((id) => {
-          const kind = address(id).split(".")[1];
-          if (kind !== "snack" && kind !== "drinks") return null;
-          const x = (communal ? concourse.machineX : 126) + (kind === "drinks" ? 36 : 0);
+          const [, kind] = address(id).split(".");
+          if (kind !== "snack" && kind !== "drinks") {
+            return null;
+          }
+          const x = cabinetsX + (kind === "drinks" ? cabinetSpacing : 0);
           const selected = focus?.toLowerCase() === kind;
+          const { back, front, height } = cabinetOutline;
+          const right = x + cabinetOutline.width;
           return (
             <g
               key={id}
@@ -154,7 +195,9 @@ export default function Office({
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  if (!event.repeat) onMachineSelect(id);
+                  if (!event.repeat) {
+                    onMachineSelect(id);
+                  }
                 }
               }}
             >
@@ -162,12 +205,12 @@ export default function Office({
               <Polygon
                 className="cabinet-contour"
                 v={[
-                  [x, 11, 66],
-                  [x + 32, 11, 66],
-                  [x + 32, 11, 0],
-                  [x + 32, 32, 0],
-                  [x, 32, 0],
-                  [x, 32, 66],
+                  [x, back, height],
+                  [right, back, height],
+                  [right, back, 0],
+                  [right, front, 0],
+                  [x, front, 0],
+                  [x, front, height],
                 ]}
                 fill="transparent"
                 vectorEffect="non-scaling-stroke"
@@ -179,4 +222,6 @@ export default function Office({
   );
 }
 
-const CornerPlant = memo(() => <Plant x={209} y={18} size={1.05} />);
+const CornerPlant = memo(function CornerPlant() {
+  return <Plant x={209} y={18} size={1.05} />;
+});

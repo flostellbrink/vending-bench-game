@@ -1,12 +1,13 @@
 import type { Report } from "games-common/benchmark";
 
+import { hasValue } from "games-common/language";
 import { useId, useRef, useState } from "react";
 
-import { msg } from "@/dictionary";
-import { commandForMove } from "@/game/commands";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove } from "@/game/commands.ts";
 
-import { ActionButton, ControlInput, ControlRow, Field, ControlTextarea } from "./FormControls";
-import { GuiToolInfo } from "./GuiToolInfo";
+import { Field } from "./FormControls.tsx";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
 import "./email-composer.css";
 
 interface Props {
@@ -20,12 +21,16 @@ interface Props {
 
 function observedSender(reports: Report[]) {
   const mail = reports.findLast((receipt) => receipt.mail && receipt.args.email_id);
-  if (!mail?.mail) return undefined;
+  if (!mail?.mail) {
+    return undefined;
+  }
   const folder = reports.findLast(
     (receipt) =>
       receipt.tool === "list_emails" && receipt.rows.some(([id]) => id === mail.args.email_id),
   );
-  if (!folder) return undefined;
+  if (!folder) {
+    return undefined;
+  }
   return folder.args.folder === "sent" ? mail.mail.from : mail.mail.to;
 }
 
@@ -39,29 +44,34 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
   const [recipient, setRecipient] = useState(to);
   const [title, setTitle] = useState(subject ?? "");
   const [body, setBody] = useState("");
-  const label = subject === undefined ? msg.operator.writeLetter() : msg.operator.replyToMail();
+  const label = hasValue(subject) ? msg.operator.replyToMail() : msg.operator.writeLetter();
+  /** The first field that the letter still needs. */
+  function firstField() {
+    if (!to) {
+      return recipientField.current;
+    }
+    if (!hasValue(subject)) {
+      return titleField.current;
+    }
+    return messageField.current;
+  }
   return (
     <>
-      <ActionButton
+      <button
         type="button"
         ref={trigger}
-        className="mail-compose-trigger"
+        className="workbench-button mail-compose-trigger"
         aria-haspopup="dialog"
         onClick={() => {
           setRecipient(to);
           setTitle(subject ?? "");
           setBody("");
           dialog.current?.showModal();
-          const firstField = !to
-            ? recipientField
-            : subject === undefined
-              ? titleField
-              : messageField;
-          firstField.current?.focus();
+          firstField()?.focus();
         }}
       >
         {label}
-      </ActionButton>
+      </button>
       <dialog
         ref={dialog}
         aria-labelledby={headingId}
@@ -71,9 +81,11 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (disabled || !recipient.trim()) return;
+            if (disabled || !recipient.trim()) {
+              return;
+            }
             dialog.current?.close();
-            send(commandForMove(["send_email", { to: recipient, subject: title, body }]));
+            send(commandForMove(["send_email", { body, subject: title, to: recipient }]));
           }}
         >
           <header>
@@ -85,7 +97,8 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
               <span>{observedSender(reports) ?? msg.operator.operator()}</span>
             </div>
             <Field label={msg.operator.mailTo()}>
-              <ControlInput
+              <input
+                className="control-input"
                 ref={recipientField}
                 inputMode="email"
                 required
@@ -94,7 +107,8 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
               />
             </Field>
             <Field label={msg.operator.mailSubject()}>
-              <ControlInput
+              <input
+                className="control-input"
                 ref={titleField}
                 value={title}
                 onChange={(event) => setTitle(event.currentTarget.value)}
@@ -102,7 +116,8 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
             </Field>
           </div>
           <Field className="compose-message" label={msg.operator.letter()}>
-            <ControlTextarea
+            <textarea
+              className="control-textarea"
               ref={messageField}
               rows={7}
               value={body}
@@ -110,18 +125,16 @@ export function EmailComposer({ to, subject, reports, disabled, send }: Props) {
             />
           </Field>
           <p>{msg.operator.supplierMailTerms()}</p>
-          <ControlRow className="compose-actions">
-            <ActionButton type="button" onClick={() => dialog.current?.close()}>
+          <div className="control-row compose-actions">
+            <button
+              className="workbench-button"
+              type="button"
+              onClick={() => dialog.current?.close()}
+            >
               {msg.operator.cancelMail()}
-            </ActionButton>
-            <GuiToolInfo verb="send_email">
-              <button
-                type="submit"
-                data-clock-verb="send_email"
-                disabled={disabled || !recipient.trim()}
-              />
-            </GuiToolInfo>
-          </ControlRow>
+            </button>
+            <GuiToolInfo verb="send_email" type="submit" disabled={disabled || !recipient.trim()} />
+          </div>
         </form>
       </dialog>
     </>

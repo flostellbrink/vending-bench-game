@@ -1,17 +1,19 @@
+import type { Optional } from "games-common/language";
+
 import { useSyncExternalStore } from "react";
 
 export const unavailable = Symbol("unavailable");
 
 function subscribeToNavigation(update: () => void) {
-  window.addEventListener("popstate", update);
-  return () => window.removeEventListener("popstate", update);
+  globalThis.addEventListener("popstate", update);
+  return () => globalThis.removeEventListener("popstate", update);
 }
 function subscribeToStorage(update: () => void) {
-  window.addEventListener("storage", update);
-  window.addEventListener("pageshow", update);
+  globalThis.addEventListener("storage", update);
+  globalThis.addEventListener("pageshow", update);
   return () => {
-    window.removeEventListener("storage", update);
-    window.removeEventListener("pageshow", update);
+    globalThis.removeEventListener("storage", update);
+    globalThis.removeEventListener("pageshow", update);
   };
 }
 export function useLocationSearch() {
@@ -21,8 +23,8 @@ export function useLocationSearch() {
     () => "",
   );
 }
-export function useStoredText(read: () => string | null) {
-  return useSyncExternalStore<string | null | undefined | typeof unavailable>(
+export function useStoredText(read: () => Optional<string>) {
+  return useSyncExternalStore<Optional<string> | typeof unavailable>(
     subscribeToStorage,
     () => {
       try {

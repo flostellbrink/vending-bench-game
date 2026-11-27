@@ -1,6 +1,8 @@
 import type { Report } from "games-common/benchmark";
 
-import { address } from "@/game/commands";
+import { hasValue } from "games-common/language";
+
+import { address } from "@/game/commands.ts";
 export interface CabinetSlot {
   id: string;
   rawId: string;
@@ -18,28 +20,29 @@ export function cabinetLayout(rows: Report["rows"]) {
   for (const [raw, size, product, quantity, capacity, price] of rows) {
     if (
       typeof raw !== "string" ||
-      size == null ||
-      product == null ||
-      quantity == null ||
-      capacity == null ||
-      price == null
-    )
+      !hasValue(size) ||
+      !hasValue(product) ||
+      !hasValue(quantity) ||
+      !hasValue(capacity) ||
+      !hasValue(price)
+    ) {
       continue;
+    }
     const id = address(raw);
     const separator = id.lastIndexOf(".");
     const machine = id.slice(0, separator);
     const code = id.slice(separator + 1).toUpperCase();
     const shelf = code.replace(/\d+$/, "");
     const slot = {
-      id,
-      rawId: raw,
-      machine,
+      capacity: Number(capacity),
       code,
-      size: String(size),
+      id,
+      machine,
+      price,
       product: String(product),
       quantity: Number(quantity),
-      capacity: Number(capacity),
-      price,
+      rawId: raw,
+      size: String(size),
     };
     const shelves = machines.get(machine) ?? new Map<string, CabinetSlot[]>();
     const lanes = shelves.get(shelf) ?? [];

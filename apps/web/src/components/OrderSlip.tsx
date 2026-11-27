@@ -1,25 +1,33 @@
-import type { Report } from "games-common/benchmark";
+import type { Report, ReportRow } from "games-common/benchmark";
 
+import { hasAny, hasValue, type Optional } from "games-common/language";
 import { useContext } from "react";
 
-import { msg } from "@/dictionary";
-import { commandForMove, priceOrder } from "@/game/commands";
-import { orderEntry, type OrderLine } from "@/game/order-entry";
-import { orderStatus } from "@/localization/messages";
-import { clock } from "@/scene/clock";
+import type { Money } from "@/localization/messages.ts";
 
-import type { ObservationProps } from "./panel-props";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove, priceOrder, type OrderEstimate } from "@/game/commands.ts";
+import { orderEntry, type OrderLine } from "@/game/order-entry.ts";
+import { orderStatus } from "@/localization/messages.ts";
+import { clock } from "@/scene/clock.ts";
 
-import { ActionButton, ActionForm, Field, QuantityInput } from "./FormControls";
-import { GuiToolInfo, ToolReferenceContext } from "./GuiToolInfo";
-import { ProductInput } from "./ProductInput";
-import { useOrderDraft, useQuoteQuantity } from "./QuoteDrafts";
+import type { ObservationProps } from "./panel-props.ts";
+
+import { ActionForm, Field, QuantityInput } from "./FormControls.tsx";
+import { GuiToolInfo, ToolReferenceContext } from "./GuiToolInfo.tsx";
+import { ProductInput } from "./ProductInput.tsx";
+import { useOrderDraft, useQuoteQuantity } from "./QuoteDrafts.tsx";
 import "./order-slip.css";
 
 type Shared = Pick<ObservationProps, "state" | "runCommand" | "disabled"> & {
   report?: Report;
   supplier: string;
   supplierView?: boolean;
+};
+
+const entryErrors = {
+  duplicate: () => msg.operator.duplicateOrderProduct(),
+  incomplete: () => msg.operator.incompleteOrderLine(),
 };
 
 export function QuoteRequest({ supplier, runCommand, disabled, supplierView = false }: Shared) {
@@ -35,18 +43,15 @@ export function QuoteRequest({ supplier, runCommand, disabled, supplierView = fa
       <ActionForm
         className="compact"
         aria-label={msg.operator.supplierQuote()}
-        actions={
-          <GuiToolInfo verb="check_offers">
-            <button type="submit" disabled={!valid} data-clock-verb="check_offers" />
-          </GuiToolInfo>
-        }
+        actions={<GuiToolInfo verb="check_offers" type="submit" disabled={!valid} />}
         onSubmit={(e) => {
           e.preventDefault();
-          if (valid)
+          if (valid) {
             runCommand(
-              commandForMove(["check_offers", { supplier_id: supplier, quantity: Number(qty) }]),
+              commandForMove(["check_offers", { quantity: Number(qty), supplier_id: supplier }]),
               supplierView ? "inline" : "dialog",
             );
+          }
         }}
       >
         <Field label={msg.operator.bundle()}>
@@ -54,6 +59,168 @@ export function QuoteRequest({ supplier, runCommand, disabled, supplierView = fa
         </Field>
       </ActionForm>
     </section>
+  );
+}
+
+/** A quoted product of the slip, with its unit price and the ordered quantity. */
+function OfferedLine({
+  row,
+  quantity,
+  oldPrice,
+  money,
+  locked,
+  amend,
+}: {
+  row: ReportRow;
+  quantity: string;
+  oldPrice: Optional<number>;
+  money: Money;
+  locked: boolean;
+  amend: (line: OrderLine) => void;
+}) {
+  const [raw, price, discount] = row;
+  const product = String(raw);
+  const key = `offered:${product}`;
+  return (
+    <tr data-ordered={hasAny(quantity)}>
+      <td>{product}</td>
+      <td>
+        {typeof price === "number" ? money(price) : price}
+        {discount && discount !== "0%" && <small> (−{discount})</small>}
+        {typeof price === "number" && hasValue(oldPrice) && oldPrice !== price && (
+          <small className="unit-delta">Δ {money(price - oldPrice)}</small>
+        )}
+      </td>
+      <td>
+        <QuantityInput
+          aria-label={`${msg.fields.quantity()} · ${product}`}
+          value={quantity}
+          disabled={locked}
+          onChange={(e) => amend({ key, manual: false, product, quantity: e.currentTarget.value })}
+        />
+      </td>
+    </tr>
+  );
+}
+
+/** A product that the player adds to the slip by hand. */
+function ManualLine({
+  line,
+  reports,
+  quoted,
+  locked,
+  amend,
+}: {
+  line: OrderLine;
+  reports: Report[];
+  quoted: boolean;
+  locked: boolean;
+  amend: (line: OrderLine) => void;
+}) {
+  return (
+    <tr className="manual-order-line">
+      <td>
+        <ProductInput
+          reports={reports}
+          label={msg.fields.product_id()}
+          value={line.product}
+          readOnly={!line.manual}
+          disabled={locked}
+          onChange={(product) => amend({ ...line, product })}
+        />
+      </td>
+      {quoted && <td>—</td>}
+      <td>
+        <QuantityInput
+          aria-label={
+            line.product ? `${msg.fields.quantity()} · ${line.product}` : msg.fields.quantity()
+          }
+          disabled={locked}
+          value={line.quantity}
+          onChange={(e) => amend({ ...line, quantity: e.currentTarget.value })}
+        />
+      </td>
+    </tr>
+  );
+}
+
+function OrderLedger({
+  rows,
+  lines,
+  manualLines,
+  oldPrices,
+  reports,
+  money,
+  locked,
+  amend,
+}: {
+  rows: ReportRow[];
+  lines: OrderLine[];
+  manualLines: OrderLine[];
+  oldPrices: Map<string, number>;
+  reports: Report[];
+  money: Money;
+  locked: boolean;
+  amend: (line: OrderLine) => void;
+}) {
+  return (
+    <div className="slip-ledger" role="region" aria-label={msg.operator.product()} tabIndex={0}>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{msg.fields.product_id()}</th>
+            {rows.length > 0 && <th scope="col">{msg.operator.quotedUnitPrice()}</th>}
+            <th scope="col">{msg.fields.quantity()}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const product = String(row[0]);
+            return (
+              <OfferedLine
+                key={`offered:${product}`}
+                row={row}
+                quantity={lines.find((line) => line.key === `offered:${product}`)?.quantity ?? ""}
+                oldPrice={oldPrices.get(product)}
+                money={money}
+                locked={locked}
+                amend={amend}
+              />
+            );
+          })}
+          {manualLines.map((line) => (
+            <ManualLine
+              key={line.key}
+              line={line}
+              reports={reports}
+              quoted={rows.length > 0}
+              locked={locked}
+              amend={amend}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** The price of the basket at the last quote, and the cash left after the order. */
+function BasketReading({ evidence, money }: { evidence: Optional<OrderEstimate>; money: Money }) {
+  if (!evidence || evidence.status === "needQuote" || evidence.status === "expiredQuote") {
+    return (
+      <div className="basket-reading" role="status">
+        {msg.operator.orderPriceUnknown()}
+      </div>
+    );
+  }
+  return (
+    <div className="basket-reading" role="status">
+      {msg.operator.quoted()}: <output>{money(evidence.cost)}</output> · {msg.operator.afterOrder()}
+      : {money(evidence.remaining)}
+      {(evidence.status === "belowMinimum" || evidence.status === "lowCash") && (
+        <small>{orderStatus[evidence.status]()}</small>
+      )}
+    </div>
   );
 }
 
@@ -90,15 +257,14 @@ export function OrderSlip({
   const previous = report && comparable?.findLast((r) => r.id < report.id);
   const newer = report && comparable?.findLast((r) => r.id > report.id);
   const oldPrices = new Map(
-    previous?.rows.flatMap(([id, price]) =>
-      typeof id === "string" && typeof price === "number" ? [[id, price] as const] : [],
+    previous?.rows.flatMap(([id, price]): [string, number][] =>
+      typeof id === "string" && typeof price === "number" ? [[id, price]] : [],
     ),
   );
   const offered = new Set(rows.map((row) => String(row[0])));
   const entry = orderEntry(supplier, draft.lines);
-  const command = entry.command;
+  const { command } = entry;
   const estimate = command ? priceOrder(command, state, reports) : null;
-  const evidence = estimate?.cost !== undefined ? estimate : null;
   const manualLines = draft.lines.filter((line) => line.manual || !offered.has(line.product));
   const amend = (line: OrderLine) => {
     const exists = draft.lines.some((item) => item.key === line.key);
@@ -112,27 +278,30 @@ export function OrderSlip({
     save({
       lines: [
         ...draft.lines,
-        { key: crypto.randomUUID(), product: "", quantity: "", manual: true },
+        { key: crypto.randomUUID(), manual: true, product: "", quantity: "" },
       ],
     });
-  const quantityLabel = msg.fields.quantity();
-  const idLabel = msg.fields.product_id();
-  const locked = disabled || Boolean(submitted?.terms?.order);
-  const invalid =
-    entry.error === "duplicate"
-      ? msg.operator.duplicateOrderProduct()
-      : entry.error === "incomplete"
-        ? msg.operator.incompleteOrderLine()
-        : null;
+  const locked = disabled || hasAny(submitted?.terms?.order);
+  const invalid = entry.error ? entryErrors[entry.error]() : null;
   return (
     <>
-      {!supplierView && <QuoteRequest {...{ report, supplier, state, runCommand, disabled }} />}
+      {!supplierView && (
+        <QuoteRequest
+          disabled={disabled}
+          report={report}
+          runCommand={runCommand}
+          state={state}
+          supplier={supplier}
+        />
+      )}
       <form
         className="order-slip"
         data-reference={rows.length > 0}
         onSubmit={(event) => {
           event.preventDefault();
-          if (!command || locked) return;
+          if (!command || locked) {
+            return;
+          }
           save({ ...draft, submittedId: (reports.at(-1)?.id ?? 0) + 1 });
           runCommand(command, "inline");
         }}
@@ -141,7 +310,7 @@ export function OrderSlip({
           <h3>{msg.operator.compose()}</h3>
           {!supplierView && <b>{supplier}</b>}
         </div>
-        {report && terms?.minimum !== undefined && (
+        {report && hasValue(terms?.minimum) && (
           <div className="slip-terms">
             <span>
               {msg.operator.quotedAtQuantity()}: <b>{terms.quantity}</b>
@@ -181,73 +350,16 @@ export function OrderSlip({
             )}
           </div>
         )}
-        <div className="slip-ledger" role="region" aria-label={msg.operator.product()} tabIndex={0}>
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">{idLabel}</th>
-                {rows.length > 0 && <th scope="col">{msg.operator.quotedUnitPrice()}</th>}
-                <th scope="col">{quantityLabel}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(([raw, price, discount]) => {
-                const product = String(raw),
-                  key = "offered:" + product;
-                const quantity = draft.lines.find((line) => line.key === key)?.quantity ?? "";
-                const oldPrice = oldPrices.get(product);
-                return (
-                  <tr key={key} data-ordered={Boolean(quantity)}>
-                    <td>{product}</td>
-                    <td>
-                      {typeof price === "number" ? money(price) : price}
-                      {discount && discount !== "0%" && <small> (−{discount})</small>}
-                      {typeof price === "number" &&
-                        oldPrice !== undefined &&
-                        oldPrice !== price && (
-                          <small className="unit-delta">Δ {money(price - oldPrice)}</small>
-                        )}
-                    </td>
-                    <td>
-                      <QuantityInput
-                        aria-label={quantityLabel + " · " + product}
-                        value={quantity}
-                        disabled={locked}
-                        onChange={(e) =>
-                          amend({ key, product, manual: false, quantity: e.currentTarget.value })
-                        }
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-              {manualLines.map((line) => (
-                <tr key={line.key} className="manual-order-line">
-                  <td>
-                    <ProductInput
-                      reports={reports}
-
-                      label={idLabel}
-                      value={line.product}
-                      readOnly={!line.manual}
-                      disabled={locked}
-                      onChange={(product) => amend({ ...line, product })}
-                    />
-                  </td>
-                  {rows.length > 0 && <td>—</td>}
-                  <td>
-                    <QuantityInput
-                      aria-label={quantityLabel + (line.product ? " · " + line.product : "")}
-                      disabled={locked}
-                      value={line.quantity}
-                      onChange={(e) => amend({ ...line, quantity: e.currentTarget.value })}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <OrderLedger
+          rows={rows}
+          lines={draft.lines}
+          manualLines={manualLines}
+          oldPrices={oldPrices}
+          reports={reports}
+          money={money}
+          locked={locked}
+          amend={amend}
+        />
         {!submitted?.terms?.order && (
           <div className="ledger-add">
             <button type="button" className="receipt-link" disabled={locked} onClick={addLine}>
@@ -268,32 +380,19 @@ export function OrderSlip({
               <span>
                 {msg.operator.expectedClose()} {submitted.terms.eta}
               </span>
-              <ActionButton
+              <button
+                className="workbench-button"
                 type="button"
                 onClick={() =>
                   save({ lines: [{ key: "manual", manual: true, product: "", quantity: "" }] })
                 }
               >
                 {msg.operator.newOrder()}
-              </ActionButton>
+              </button>
             </div>
           ) : (
             <>
-              {command && (
-                <div className="basket-reading" role="status">
-                  {evidence ? (
-                    <>
-                      {msg.operator.quoted()}: <output>{money(evidence.cost)}</output> ·{" "}
-                      {msg.operator.afterOrder()}: {money(evidence.remaining)}
-                      {evidence.status === "belowMinimum" || evidence.status === "lowCash" ? (
-                        <small>{orderStatus[evidence.status]()}</small>
-                      ) : null}
-                    </>
-                  ) : (
-                    msg.operator.orderPriceUnknown()
-                  )}
-                </div>
-              )}
+              {command && <BasketReading evidence={estimate} money={money} />}
               {invalid && <small role="status">{invalid}</small>}
               {submitted && (
                 <button
@@ -304,9 +403,7 @@ export function OrderSlip({
                   #{submitted.id} · {submitted.display}
                 </button>
               )}
-              <GuiToolInfo verb="order_goods">
-                <button type="submit" data-clock-verb="order_goods" disabled={locked || !command} />
-              </GuiToolInfo>
+              <GuiToolInfo verb="order_goods" type="submit" disabled={locked || !command} />
             </>
           )}
         </div>

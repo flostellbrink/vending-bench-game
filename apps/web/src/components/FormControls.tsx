@@ -1,4 +1,6 @@
-import type { ComponentProps, ReactNode } from "react";
+import type { ChangeEventHandler, FormEventHandler, ReactNode } from "react";
+
+import { hasAny } from "games-common/language";
 
 import "./action-layout.css";
 
@@ -6,22 +8,50 @@ export function ActionForm({
   actions,
   children,
   className = "",
-  ...props
-}: ComponentProps<"form"> & { actions: ReactNode }) {
+  onSubmit,
+  "aria-label": label,
+}: {
+  actions: ReactNode;
+  children: ReactNode;
+  className?: string;
+  onSubmit: FormEventHandler<HTMLFormElement>;
+  "aria-label"?: string;
+}) {
   return (
-    <form {...props} className={("action-form " + className).trim()}>
+    <form className={`action-form ${className}`.trim()} onSubmit={onSubmit} aria-label={label}>
       <div className="action-fields">{children}</div>
       <div className="action-submit">{actions}</div>
     </form>
   );
 }
 
-export function ActionButton({ className = "", ...props }: ComponentProps<"button">) {
-  return <button {...props} className={("workbench-button " + className).trim()} />;
-}
-
-export function ControlRow({ className = "", ...props }: ComponentProps<"div">) {
-  return <div {...props} className={("control-row " + className).trim()} />;
+/** A whole number of packs or units, at least 1. */
+export function QuantityInput({
+  value,
+  onChange,
+  disabled,
+  required,
+  "aria-label": label,
+}: {
+  value: string;
+  onChange: ChangeEventHandler<HTMLInputElement>;
+  disabled?: boolean;
+  required?: boolean;
+  "aria-label"?: string;
+}) {
+  return (
+    <input
+      className="control-input"
+      type="number"
+      min={1}
+      step={1}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      required={required}
+      aria-label={label}
+    />
+  );
 }
 
 export function Field({
@@ -39,28 +69,17 @@ export function Field({
 }) {
   return (
     <label
-      className={["control-field", inline && "inline-field", wide && "field-wide", className]
-        .filter(Boolean)
+      className={[
+        "control-field",
+        inline ? "inline-field" : "",
+        wide ? "field-wide" : "",
+        className,
+      ]
+        .filter(hasAny)
         .join(" ")}
     >
       <span className="field-label">{label}</span>
       {children}
     </label>
   );
-}
-
-export function ControlInput({ className = "", ...props }: ComponentProps<"input">) {
-  return <input {...props} className={("control-input " + className).trim()} />;
-}
-
-export function QuantityInput(props: Omit<ComponentProps<"input">, "type">) {
-  return <ControlInput type="number" min={1} step={1} {...props} />;
-}
-
-export function ControlSelect({ className = "", ...props }: ComponentProps<"select">) {
-  return <select {...props} className={("control-input " + className).trim()} />;
-}
-
-export function ControlTextarea({ className = "", ...props }: ComponentProps<"textarea">) {
-  return <textarea {...props} className={("control-textarea " + className).trim()} />;
 }

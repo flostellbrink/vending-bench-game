@@ -12,10 +12,10 @@ export function salesRange(rows: ReportRow[], from: string, through: string) {
   }
   const revenue = cents / 100;
   return {
+    averageRevenue: selected.length ? revenue / selected.length : 0,
+    averageUnits: selected.length ? units / selected.length : 0,
+    revenue,
     rows: selected,
     units,
-    revenue,
-    averageUnits: selected.length ? units / selected.length : 0,
-    averageRevenue: selected.length ? revenue / selected.length : 0,
   };
 }

@@ -8,6 +8,7 @@ import {
   type Receipt,
   type Release,
 } from "games-common/benchmark";
+import { hasValue, type Optional } from "games-common/language";
 import * as v from "valibot";
 
 import { commandForMove } from "./commands.ts";
@@ -24,46 +25,48 @@ export function isSlotId(id: string): boolean {
 }
 
 export function runKey(release: Release, slot = legacySlot) {
-  if (!isSlotId(slot)) throw Error("Unsupported save slot");
-  const base = "vending:" + release.revision + ":" + release.seed;
-  return slot === legacySlot ? base : base + ":slot:" + slot;
+  if (!isSlotId(slot)) {
+    throw new Error("Unsupported save slot");
+  }
+  const base = `vending:${release.revision}:${release.seed}`;
+  return slot === legacySlot ? base : `${base}:slot:${slot}`;
 }
 export function recordKey(release: Release) {
-  return runKey(release) + ":" + release.days + ":record";
+  return `${runKey(release)}:${release.days}:record`;
 }
 
 const checkpointSchema = v.object({
+  cash: v.pipe(v.number(), v.finite()),
   day: v.pipe(v.number(), v.integer(), v.minValue(1)),
   moveCount: v.pipe(v.number(), v.integer(), v.minValue(0)),
-  cash: v.pipe(v.number(), v.finite()),
 });
 export type RunTimeline = v.InferOutput<typeof timelineSchema>;
 const timelineSchema = v.object({
   ...checkpointSchema.entries,
-  minute: v.optional(v.number()),
   checkpoints: v.pipe(v.array(checkpointSchema), v.minLength(1)),
+  minute: v.optional(v.number()),
 });
 const lineageSchema = v.object({
   createdAt: v.nullable(v.number()),
-  updatedAt: v.optional(v.number()),
   parent: v.nullable(
     v.object({
-      slot: v.union([v.literal(referenceSlot), v.pipe(v.string(), v.check(isSlotId))]),
       day: checkpointSchema.entries.day,
+      slot: v.union([v.literal(referenceSlot), v.pipe(v.string(), v.check(isSlotId))]),
     }),
   ),
+  updatedAt: v.optional(v.number()),
 });
 const metadataSchema = v.object({ ...lineageSchema.entries, timeline: timelineSchema });
 const savedRunSchema = v.object({
+  finished: v.optional(v.boolean(), false),
   format: v.literal(1),
+  metadata: v.optional(metadataSchema),
   moves: v.array(entrySchema),
   opponent: v.nullable(personalBestSchema),
-  finished: v.optional(v.boolean(), false),
-  metadata: v.optional(metadataSchema),
 });
 export interface SavedRun {
   moves: Entry[];
-  opponent: PersonalBest | null;
+  opponent: Optional<PersonalBest>;
   finished: boolean;
   timeline?: RunTimeline;
 }
@@ -78,20 +81,21 @@ export interface ParentBalance {
 export function recordedClosings(slot: Pick<RunSlot, "checkpoints" | "finished" | "day" | "cash">) {
   const values = slot.checkpoints.map((morning) => morning.cash);
   const lastMorning = slot.checkpoints.at(-1);
-  if (slot.finished && slot.cash !== null && lastMorning && slot.day === lastMorning.day + 1)
+  if (slot.finished && hasValue(slot.cash) && lastMorning && slot.day === lastMorning.day + 1) {
     values.push(slot.cash);
+  }
   return values;
 }
 const slotSchema = v.object({
   ...lineageSchema.entries,
-  id: v.pipe(v.string(), v.check(isSlotId)),
-  checkpoints: v.array(checkpointSchema),
-  moves: checkpointSchema.entries.moveCount,
-  finished: v.boolean(),
-  day: checkpointSchema.entries.day,
-  minute: v.optional(v.number()),
   cash: v.nullable(v.number()),
+  checkpoints: v.array(checkpointSchema),
   damaged: v.boolean(),
+  day: checkpointSchema.entries.day,
+  finished: v.boolean(),
+  id: v.pipe(v.string(), v.check(isSlotId)),
+  minute: v.optional(v.number()),
+  moves: checkpointSchema.entries.moveCount,
 });
 
 export function runTimeline(
@@ -99,12 +103,12 @@ export function runTimeline(
   receipts: readonly (Pick<Receipt, "day" | "endDay" | "closingCash"> &
     Partial<Pick<Receipt, "endMinute">>)[],
   finished: boolean,
-  previous?: RunTimeline,
+  previous?: Optional<RunTimeline>,
 ): RunTimeline {
-  const opening = { day: 1, moveCount: 0, cash: release.startingBalance };
+  const opening = { cash: release.startingBalance, day: 1, moveCount: 0 };
   const timeline = previous
     ? { ...previous, checkpoints: [...previous.checkpoints] }
-    : { ...opening, minute: release.network.opens, checkpoints: [opening] };
+    : { ...opening, checkpoints: [opening], minute: release.network.opens };
   for (const [index, receipt] of receipts.entries()) {
     timeline.moveCount++;
     timeline.day = receipt.endDay;
@@ -112,22 +116,24 @@ export function runTimeline(
     timeline.cash = receipt.closingCash;
     if (receipt.endDay !== receipt.day && !(finished && index === receipts.length - 1)) {
       timeline.checkpoints.push({
+        cash: timeline.cash,
         day: receipt.endDay,
         moveCount: timeline.moveCount,
-        cash: timeline.cash,
       });
     }
   }
   return timeline;
 }
 
-export function readRecord(serialized: string | null): PersonalBest | null {
-  return serialized === null ? null : v.parse(personalBestSchema, JSON.parse(serialized));
+export function readRecord(serialized: Optional<string>): Optional<PersonalBest> {
+  return hasValue(serialized) ? v.parse(personalBestSchema, JSON.parse(serialized)) : null;
 }
 
 /** Old saves contain only moves, so their pre-run comparison cannot be reconstructed. */
-export function readRun(serialized: string | null, record: PersonalBest | null): SavedRun {
-  if (serialized === null) return { moves: [], opponent: record, finished: false };
+export function readRun(serialized: Optional<string>, record: Optional<PersonalBest>): SavedRun {
+  if (!hasValue(serialized)) {
+    return { finished: false, moves: [], opponent: record };
+  }
   return decode(serialized);
 }
 
@@ -135,14 +141,18 @@ function decode(raw: string): SavedRun & Pick<RunSlot, "createdAt" | "parent" | 
   const saved: unknown = JSON.parse(raw);
   if (Array.isArray(saved)) {
     const moves = saved.map((input: unknown): Entry => {
-      if (!Array.isArray(input)) return v.parse(entrySchema, input);
+      if (!Array.isArray(input)) {
+        return v.parse(entrySchema, input);
+      }
       const move = v.parse(moveSchema, input);
-      return { move, line: move[0] };
+      return { line: move[0], move };
     });
-    return { moves, opponent: null, finished: false, createdAt: null, parent: null };
+    return { createdAt: null, finished: false, moves, opponent: null, parent: null };
   }
   const result = v.safeParse(savedRunSchema, saved);
-  if (!result.success) throw Error("Unsupported save");
+  if (!result.success) {
+    throw new Error("Unsupported save");
+  }
   const { moves, opponent, finished, metadata } = result.output;
   if (metadata) {
     const { timeline } = metadata;
@@ -158,49 +168,56 @@ function decode(raw: string): SavedRun & Pick<RunSlot, "createdAt" | "parent" | 
             : point.moveCount <= (points[index - 1]?.moveCount ?? 0)),
       )
     ) {
-      throw Error("Invalid save timeline");
+      throw new Error("Invalid save timeline");
     }
   }
   return {
+    createdAt: metadata?.createdAt ?? null,
+    finished,
     moves,
     opponent,
-    finished,
-    timeline: metadata?.timeline,
-    createdAt: metadata?.createdAt ?? null,
-    updatedAt: metadata?.updatedAt,
     parent: metadata?.parent ?? null,
+    timeline: metadata?.timeline,
+    updatedAt: metadata?.updatedAt,
   };
 }
 
+interface RunUpdate {
+  moves: Entry[];
+  opponent: Optional<PersonalBest>;
+  finished?: boolean;
+  timeline?: Optional<RunTimeline>;
+}
 export function saveRun(
   storage: StorageWriter,
   key: string,
-  expected: string | null,
-  moves: Entry[],
-  opponent: PersonalBest | null,
-  finished = false,
-  timeline?: RunTimeline,
+  expected: Optional<string>,
+  { moves, opponent, finished = false, timeline }: RunUpdate,
 ) {
-  if (storage.getItem(key) !== expected) throw Error("changed");
-  const prior: unknown = expected === null ? null : JSON.parse(expected);
+  if (storage.getItem(key) !== (expected ?? null)) {
+    throw new Error("changed");
+  }
+  const prior: unknown = hasValue(expected) ? JSON.parse(expected) : null;
   const previous = v.safeParse(v.object({ metadata: metadataSchema }), prior);
   const metadata = previous.success ? previous.output.metadata : undefined;
   const nextTimeline = timeline ?? metadata?.timeline;
-  if (nextTimeline && nextTimeline.moveCount !== moves.length) throw Error("Invalid save timeline");
+  if (nextTimeline && nextTimeline.moveCount !== moves.length) {
+    throw new Error("Invalid save timeline");
+  }
   const next = JSON.stringify({
-    format: 1,
-    moves,
-    opponent,
     finished,
+    format: 1,
     metadata: nextTimeline
       ? {
           createdAt: metadata?.createdAt ?? null,
-          updatedAt:
-            metadata?.timeline.moveCount === moves.length ? metadata.updatedAt : Date.now(),
           parent: metadata?.parent ?? null,
           timeline: nextTimeline,
+          updatedAt:
+            metadata?.timeline.moveCount === moves.length ? metadata.updatedAt : Date.now(),
         }
       : undefined,
+    moves,
+    opponent: opponent ?? null,
   });
   storage.setItem(key, next);
   return next;
@@ -213,19 +230,21 @@ function newSlot(
   timeline: RunTimeline,
   parent: RunSlot["parent"],
 ) {
-  const id = crypto.randomUUID(),
-    key = runKey(release, id);
-  if (storage.getItem(key) !== null) throw Error("Save slot already exists");
-  const opponent = readRecord(storage.getItem(recordKey(release)));
+  const id = crypto.randomUUID();
+  const key = runKey(release, id);
+  if (hasValue(storage.getItem(key))) {
+    throw new Error("Save slot already exists");
+  }
+  const opponent = readRecord(storage.getItem(recordKey(release))) ?? null;
   const now = Date.now();
   storage.setItem(
     key,
     JSON.stringify({
+      finished: false,
       format: 1,
+      metadata: { createdAt: now, parent, timeline, updatedAt: now },
       moves,
       opponent,
-      finished: false,
-      metadata: { createdAt: now, updatedAt: now, parent, timeline },
     }),
   );
   return id;
@@ -241,9 +260,13 @@ export async function forkReferenceRun(
   day: number,
 ): Promise<string> {
   const path = referenceRun(release)?.replay;
-  if (!path) throw Error("Missing reference replay");
-  const response = await fetch("/" + path);
-  if (!response.ok) throw Error("Reference replay unavailable");
+  if (!path) {
+    throw new Error("Missing reference replay");
+  }
+  const response = await fetch(`/${path}`);
+  if (!response.ok) {
+    throw new Error("Reference replay unavailable");
+  }
   const replay = v.parse(replaySchema, await response.json());
   if (
     replay.revision !== release.revision ||
@@ -258,19 +281,22 @@ export async function forkReferenceRun(
           ? point.moveCount !== 0 || point.cash !== release.startingBalance
           : point.moveCount <= (all[i - 1]?.moveCount ?? 0)),
     )
-  )
-    throw Error("Incompatible reference replay");
+  ) {
+    throw new Error("Incompatible reference replay");
+  }
   const point = replay.checkpoints.find((p) => p.day === day);
-  if (!point) throw Error("Missing reference morning");
+  if (!point) {
+    throw new Error("Missing reference morning");
+  }
   const moves = replay.moves
     .slice(0, point.moveCount)
-    .map((move) => ({ move, line: commandForMove(move) }));
+    .map((move) => ({ line: commandForMove(move, release.toolParameters[move[0]]), move }));
   return newSlot(
     storage,
     release,
     moves,
-    { ...point, minute: release.network.opens, checkpoints: replay.checkpoints.slice(0, day) },
-    { slot: referenceSlot, day },
+    { ...point, checkpoints: replay.checkpoints.slice(0, day), minute: release.network.opens },
+    { day, slot: referenceSlot },
   );
 }
 
@@ -282,31 +308,37 @@ export function forkRun(
 ): string {
   const visited = new Set<string>();
   function load(id: string) {
-    if (visited.has(id)) throw Error("Invalid save lineage");
+    if (visited.has(id)) {
+      throw new Error("Invalid save lineage");
+    }
     visited.add(id);
     const raw = storage.getItem(runKey(release, id));
-    if (raw === null) throw Error("Missing parent run");
+    if (!hasValue(raw)) {
+      throw new Error("Missing parent run");
+    }
     return decode(raw);
   }
-  let owner = parentSlot,
-    parent = load(owner);
+  let owner = parentSlot;
+  let parent = load(owner);
   while (parent.parent && parent.parent.slot !== referenceSlot && day <= parent.parent.day) {
     owner = parent.parent.slot;
     parent = load(owner);
   }
   const timeline = parent.timeline ?? runTimeline(release, [], false);
   const point = timeline.checkpoints.find((p) => p.day === day);
-  if (!point || point.moveCount > parent.moves.length) throw Error("Missing day checkpoint");
+  if (!point || point.moveCount > parent.moves.length) {
+    throw new Error("Missing day checkpoint");
+  }
   const checkpoints = timeline.checkpoints.filter((p) => p.day <= day);
   return newSlot(
     storage,
     release,
     parent.moves.slice(0, point.moveCount),
-    { ...point, minute: release.network.opens, checkpoints },
+    { ...point, checkpoints, minute: release.network.opens },
     {
+      day,
       slot:
         parent.parent?.slot === referenceSlot && day <= parent.parent.day ? referenceSlot : owner,
-      day,
     },
   );
 }
@@ -314,34 +346,31 @@ export function forkRun(
 function summary(raw: string, release: Release, id: string): RunSlot {
   const opening = runTimeline(release, [], false);
   const empty = {
-    id,
-    createdAt: null,
-    parent: null,
-    day: 1,
     cash: null,
-    moves: 0,
-    finished: false,
     checkpoints: [],
+    createdAt: null,
+    day: 1,
+    finished: false,
+    id,
+    moves: 0,
+    parent: null,
   };
   try {
     const saved = decode(raw);
     const timeline = saved.timeline ?? opening;
+    const minuteWithoutTimeline = saved.moves.length ? undefined : release.network.opens;
     return {
       ...empty,
-      createdAt: saved.createdAt,
-      updatedAt: saved.updatedAt,
-      parent: saved.parent,
-      checkpoints: timeline.checkpoints,
-      day: timeline.day,
-      minute: saved.timeline
-        ? timeline.minute
-        : saved.moves.length
-          ? undefined
-          : release.network.opens,
       cash: saved.timeline || !saved.moves.length ? timeline.cash : null,
-      moves: saved.moves.length,
-      finished: saved.finished,
+      checkpoints: timeline.checkpoints,
+      createdAt: saved.createdAt,
       damaged: false,
+      day: timeline.day,
+      finished: saved.finished,
+      minute: saved.timeline ? timeline.minute : minuteWithoutTimeline,
+      moves: saved.moves.length,
+      parent: saved.parent,
+      updatedAt: saved.updatedAt,
     };
   } catch {
     return { ...empty, damaged: true };
@@ -349,16 +378,22 @@ function summary(raw: string, release: Release, id: string): RunSlot {
 }
 
 export function listRuns(storage: StorageReader, release: Release): RunSlot[] {
-  const base = runKey(release),
-    prefix = base + ":slot:",
-    slots: RunSlot[] = [];
+  const base = runKey(release);
+  const prefix = `${base}:slot:`;
+  const slots: RunSlot[] = [];
   for (let n = 0; n < storage.length; n++) {
     const key = storage.key(n);
-    if (key === null || (key !== base && !key.startsWith(prefix))) continue;
+    if (!hasValue(key) || (key !== base && !key.startsWith(prefix))) {
+      continue;
+    }
     const id = key === base ? legacySlot : key.slice(prefix.length);
-    if (!isSlotId(id) || key !== runKey(release, id)) continue;
+    if (!isSlotId(id) || key !== runKey(release, id)) {
+      continue;
+    }
     const raw = storage.getItem(key);
-    if (raw !== null) slots.push(summary(raw, release, id));
+    if (hasValue(raw)) {
+      slots.push(summary(raw, release, id));
+    }
   }
   return slots.toSorted(
     (a, b) =>
@@ -377,6 +412,8 @@ export function readSlotSnapshot(snapshot: string): RunSlot[] {
 }
 
 export async function withRunLock<T>(key: string, operation: () => T): Promise<T> {
-  if (navigator.locks) return navigator.locks.request(key, operation);
+  if (navigator.locks) {
+    return navigator.locks.request(key, operation);
+  }
   return operation();
 }

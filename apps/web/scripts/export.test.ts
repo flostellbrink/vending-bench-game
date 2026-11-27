@@ -1,4 +1,4 @@
-import { assertValue } from "games-common/language";
+import { assertValue, keys } from "games-common/language";
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
@@ -15,44 +15,48 @@ const flightRecord = v.tuple([
   v.object({ translations: v.object({ "vending-bench-game": messageSubset }) }),
 ]);
 
+/** @risk impact=2 likelihood=2 */
 await test("each exported page ships only its own localized messages", async () => {
   const chunks = new URL("_next/static/chunks/", directory);
   const files = await readdir(chunks, { recursive: true });
   const scripts = await Promise.all(
     files.filter((f) => f.endsWith(".js")).map((f) => readFile(new URL(f, chunks), "utf8")),
   );
-  for (const locale of locales)
+  for (const locale of locales) {
     for (const [segment, landmarkId] of [
       ["", "SX000001"],
       ["run/", "VBBOOT03"],
     ] as const) {
-      const route = new URL(locale + "/" + segment, directory);
+      const route = new URL(`${locale}/${segment}`, directory);
       const html = await readFile(new URL("index.html", route), "utf8");
-      assert.ok(html.includes('<html lang="' + locale + '">'));
+      assert.ok(html.includes(`<html lang="${locale}">`));
       if (segment !== "run/") {
-        const headings = assertValue(html.match(/class="save-map-head"[^>]*>(.*?)<\/div>/s)?.[1]);
+        const headings = assertValue(
+          /class="save-map-head"[^>]*>(?<headings>.*?)<\/div>/s.exec(html)?.groups?.headings,
+        );
         assert.ok(!headings.includes("<button"), "The day headings must not contain the New box");
-        const firstTrack = assertValue(html.match(/class="save-map-row"[^>]*>(.*?)<\/div>/s)?.[1]);
+        const firstTrack = assertValue(
+          /class="save-map-row"[^>]*>(?<track>.*?)<\/div>/s.exec(html)?.groups?.track,
+        );
         const nodes = [...firstTrack.matchAll(/<button\b[^>]+>/g)].map(([button]) => button);
         assert.ok(assertValue(nodes[0]).includes('data-checkpoint="new:1"'));
         assert.ok(assertValue(nodes[1]).includes('data-checkpoint="reference-run:2"'));
         const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]
           .map(([form]) => form)
           .filter((form) => {
-            const action = form.match(/\baction="([^"]+)"/)?.[1];
+            const action = /\baction="(?<action>[^"]+)"/.exec(form)?.groups?.action;
             return (
               action &&
-              new URL(action, "https://example.test/" + locale + "/").pathname ===
-                "/" + locale + "/run/"
+              new URL(action, `https://example.test/${locale}/`).pathname === `/${locale}/run/`
             );
           });
         assert.equal(forms.length, 1, "Only the timeline starts a new game");
         const form = assertValue(forms[0]);
-        const id = assertValue(form.match(/\bid="([^"]+)"/)?.[1]);
+        const id = assertValue(/\bid="(?<id>[^"]+)"/.exec(form)?.groups?.id);
         assert.ok(form.includes('name="slot"') && form.includes('value="new"'));
         const buttons = [...html.matchAll(/<button\b[^>]*>/g)]
           .map(([button]) => button)
-          .filter((button) => button.includes('form="' + id + '"'));
+          .filter((button) => button.includes(`form="${id}"`));
         assert.equal(buttons.length, 1, "The selected checkpoint has one launch control");
         assert.ok(assertValue(buttons[0]).includes('type="submit"'));
         assert.ok(!assertValue(buttons[0]).includes("disabled"), "Start works before hydration");
@@ -61,10 +65,10 @@ await test("each exported page ships only its own localized messages", async () 
       const line = flight
         .split("\n")
         .find((l) => l.includes('"translations":{"vending-bench-game"'));
-      assert.ok(line, "Missing client translations for " + route.pathname);
+      assert.ok(line, `Missing client translations for ${route.pathname}`);
       const record = v.parse(flightRecord, JSON.parse(line.slice(line.indexOf(":") + 1)));
       const dictionary = record[3].translations["vending-bench-game"];
-      assert.deepEqual(Object.keys(dictionary), [locale]);
+      assert.deepEqual(keys(dictionary), [locale]);
       const messages = assertValue(dictionary[locale]);
       const landmark = assertValue(messages[landmarkId]);
       assert.equal("VBBOOT03" in messages, segment === "run/", "Wrong boot-hint scope");
@@ -80,4 +84,5 @@ await test("each exported page ships only its own localized messages", async () 
         "Page message included in shared browser JS",
       );
     }
+  }
 });

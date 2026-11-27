@@ -1,5 +1,5 @@
 import { actionsSchema, parseReleases, replaySchema, snapshotSchema } from "games-common/benchmark";
-import { assertValue } from "games-common/language";
+import { assertValue, keys } from "games-common/language";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
@@ -18,20 +18,22 @@ const pinned = assertValue(catalog[0]).revision;
 const git = (...args: string[]) =>
   execFileSync("git", ["-C", "vendor/vending-bench", ...args], { cwd: root, encoding: "utf8" });
 
+/** @risk impact=4 likelihood=2 */
 await test("each model shows its latest published attempt once, with daily balances", async () => {
   const revision = pinned;
-  const release = assertValue((await readReleases([{ revision }]))[0]);
+  const releases = await readReleases([{ revision }]);
+  const release = assertValue(releases[0]);
   const resultSchema = v.object({
-    model_requested: v.string(),
-    timestamp_utc: v.string(),
-    horizon_days: v.number(),
-    seed: v.number(),
     days_operated: v.number(),
     final_balance: v.number(),
+    horizon_days: v.number(),
+    model_requested: v.string(),
     reward: v.number(),
+    seed: v.number(),
+    timestamp_utc: v.string(),
   });
   const trial = (path: string) =>
-    v.parse(resultSchema, JSON.parse(git("show", revision + ":" + path)));
+    v.parse(resultSchema, JSON.parse(git("show", `${revision}:${path}`)));
   const published = git("ls-tree", "-r", "--name-only", revision, "--", "results")
     .trim()
     .split("\n")
@@ -39,8 +41,12 @@ await test("each model shows its latest published attempt once, with daily balan
   const latest = new Map<string, string>();
   for (const path of published) {
     const { model_requested: model, timestamp_utc: time, horizon_days, seed } = trial(path);
-    if (horizon_days !== release.days || seed !== release.seed) continue;
-    if (time > (latest.get(model) ?? "")) latest.set(model, time);
+    if (horizon_days !== release.days || seed !== release.seed) {
+      continue;
+    }
+    if (time > (latest.get(model) ?? "")) {
+      latest.set(model, time);
+    }
   }
   assert.equal(latest.size, 5);
   const models = release.rivals;
@@ -59,7 +65,8 @@ await test("each model shows its latest published attempt once, with daily balan
   assert.equal(models.length, shown.size);
   assert.deepEqual(shown, latest);
 });
-await test("quote defaults come from the published MCP signature, not a frontend constant", async () => {
+/** @risk impact=4 likelihood=2 */
+await test("quote defaults and parameter order come from the published MCP signature", async () => {
   const python = await readSnapshot(pinned);
   const path = v.parse(v.string(), python.runPython('str(SERVER / "server.py")'));
   python.FS.writeFile(
@@ -74,6 +81,9 @@ await test("quote defaults come from the published MCP signature, not a frontend
     { check_offers: "Quote this quantity." },
     { check_offers: { quantity: 37 } },
   ]);
+  assert.deepEqual(pythonJSON(python, "json.dumps(tool_parameters())"), {
+    check_offers: ["supplier_id", "quantity"],
+  });
   assert.equal(
     python.runPython(`
 import inspect
@@ -84,14 +94,15 @@ str(inspect.signature(scope["tools"]["check_offers"]))
     "(supplier_id: str, quantity: int = 37)",
   );
 });
+/** @risk impact=5 likelihood=2 */
 await test("a saved command sequence replays to the same final score", async () => {
   const release = assertValue(catalog[0]);
   const python = await loadPyodide();
   python.unpackArchive(
-    new Uint8Array(await readFile(new URL("public/" + release.engineArchive, app))),
+    new Uint8Array(await readFile(new URL(`public/${release.engineArchive}`, app))),
     "zip",
   );
-  python.runPython(await readFile(new URL("public/" + release.adapter, app), "utf8"));
+  python.runPython(await readFile(new URL(`public/${release.adapter}`, app), "utf8"));
   python.globals.set("seed", release.seed);
   const play = () =>
     v.parse(
@@ -118,26 +129,27 @@ snapshot()
       release.days * v.parse(v.number(), python.runPython("config.DAILY_SPOT_FEE")),
   );
   assert.deepEqual(
-    Object.keys(v.parse(actionsSchema, pythonJSON(python, "actions()"))).toSorted(),
-    Object.keys(release.tools).toSorted(),
+    keys(v.parse(actionsSchema, pythonJSON(python, "actions()"))).toSorted(),
+    keys(release.tools).toSorted(),
   );
 });
 
+/** @risk impact=3 likelihood=3 */
 await test("the reference run reproduces each morning and its published score in the browser engine", async () => {
   for (const release of catalog) {
     const rival = assertValue(release.rivals.find((r) => r.replay));
     const journal = v.parse(
       replaySchema,
-      JSON.parse(await readFile(new URL("public/" + assertValue(rival.replay), app), "utf8")),
+      JSON.parse(await readFile(new URL(`public/${assertValue(rival.replay)}`, app), "utf8")),
     );
     assert.equal(journal.revision, release.revision);
     assert.equal(journal.seed, release.seed);
     const python = await loadPyodide();
     python.unpackArchive(
-      new Uint8Array(await readFile(new URL("public/" + release.engineArchive, app))),
+      new Uint8Array(await readFile(new URL(`public/${release.engineArchive}`, app))),
       "zip",
     );
-    python.runPython(await readFile(new URL("public/" + release.adapter, app), "utf8"));
+    python.runPython(await readFile(new URL(`public/${release.adapter}`, app), "utf8"));
     python.globals.set("encoded_moves", JSON.stringify(journal.moves));
     python.globals.set("seed", journal.seed);
     const replay = pythonJSON(
@@ -157,7 +169,7 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
     const result = v.parse(
       v.object({
         checkpoints: replaySchema.entries.checkpoints,
-        final: v.object({ reward: v.number(), final_balance: v.number(), completed: v.boolean() }),
+        final: v.object({ completed: v.boolean(), final_balance: v.number(), reward: v.number() }),
       }),
       replay,
     );
@@ -168,21 +180,25 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
     );
     assert.equal(result.final.reward, rival.score);
     assert.equal(result.final.final_balance, rival.finalBalance);
-    if (result.final.completed) assert.equal(result.checkpoints.length, release.days);
+    if (result.final.completed) {
+      assert.equal(result.checkpoints.length, release.days);
+    }
   }
 });
 
+/** @risk impact=2 likelihood=1 */
 await test("the briefing comes from the selected Git revision", () => {
   for (const release of catalog) {
     assert.equal(
       release.brief,
-      git("show", release.revision + ":tasks/vending-bench/instruction.md").trim(),
+      git("show", `${release.revision}:tasks/vending-bench/instruction.md`).trim(),
     );
   }
 });
 
+/** @risk impact=3 likelihood=2 */
 await test("different commits sharing one release version remain distinct; duplicate pins collapse", async () => {
-  const previous = git("rev-parse", pinned + "^").trim();
+  const previous = git("rev-parse", `${pinned}^`).trim();
   const releases = await readReleases([pinned, previous, pinned].map((revision) => ({ revision })));
   assert.equal(releases.length, 2);
   assert.equal(assertValue(releases[0]).version, assertValue(releases[1]).version);
@@ -193,11 +209,14 @@ await test("different commits sharing one release version remain distinct; dupli
   );
 });
 
+/** @risk impact=4 likelihood=3 */
 await test("model endpoints need matching source and conditions; only recorded closings become a trace", async () => {
   const release = assertValue(catalog[0]);
   const python = await readSnapshot(release.revision);
+  const fixtureScore = 2476;
+  const dayTwoMorningBalance = 1481.25;
   const batch = "/upstream/results/baselines/models-30d";
-  const trial = batch + "/example";
+  const trial = `${batch}/example`;
   python.FS.mkdirTree(trial);
   const write = (path: string, data: unknown) => python.FS.writeFile(path, JSON.stringify(data));
   const fingerprint = v.parse(
@@ -217,47 +236,51 @@ with ZipFile(source, "w") as files:
 digest.hexdigest()
 `),
   );
-  python.globals.set("fixture_zip", batch + "/evaluation-source.zip");
+  python.globals.set("fixture_zip", `${batch}/evaluation-source.zip`);
   python.runPython("Path(fixture_zip).write_bytes(source.getvalue())");
-  python.FS.writeFile(batch + "/evaluation-source.sha256", fingerprint);
-  write(batch + "/manifest.json", { source_sha256: fingerprint });
+  python.FS.writeFile(`${batch}/evaluation-source.sha256`, fingerprint);
+  write(`${batch}/manifest.json`, { source_sha256: fingerprint });
   const result = {
-    seed: release.seed,
-    horizon_days: release.days,
-    version: release.version,
-    completed: true,
-    model_requested: "example/model",
-    reward: 2476,
-    final_balance: 2476,
     benchmark_sha256: fingerprint,
+    completed: true,
+    final_balance: fixtureScore,
+    horizon_days: release.days,
+    model_requested: "example/model",
+    reward: fixtureScore,
+    seed: release.seed,
+    version: release.version,
   };
-  write(trial + "/result.json", result);
-  write(batch + "/aggregate.json", {
+  write(`${trial}/result.json`, result);
+  write(`${batch}/aggregate.json`, {
     leaderboard: [{ ...result, display_name: "Example model", result_path: "example/result.json" }],
   });
   const settingsSchema = v.looseObject({ capital: v.looseObject({ daily_spot_fee: v.number() }) });
   const config = v.parse(settingsSchema, pythonJSON(python, "json.dumps(config.CONFIG)"));
-  write(trial + "/config.json", config);
+  write(`${trial}/config.json`, config);
   const models = () =>
     v.parse(
       v.array(sourceRivalSchema),
-      pythonJSON(python, "json.dumps(model_results(" + JSON.stringify(release.version) + "))"),
+      pythonJSON(python, `json.dumps(model_results(${JSON.stringify(release.version)}))`),
     );
   assert.deepEqual(
     models().map((r) => [r.name, r.score, r.values]),
-    [["Example model", 2476, null]],
+    [["Example model", fixtureScore, null]],
   );
-  const receipt = "[Day 2/" + release.days + " — Tue 06 Jan 2026 09:00 — balance €1,481.25]";
-  write(trial + "/conversation.jsonl", [
-    { role: "assistant", content: receipt.replace("1,481.25", "9,999.99") },
-    { role: "tool", content: receipt },
+  const receipt = `[Day 2/${release.days} — Tue 06 Jan 2026 09:00 — balance €1,481.25]`;
+  write(`${trial}/conversation.jsonl`, [
+    { content: receipt.replace("1,481.25", "9,999.99"), role: "assistant" },
+    { content: receipt, role: "tool" },
   ]);
-  assert.deepEqual(assertValue(models()[0]).values, [release.startingBalance, 1481.25]);
+  assert.deepEqual(assertValue(models()[0]).values, [
+    release.startingBalance,
+    dayTwoMorningBalance,
+  ]);
   config.capital.daily_spot_fee++;
-  write(trial + "/config.json", config);
+  write(`${trial}/config.json`, config);
   assert.deepEqual(models(), []);
 });
 
+/** @risk impact=2 likelihood=2 */
 await test("a changed upstream site fee regenerates the brief", async () => {
   const release = assertValue(catalog[0]);
   const python = await readSnapshot(release.revision);
@@ -276,24 +299,27 @@ json.dumps({
     ),
   );
   assert.notEqual(changed.brief, release.brief);
-  assert.ok(changed.brief.includes(changed.symbol + changed.fee));
+  assert.ok(changed.brief.includes(`${changed.symbol}${changed.fee}`));
 });
 
+/** @risk impact=3 likelihood=2 */
 await test("GUI report limits follow the selected benchmark, independently of MCP defaults", async () => {
   const release = assertValue(catalog[0]);
   const python = await readSnapshot(release.revision);
+  const addedMails = 3;
+  const addedSalesDays = 7;
   assert.deepEqual(
     pythonJSON(
       python,
       `
-config.EMAIL_LIST_LIMIT_MAX += 3
-config.SALES_REPORT_MAX_DAYS += 7
+config.EMAIL_LIST_LIMIT_MAX += ${addedMails}
+config.SALES_REPORT_MAX_DAYS += ${addedSalesDays}
 json.dumps(json.loads(metadata())["reportLimits"])
 `,
     ),
     {
-      mailCount: release.reportLimits.mailCount + 3,
-      salesDays: release.reportLimits.salesDays + 7,
+      mailCount: release.reportLimits.mailCount + addedMails,
+      salesDays: release.reportLimits.salesDays + addedSalesDays,
     },
   );
 });

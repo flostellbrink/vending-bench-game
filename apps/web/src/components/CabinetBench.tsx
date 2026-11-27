@@ -1,24 +1,83 @@
 import type { Report } from "games-common/benchmark";
 
-import { assertValue, first as firstValue } from "games-common/language";
+import { assertValue, first as firstValue, hasValue, type Optional } from "games-common/language";
 import { useMemo, useState } from "react";
 
-import { msg } from "@/dictionary";
-import { cabinetLayout } from "@/game/cabinet-layout";
-import { address } from "@/game/commands";
-import { slotChanges } from "@/game/slot-evidence";
+import { msg } from "@/dictionary/index.ts";
+import { cabinetLayout, type CabinetSlot } from "@/game/cabinet-layout.ts";
+import { address } from "@/game/commands.ts";
+import { slotChanges } from "@/game/slot-evidence.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
-import { ControlSelect } from "./FormControls";
-import { SlotInstrument } from "./SlotInstrument";
+import { SlotInstrument } from "./SlotInstrument.tsx";
 import "./cabinet-bench.css";
+
+/** The inventory report lists the slot price in this column. */
+const inventoryPriceColumn = 5;
 interface Props extends ObservationProps {
   live: boolean;
   openReport: (id: number) => void;
 }
-export default function CabinetBench(props: Props) {
-  const { report, reports, live } = props;
+/** A slot on a shelf of the cabinet face, with its fill level. */
+function ShelfSlot({
+  slot,
+  picked,
+  pick,
+}: {
+  slot: CabinetSlot;
+  picked: boolean;
+  pick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={picked}
+      aria-label={`${slot.code} · ${slot.product} · ${slot.quantity} / ${slot.capacity}`}
+      title={`${slot.code} · ${slot.product} · ${slot.quantity}/${slot.capacity}`}
+      onClick={pick}
+    >
+      <b>{slot.code}</b>
+      <span>{slot.quantity}</span>
+      <i className="slot-level" aria-hidden="true">
+        <i style={{ width: `${(slot.quantity / Math.max(1, slot.capacity)) * 100}%` }} />
+      </i>
+    </button>
+  );
+}
+
+/** The price that a later receipt shows for the slot, or "—" when it clears the price. */
+function observedPrice(
+  { report: source, price }: { report: Report; price?: number },
+  slotId: string,
+): Optional<string | number> {
+  const inspection =
+    source.tool === "get_machine_inventory"
+      ? source.rows.find(([id]) => typeof id === "string" && address(id) === slotId)
+      : undefined;
+  const listed = inspection?.[inventoryPriceColumn];
+  if (hasValue(listed)) {
+    return listed;
+  }
+  if (hasValue(price)) {
+    return price;
+  }
+  if (source.tool === "clear_slot" || source.display.includes("has no price set")) {
+    return "—";
+  }
+  return undefined;
+}
+
+export default function CabinetBench({
+  report,
+  reports,
+  state,
+  money,
+  runCommand,
+  disabled,
+  live,
+  openReport,
+}: Props) {
   const readings = useMemo(() => {
     const layout = cabinetLayout(report.rows);
     const stockSources = new Map<string, Report>();
@@ -33,27 +92,21 @@ export default function CabinetBench(props: Props) {
           slot.capacity = change.observation.capacity ?? slot.capacity;
           stockSources.set(slot.id, source);
         }
-        const inspection =
-          source.tool === "get_machine_inventory"
-            ? source.rows.find(([id]) => typeof id === "string" && address(id) === slot.id)
-            : undefined;
-        let price;
-        if (inspection?.[5] != null) price = inspection[5];
-        else if (change.price !== undefined) price = change.price;
-        else if (source.tool === "clear_slot" || source.display.includes("has no price set"))
-          price = "—";
-        if (price !== undefined) {
+        const price = observedPrice(change, slot.id);
+        if (hasValue(price)) {
           slot.price = price;
           priceSources.set(slot.id, source);
         }
       }
     }
-    return { ...layout, stockSources, priceSources };
+    return { ...layout, priceSources, stockSources };
   }, [report, reports, live]);
   const { machines, slots } = readings;
   const [picked, setPicked] = useState(() => slots.keys().next().value);
   const slot = (picked ? slots.get(picked) : undefined) ?? slots.values().next().value;
-  if (!slot) return null;
+  if (!slot) {
+    return null;
+  }
   const shelves = assertValue(machines.get(slot.machine));
 
   return (
@@ -63,7 +116,8 @@ export default function CabinetBench(props: Props) {
           {machines.size === 1 ? (
             <b>{slot.machine}</b>
           ) : (
-            <ControlSelect
+            <select
+              className="control-input"
               aria-label={msg.operator.machines()}
               value={slot.machine}
               onChange={(e) => {
@@ -74,7 +128,7 @@ export default function CabinetBench(props: Props) {
               {[...machines.keys()].map((id) => (
                 <option key={id}>{id}</option>
               ))}
-            </ControlSelect>
+            </select>
           )}
         </header>
         <div className="cabinet-glass">
@@ -82,23 +136,10 @@ export default function CabinetBench(props: Props) {
             <div
               className="cabinet-shelf"
               key={key}
-              style={{ gridTemplateColumns: "repeat(" + shelf.length + ", minmax(0,1fr))" }}
+              style={{ gridTemplateColumns: `repeat(${shelf.length}, minmax(0,1fr))` }}
             >
               {shelf.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  aria-pressed={s === slot}
-                  aria-label={s.code + " · " + s.product + " · " + s.quantity + " / " + s.capacity}
-                  title={s.code + " · " + s.product + " · " + s.quantity + "/" + s.capacity}
-                  onClick={() => setPicked(s.id)}
-                >
-                  <b>{s.code}</b>
-                  <span>{s.quantity}</span>
-                  <i className="slot-level" aria-hidden="true">
-                    <i style={{ width: (s.quantity / Math.max(1, s.capacity)) * 100 + "%" }} />
-                  </i>
-                </button>
+                <ShelfSlot key={s.id} slot={s} picked={s === slot} pick={() => setPicked(s.id)} />
               ))}
             </div>
           ))}
@@ -106,7 +147,14 @@ export default function CabinetBench(props: Props) {
       </section>
       <SlotInstrument
         key={slot.id}
-        {...props}
+        report={report}
+        reports={reports}
+        state={state}
+        money={money}
+        runCommand={runCommand}
+        disabled={disabled}
+        live={live}
+        openReport={openReport}
         slot={slot}
         stockSource={readings.stockSources.get(slot.id) ?? report}
         priceSource={readings.priceSources.get(slot.id) ?? report}

@@ -1,38 +1,38 @@
 import type { Actions, Release, Snapshot } from "games-common/benchmark";
 
-import { entries } from "games-common/language";
+import { keys, type Optional } from "games-common/language";
 import { useState } from "react";
 
-import { msg } from "@/dictionary";
-import { commandGroups, local, syntax, toolFor } from "@/game/commands";
-import { useTimeLabel } from "@/game/time-label";
-import { toolDefaults } from "@/game/tool-defaults";
-import { commandLabel } from "@/localization/messages";
+import { msg } from "@/dictionary/index.ts";
+import { commandGroups, local, syntax, toolFor } from "@/game/commands.ts";
+import { useTimeLabel } from "@/game/time-label.ts";
+import { toolDefaults } from "@/game/tool-defaults.ts";
+import { commandLabel } from "@/localization/messages.ts";
 
 import "./command-manual.css";
 
 const groupsLabels = {
-  supply: msg.operator.supply,
-  machines: msg.operator.machines,
   business: msg.operator.business,
   correspondence: msg.operator.correspondence,
+  machines: msg.operator.machines,
   records: msg.operator.records,
+  supply: msg.operator.supply,
 };
 interface Props {
   actions: Actions;
   release: Release;
-  state: Snapshot | null;
+  state: Optional<Snapshot>;
 }
 
 export function CommandIndex({ actions, release, state }: Props) {
-  const [choice, choose] = useState("search_web");
+  const [choice, setChoice] = useState("search_web");
   const timeLabel = useTimeLabel();
-  const groups = entries(commandGroups).map(([key, names]) => ({
+  const groups = commandGroups.map(([key, names]) => ({
     label: groupsLabels[key](),
     names: names.filter((name) => name in release.tools || name in actions),
   }));
   const mapped = new Set<string>(groups.flatMap((group) => group.names));
-  const other = Object.keys(release.tools).filter((tool) => !mapped.has(tool));
+  const other = keys(release.tools).filter((tool) => !mapped.has(tool));
   const sections = [
     ...groups,
     { label: msg.operator.toolInformation(), names: other },
@@ -56,7 +56,7 @@ export function CommandIndex({ actions, release, state }: Props) {
                   type="button"
                   key={name}
                   aria-pressed={name === selected}
-                  onClick={() => choose(name)}
+                  onClick={() => setChoice(name)}
                 >
                   {name}
                 </button>

@@ -1,6 +1,6 @@
-import { msg } from "@/dictionary";
+import { msg } from "@/dictionary/index.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
 import "./financial-readouts.css";
 type Props = Pick<ObservationProps, "report" | "reports" | "state" | "money"> & {

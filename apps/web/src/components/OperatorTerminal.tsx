@@ -1,23 +1,25 @@
 import type { Release, SlotObservation } from "games-common/benchmark";
 
+import { entries, hasAny, hasValue } from "games-common/language";
 import { useEffect, useMemo, useRef } from "react";
 
-import type { CommandLine, Run } from "@/hooks/useCommandLine";
+import type { CommandLine, Run } from "@/hooks/useCommandLine.ts";
 
-import { msg } from "@/dictionary";
-import { syntax, toolFor } from "@/game/commands";
-import { useTimeLabel } from "@/game/time-label";
-import { orderStatus } from "@/localization/messages";
-import { commandLabel, type Money } from "@/localization/messages";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { syntax, toolFor } from "@/game/commands.ts";
+import { useTimeLabel } from "@/game/time-label.ts";
+import { commandLabel, orderStatus, type Money } from "@/localization/messages.ts";
+import { clock } from "@/scene/clock.ts";
 
-import { PlanEvidence } from "./PlanEvidence";
-import { Receipts } from "./Receipts";
-import { ShiftPlan } from "./ShiftPlan";
+import { PlanEvidence } from "./PlanEvidence.tsx";
+import { Receipts } from "./Receipts.tsx";
+import { ShiftPlan } from "./ShiftPlan.tsx";
+/** The log keeps following new receipts while the reader is this close to its end, in pixels. */
+const followSlack = 24;
 const bootStages = {
-  runtime: msg.operator.runtime,
   mount: msg.operator.mount,
   ready: msg.operator.ready,
+  runtime: msg.operator.runtime,
 };
 interface Props {
   release: Release;
@@ -44,13 +46,13 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
     orderEstimate,
   } = shell;
   const timeLabel = useTimeLabel();
-  const estimate = timeLabel(verb, state),
-    log = useRef<HTMLDivElement>(null),
-    follow = useRef(true);
+  const estimate = timeLabel(verb, state);
+  const log = useRef<HTMLDivElement>(null);
+  const follow = useRef(true);
   const observations = useMemo(() => {
     const bySlot: Record<string, SlotObservation & { day: number; minute: number }> = {};
     for (const r of reports) {
-      for (const [key, v] of Object.entries(r.slots)) {
+      for (const [key, v] of entries(r.slots)) {
         const id = JSON.stringify(key);
         bySlot[id] = {
           ...v,
@@ -63,14 +65,15 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
     return bySlot;
   }, [reports]);
   useEffect(() => {
-    if (lines.length && follow.current && log.current)
+    if (lines.length && follow.current && log.current) {
       log.current.scrollTop = log.current.scrollHeight;
+    }
   }, [lines]);
   return (
     <aside className="shell">
       <header>
         <b>{msg.operator.terminal()}</b>
-        <span className={"lamp" + (busy ? " working" : "")}>TTY / 01</span>
+        <span className={`lamp${busy ? " working" : ""}`}>TTY / 01</span>
       </header>
       <div
         className="scrollback"
@@ -79,13 +82,14 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
           if (
             e.target instanceof Element &&
             !e.target.closest("button,textarea,select,a") &&
-            !window.getSelection()?.toString()
-          )
+            !globalThis.getSelection()?.toString()
+          ) {
             prompt.current?.focus();
+          }
         }}
         onScroll={(e) => {
           const n = e.currentTarget;
-          follow.current = n.scrollHeight - n.clientHeight - n.scrollTop < 24;
+          follow.current = n.scrollHeight - n.clientHeight - n.scrollTop < followSlack;
         }}
       >
         {boot && (
@@ -112,7 +116,7 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
         <Receipts lines={lines} openReport={setTab} money={money} />
       </div>
       <div className="input-zone">
-        {state && shell.steps.length > 0 && <ShiftPlan {...{ state, shell, busy }} />}
+        {state && shell.steps.length > 0 && <ShiftPlan busy={busy} shell={shell} state={state} />}
         {state && shell.steps.length > 0 && (
           <PlanEvidence
             line={shell.line || shell.steps[0]?.line || ""}
@@ -132,15 +136,11 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
                 {s}
                 <small>
                   {observations[s]
-                    ? observations[s].qty +
-                      "/" +
-                      (observations[s].capacity ?? "—") +
-                      " · " +
-                      msg.operator.day() +
-                      " " +
-                      observations[s].day +
-                      " " +
-                      clock(observations[s].minute)
+                    ? `${observations[s].qty}/${
+                        observations[s].capacity ?? "—"
+                      } · ${msg.operator.day()} ${observations[s].day} ${clock(
+                        observations[s].minute,
+                      )}`
                     : commandLabel(toolFor(s))}
                 </small>
               </button>
@@ -156,14 +156,14 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
               <button
                 onClick={shell.stage}
                 disabled={busy}
-                title={"Ctrl+Enter · " + msg.operator.noCharge()}
+                title={`Ctrl+Enter · ${msg.operator.noCharge()}`}
               >
-                {shell.editing === null ? msg.operator.addPlan() : msg.operator.savePlan()}
+                {hasValue(shell.editing) ? msg.operator.savePlan() : msg.operator.addPlan()}
               </button>
             )}
           </div>
         )}
-        {shell.editing !== null && (
+        {hasValue(shell.editing) && (
           <div className="plan-edit">
             <small>{msg.operator.editPlan()} · Enter / Esc</small>
             <button onClick={shell.cancelEdit}>{msg.operator.cancelPlan()}</button>
@@ -172,7 +172,7 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
         {orderEstimate && (
           <div className="order-estimate">
             <b>{orderStatus[orderEstimate.status]()}</b>
-            {orderEstimate.cost != null && (
+            {orderEstimate.status !== "needQuote" && orderEstimate.status !== "expiredQuote" && (
               <>
                 {" "}
                 · {money(orderEstimate.cost)} · {msg.operator.afterOrder()}:{" "}
@@ -188,13 +188,13 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
           </div>
         )}
         {error && <p role="alert">{error}</p>}
-        {run.runtimeError && (
+        {hasAny(run.runtimeError) && (
           <div role="alert">
             <p>{run.runtimeError}</p>
             <button onClick={() => location.reload()}>{msg.operator.resumeSavedRun()}</button>
           </div>
         )}
-        {saveIssue && (
+        {hasAny(saveIssue) && (
           <p role="alert">
             {(saveIssue === "saveConflict" ? msg.operator.saveConflict : msg.operator.saveFailed)()}
           </p>
@@ -205,7 +205,7 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
             autoFocus
             rows={1}
             id="prompt"
-            disabled={Boolean(run.runtimeError)}
+            disabled={hasAny(run.runtimeError)}
             ref={prompt}
             value={line}
             aria-label={msg.operator.query()}
@@ -224,12 +224,7 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
         <small>
           {busy
             ? msg.screen.loading()
-            : "Tab " +
-              msg.operator.completeKey() +
-              " · Enter " +
-              msg.operator.execute() +
-              " · ↑ " +
-              msg.operator.history()}
+            : `Tab ${msg.operator.completeKey()} · Enter ${msg.operator.execute()} · ↑ ${msg.operator.history()}`}
         </small>
         <button type="button" className="terminal-manual-link" onClick={() => setTab("help")}>
           {msg.operator.help()}

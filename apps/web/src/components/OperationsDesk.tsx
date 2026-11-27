@@ -1,19 +1,20 @@
 import type { CommandArgs, Release } from "games-common/benchmark";
 import type { FormEvent, ReactNode } from "react";
 
+import { keys } from "games-common/language";
 import { useId, useMemo, useRef, useState } from "react";
 
-import { msg } from "@/dictionary";
-import { commandForMove, type ToolName } from "@/game/commands";
-import { noteSnapshot } from "@/game/note-snapshot";
-import { commandLabel } from "@/localization/messages";
-import { clock } from "@/scene/clock";
+import { msg } from "@/dictionary/index.ts";
+import { commandForMove, type ToolName } from "@/game/commands.ts";
+import { noteSnapshot } from "@/game/note-snapshot.ts";
+import { commandLabel } from "@/localization/messages.ts";
+import { clock } from "@/scene/clock.ts";
 
-import type { ObservationProps } from "./panel-props";
+import type { ObservationProps } from "./panel-props.ts";
 
-import { ActionButton, ActionForm, ControlInput, ControlTextarea, Field } from "./FormControls";
-import { GuiToolInfo } from "./GuiToolInfo";
-import ObservationView from "./ObservationView";
+import { ActionForm, Field } from "./FormControls.tsx";
+import { GuiToolInfo } from "./GuiToolInfo.tsx";
+import ObservationView from "./ObservationView.tsx";
 import "./operations-desk.css";
 
 type Desk = "status" | "payments" | "marketing" | "notes" | "reminders";
@@ -28,8 +29,16 @@ function value(data: FormData, key: string) {
   return typeof entry === "string" ? entry : "";
 }
 
-export function OperationsDesk(props: Props) {
-  const { desk, release, state, reports, disabled, runCommand } = props;
+export function OperationsDesk({
+  desk,
+  release,
+  state,
+  reports,
+  money,
+  disabled,
+  runCommand,
+  openReport,
+}: Props) {
   const defaultDays = release.toolDefaults.set_reminder?.in_days;
   const [noteKey, setNoteKey] = useState("");
   const [noteText, setNoteText] = useState("");
@@ -42,7 +51,9 @@ export function OperationsDesk(props: Props) {
     [desk, reports],
   );
   function dispatch(tool: ToolName, args: CommandArgs = {}) {
-    if (!disabled) runCommand(commandForMove([tool, args]), "inline");
+    if (!disabled) {
+      runCommand(commandForMove([tool, args]), "inline");
+    }
   }
   function submit(tool: ToolName, getArgs: (form: FormData) => CommandArgs) {
     return (event: FormEvent<HTMLFormElement>) => {
@@ -55,15 +66,13 @@ export function OperationsDesk(props: Props) {
     options: { onClick?: () => void; label?: string; inactive?: boolean } = {},
   ) {
     return (
-      <GuiToolInfo verb={tool}>
-        <button
-          type={options.onClick ? "button" : "submit"}
-          disabled={disabled || options.inactive}
-          data-clock-verb={tool}
-          onClick={options.onClick}
-        >
-          {options.label ?? commandLabel(tool)}
-        </button>
+      <GuiToolInfo
+        verb={tool}
+        type={options.onClick ? "button" : "submit"}
+        disabled={disabled || options.inactive}
+        onClick={options.onClick}
+      >
+        {options.label ?? commandLabel(tool)}
       </GuiToolInfo>
     );
   }
@@ -76,43 +85,55 @@ export function OperationsDesk(props: Props) {
       <section className="operation-block" aria-label={title ?? commandLabel(tool)}>
         {title && <h3>{title}</h3>}
         {controls}
-        {report && <ObservationView {...props} report={report} />}
+        {report && (
+          <ObservationView
+            report={report}
+            reports={reports}
+            state={state}
+            money={money}
+            runCommand={runCommand}
+            disabled={disabled}
+            openReport={openReport}
+          />
+        )}
       </section>
     );
   }
-  let forms: ReactNode;
+  let forms: ReactNode = null;
   switch (desk) {
-    case "status":
+    case "status": {
       forms = block("get_status", inspect("get_status"));
       break;
-    case "payments":
+    }
+    case "payments": {
       forms = block(
         "send_payment",
         <ActionForm
           className="payment-fields"
           actions={button("send_payment")}
           onSubmit={submit("send_payment", (data) => ({
-            recipient: value(data, "recipient"),
             amount: Number(value(data, "amount")),
+            recipient: value(data, "recipient"),
             reference: value(data, "reference"),
           }))}
         >
           <Field label={msg.fields.recipient()}>
-            <ControlInput name="recipient" required />
+            <input className="control-input" name="recipient" required />
           </Field>
           <Field label={msg.fields.amount()}>
-            <ControlInput name="amount" type="number" step="any" required />
+            <input className="control-input" name="amount" type="number" step="any" required />
           </Field>
           <Field label={msg.fields.reference()}>
-            <ControlInput name="reference" required />
+            <input className="control-input" name="reference" required />
           </Field>
         </ActionForm>,
       );
       break;
+    }
     case "marketing": {
       const rules = reports.findLast((r) => r.channels)?.channels?.rules.channels;
       const channels =
-        rules && typeof rules === "object" && !Array.isArray(rules) ? Object.keys(rules) : [];
+        rules && typeof rules === "object" && !Array.isArray(rules) ? keys(rules) : [];
       forms = (
         <>
           {block(
@@ -121,13 +142,13 @@ export function OperationsDesk(props: Props) {
               className="campaign-fields"
               actions={button("run_marketing")}
               onSubmit={submit("run_marketing", (data) => ({
-                location: value(data, "location"),
                 channel: value(data, "channel"),
+                location: value(data, "location"),
                 message: value(data, "message"),
               }))}
             >
               <Field label={msg.fields.location()}>
-                <ControlInput name="location" list={locationList} required />
+                <input className="control-input" name="location" list={locationList} required />
               </Field>
               <datalist id={locationList}>
                 {state.sites.map((site) => (
@@ -137,7 +158,7 @@ export function OperationsDesk(props: Props) {
                 ))}
               </datalist>
               <Field label={msg.fields.channel()}>
-                <ControlInput name="channel" list={channelList} required />
+                <input className="control-input" name="channel" list={channelList} required />
               </Field>
               <datalist id={channelList}>
                 {channels.map((channel) => (
@@ -145,7 +166,7 @@ export function OperationsDesk(props: Props) {
                 ))}
               </datalist>
               <Field wide label={msg.fields.message()}>
-                <ControlTextarea rows={2} name="message" required />
+                <textarea className="control-textarea" rows={2} name="message" required />
               </Field>
             </ActionForm>,
             msg.operator.campaignDraft(),
@@ -166,7 +187,7 @@ export function OperationsDesk(props: Props) {
                 <button
                   className="receipt-link note-source"
                   type="button"
-                  onClick={() => props.openReport(notebook.read.id)}
+                  onClick={() => openReport(notebook.read.id)}
                 >
                   {msg.operator.seen()} · {msg.operator.day()} {notebook.read.day} /{" "}
                   {clock(notebook.read.minute)} · #{notebook.read.id}
@@ -181,7 +202,8 @@ export function OperationsDesk(props: Props) {
                         </small>
                       </summary>
                       <pre>{note.text}</pre>
-                      <ActionButton
+                      <button
+                        className="workbench-button"
                         type="button"
                         onClick={() => {
                           setNoteKey(note.key);
@@ -190,7 +212,7 @@ export function OperationsDesk(props: Props) {
                         }}
                       >
                         {msg.operator.editNote()}
-                      </ActionButton>
+                      </button>
                     </details>
                   ))
                 ) : (
@@ -205,8 +227,9 @@ export function OperationsDesk(props: Props) {
               className="note-editor"
               onSubmit={(event) => {
                 event.preventDefault();
-                if (noteKey.trim() && noteText)
+                if (noteKey.trim() && noteText) {
                   dispatch("write_note", { key: noteKey, text: noteText });
+                }
               }}
               actions={button("write_note", {
                 inactive: !noteKey.trim(),
@@ -215,7 +238,8 @@ export function OperationsDesk(props: Props) {
               })}
             >
               <Field label={msg.fields.key()}>
-                <ControlInput
+                <input
+                  className="control-input"
                   name="key"
                   value={noteKey}
                   list={keyList}
@@ -228,7 +252,8 @@ export function OperationsDesk(props: Props) {
                 ))}
               </datalist>
               <Field wide label={msg.fields.text()}>
-                <ControlTextarea
+                <textarea
+                  className="control-textarea"
                   ref={editor}
                   rows={2}
                   value={noteText}
@@ -242,7 +267,7 @@ export function OperationsDesk(props: Props) {
       );
       break;
     }
-    case "reminders":
+    case "reminders": {
       forms = (
         <>
           {block(
@@ -251,12 +276,13 @@ export function OperationsDesk(props: Props) {
               className="reminder-fields"
               actions={button("set_reminder")}
               onSubmit={submit("set_reminder", (data) => ({
-                text: value(data, "text"),
                 in_days: Number(value(data, "in_days")),
+                text: value(data, "text"),
               }))}
             >
               <Field label={msg.fields.in_days()}>
-                <ControlInput
+                <input
+                  className="control-input"
                   type="number"
                   step="1"
                   name="in_days"
@@ -265,7 +291,7 @@ export function OperationsDesk(props: Props) {
                 />
               </Field>
               <Field wide label={msg.fields.text()}>
-                <ControlTextarea rows={2} name="text" />
+                <textarea className="control-textarea" rows={2} name="text" />
               </Field>
             </ActionForm>,
             msg.operator.newReminder(),
@@ -274,6 +300,7 @@ export function OperationsDesk(props: Props) {
         </>
       );
       break;
+    }
   }
   return (
     <section className="sheet business-report operations-desk">

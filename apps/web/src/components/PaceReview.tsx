@@ -1,30 +1,34 @@
 import type { PersonalBest, Rival } from "games-common/benchmark";
 
+import { hasValue, type Optional } from "games-common/language";
 import { useState } from "react";
 
-import type { Money } from "@/localization/messages";
+import type { Money } from "@/localization/messages.ts";
 
-import { msg } from "@/dictionary";
-import { largestPaceLoss } from "@/game/pace";
+import { msg } from "@/dictionary/index.ts";
+import { largestPaceLoss } from "@/game/pace.ts";
 
 interface Props {
   history: readonly number[];
   rivals: readonly Rival[];
-  best: PersonalBest | null;
+  best: Optional<PersonalBest>;
   playerName: string;
 
   money: Money;
   reviewDay: (day: number) => void;
 }
 export function PaceReview({ history, rivals, best, playerName, money, reviewDay }: Props) {
-  const [choice, choose] = useState("");
+  const [choice, setChoice] = useState("");
   const opponents = rivals
     .filter((r) => r.values && r.values.length > 1)
     .map((r) => ({ key: r.source, name: r.name, values: r.values ?? [] }));
-  if (best)
+  if (best) {
     opponents.push({ key: "personal", name: msg.operator.previousBest(), values: best.values });
+  }
   const rival = opponents.find((r) => r.key === choice) ?? opponents[0];
-  if (!rival || history.length < 2) return null;
+  if (!rival || history.length < 2) {
+    return null;
+  }
   const loss = largestPaceLoss(history, rival.values);
   const day = Math.min(history.length, rival.values.length) - 1;
   const playerClose = history[day];
@@ -38,7 +42,7 @@ export function PaceReview({ history, rivals, best, playerName, money, reviewDay
           <select
             aria-label={msg.operator.opponent()}
             value={rival.key}
-            onChange={(e) => choose(e.currentTarget.value)}
+            onChange={(e) => setChoice(e.currentTarget.value)}
           >
             {opponents.map((o) => (
               <option key={o.key} value={o.key}>
@@ -50,7 +54,7 @@ export function PaceReview({ history, rivals, best, playerName, money, reviewDay
           <span>{rival.name}</span>
         )}
       </header>
-      {day > 0 && playerClose !== undefined && rivalClose !== undefined && (
+      {day > 0 && hasValue(playerClose) && hasValue(rivalClose) && (
         <div className="pace-checkpoint">
           <span>
             {msg.operator.closing()} · {msg.operator.day()} {day}

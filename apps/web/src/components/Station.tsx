@@ -1,22 +1,22 @@
 import type { Release } from "games-common/benchmark";
 
-import { includes } from "games-common/language";
+import { hasValue, includes } from "games-common/language";
 import { useLocale } from "games-localize/react";
 
-import type { ParentBalance } from "@/game/runs";
+import type { ParentBalance } from "@/game/runs.ts";
 
-import { msg } from "@/dictionary";
-import { locales } from "@/dictionary/runtime";
-import { rankedModels } from "@/game/model-rivals";
-import { useCommandLine } from "@/hooks/useCommandLine";
-import { useNavigation } from "@/hooks/useNavigation";
-import { useRun } from "@/hooks/useRun";
-import { useCurrency } from "@/localization/formatters";
-import { type Lang } from "@/localization/messages";
+import { msg } from "@/dictionary/index.ts";
+import { locales } from "@/dictionary/runtime.ts";
+import { rankedModels } from "@/game/model-rivals.ts";
+import { useCommandLine } from "@/hooks/useCommandLine.ts";
+import { useNavigation } from "@/hooks/useNavigation.ts";
+import { useRun } from "@/hooks/useRun.ts";
+import { useCurrency } from "@/localization/formatters.ts";
+import { type Lang } from "@/localization/messages.ts";
 
-import { OperatorTerminal } from "./OperatorTerminal";
-import { Settlement } from "./Settlement";
-import { Workspace } from "./Workspace";
+import { OperatorTerminal } from "./OperatorTerminal.tsx";
+import { Settlement } from "./Settlement.tsx";
+import { Workspace } from "./Workspace.tsx";
 interface Props {
   newRun: boolean;
   release: Release;
@@ -27,19 +27,28 @@ interface Props {
 }
 export function Station({ release, slot, parentBalance, changeLang, newRun }: Props) {
   const lang = useLocale();
-  const nav = useNavigation(newRun ? "brief" : "suppliers"),
-    run = useRun(release, slot, nav.showResult);
+  const nav = useNavigation(newRun ? "brief" : "suppliers");
+  const run = useRun(release, slot, nav.showResult);
   const currency = useCurrency(release.currency);
   const money = (value: number) => currency.format(value);
   const shell = useCommandLine(run, nav, release);
   const { state, rivals, busy, history } = run;
-  const opponent = rankedModels(rivals)[0],
-    day = history.length - 1,
-    closing = history[day],
-    rivalClose = opponent?.values?.[day];
-  const gap =
-    day > 0 && closing !== undefined && rivalClose !== undefined ? closing - rivalClose : null;
-  if (state?.over) return <Settlement {...{ run, release, slot, money, parentBalance }} />;
+  const [opponent] = rankedModels(rivals);
+  const day = history.length - 1;
+  const closing = history[day];
+  const rivalClose = opponent?.values?.[day];
+  const gap = day > 0 && hasValue(closing) && hasValue(rivalClose) ? closing - rivalClose : null;
+  if (state?.over) {
+    return (
+      <Settlement
+        money={money}
+        parentBalance={parentBalance}
+        release={release}
+        run={run}
+        slot={slot}
+      />
+    );
+  }
   return (
     <main className="station">
       <header className="mast">
@@ -53,9 +62,9 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
           <button className="pace-key" onClick={() => nav.setTab("scores")}>
             <span>{opponent.name}</span>
             <b>
-              {gap === null
-                ? msg.fields.score() + " · " + money(opponent.score)
-                : msg.operator.day() + " " + day + " · " + (gap > 0 ? "+" : "") + money(gap)}
+              {hasValue(gap)
+                ? `${msg.operator.day()} ${day} · ${gap > 0 ? "+" : ""}${money(gap)}`
+                : `${msg.fields.score()} · ${money(opponent.score)}`}
             </b>
           </button>
         )}
@@ -64,7 +73,9 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
           value={lang}
           disabled={busy}
           onChange={(e) => {
-            if (includes(locales, e.target.value)) changeLang(e.target.value);
+            if (includes(locales, e.target.value)) {
+              changeLang(e.target.value);
+            }
           }}
         >
           {locales.map((l) => (
@@ -82,16 +93,29 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
         </button>
       </header>
       <div className="desk">
-        <OperatorTerminal {...{ release, money, run, shell }} setTab={nav.setTab} />
-        <Workspace {...{ run, nav, shell, release, money, parentBalance }} />
+        <OperatorTerminal
+          money={money}
+          release={release}
+          run={run}
+          shell={shell}
+          setTab={nav.setTab}
+        />
+        <Workspace
+          money={money}
+          nav={nav}
+          parentBalance={parentBalance}
+          release={release}
+          run={run}
+          shell={shell}
+        />
       </div>
       <footer>
         <span>
           {state?.final
-            ? msg.operator.score() + " · " + money(state.final.reward)
-            : "Vending Bench / " + release.id + " · Seed " + release.seed}
+            ? `${msg.operator.score()} · ${money(state.final.reward)}`
+            : `Vending Bench / ${release.id} · Seed ${release.seed}`}
         </span>
-        <a href={"../?" + new URLSearchParams({ bench: release.revision, slot })}>
+        <a href={`../?${new URLSearchParams({ bench: release.revision, slot })}`}>
           {msg.session.mainMenu()}
         </a>
       </footer>

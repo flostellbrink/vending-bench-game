@@ -1,31 +1,37 @@
 import type { Report } from "games-common/benchmark";
 import type { ReactNode, RefObject } from "react";
 
+import { type Optional } from "games-common/language";
 import { useId, useLayoutEffect, useRef } from "react";
 
-import type { View } from "@/game/readout-path";
+import type { View } from "@/game/readout-path.ts";
 
-import { msg } from "@/dictionary";
-import { toolFor } from "@/game/commands";
-import { commandLabel } from "@/localization/messages";
+import { msg } from "@/dictionary/index.ts";
+import { toolFor } from "@/game/commands.ts";
+import { commandLabel } from "@/localization/messages.ts";
 
-import { ActionButton } from "./FormControls";
 import "./result-dialog.css";
 
+const dayPrefix = "day:";
+
 export function resultTitle(view: View, report?: Report, owner = "") {
-  if (typeof view === "number" && report && report.endDay !== report.day)
-    return msg.operator.statement() + " · " + msg.operator.day() + " " + report.day;
-  if (typeof view === "number" && report)
+  if (typeof view === "number" && report && report.endDay !== report.day) {
+    return `${msg.operator.statement()} · ${msg.operator.day()} ${report.day}`;
+  }
+  if (typeof view === "number" && report) {
     return (
       report.mail?.subject ??
       report.terms?.order ??
       commandLabel(toolFor(report.tool)) ??
       report.tool
     );
-  if (typeof view === "string" && view.startsWith("day:"))
-    return msg.operator.day() + " " + view.slice(4) + " · " + msg.operator.results();
-  if (typeof view === "string" && view.startsWith("past:"))
-    return msg.operator.history() + " · " + owner;
+  }
+  if (typeof view === "string" && view.startsWith(dayPrefix)) {
+    return `${msg.operator.day()} ${view.slice(dayPrefix.length)} · ${msg.operator.results()}`;
+  }
+  if (typeof view === "string" && view.startsWith("past:")) {
+    return `${msg.operator.history()} · ${owner}`;
+  }
   return owner;
 }
 
@@ -42,7 +48,7 @@ export function ResultDialog({
   close: () => void;
   related?: ReactNode;
   covered?: boolean;
-  opener?: RefObject<HTMLElement | null>;
+  opener?: RefObject<Optional<HTMLElement>>;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const heading = useId();
@@ -54,7 +60,9 @@ export function ResultDialog({
     dialog?.showModal();
     return () => {
       dialog?.close();
-      if (origin?.isConnected) origin.focus({ preventScroll: true });
+      if (origin?.isConnected) {
+        origin.focus({ preventScroll: true });
+      }
     };
   }, [opener]);
   return (
@@ -64,7 +72,9 @@ export function ResultDialog({
       aria-labelledby={heading}
       data-covered={covered || undefined}
       onCancel={(event) => {
-        if (event.target !== event.currentTarget) return;
+        if (event.target !== event.currentTarget) {
+          return;
+        }
         event.preventDefault();
         close();
       }}
@@ -72,9 +82,9 @@ export function ResultDialog({
       <header>
         <h2 id={heading}>{title}</h2>
         {related}
-        <ActionButton type="button" onClick={close}>
+        <button className="workbench-button" type="button" onClick={close}>
           {msg.operator.closeDialog()}
-        </ActionButton>
+        </button>
       </header>
       <div className="readout result-body">{children}</div>
     </dialog>

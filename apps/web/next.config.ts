@@ -3,13 +3,13 @@ import type { NextConfig } from "next";
 import { localizeRules } from "games-localize/next";
 
 export default {
-  output: "export",
-  trailingSlash: true,
   devIndicators: false,
-  poweredByHeader: false,
-  transpilePackages: ["games-localize", "games-common"],
-  reactCompiler: true,
   experimental: { turbopackRustReactCompiler: true },
+  output: "export",
+  poweredByHeader: false,
+  reactCompiler: true,
+  trailingSlash: true,
+  transpilePackages: ["games-localize", "games-common"],
   turbopack: {
     rules: {
       "*.css": { as: "*.css", loaders: ["@tailwindcss/turbopack"] },
