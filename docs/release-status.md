@@ -10,7 +10,7 @@ The static export is ready for desktop playtests. Cross-device sign-off is open.
 
 ## Competition
 
-The game uses v3.0.0. The briefing, tools, engine, costs and rivals come from the pinned submodule commit. The scripted operator reproduces the published €3,302.96 for 30 days on seed 1. The latest solo attempt per model from the [two-agent study](https://github.com/ProsusAI/vending-bench/tree/0d9e1a1e/results/two-agent-seed1) shows as a final balance. No v2 scores ship.
+The game uses v3.0.0. The briefing, tools, engine, costs and rivals come from the pinned submodule commit. The scripted operator reproduces the published €3,302.96 for 30 days on seed 1. Each model shows its latest 30-day attempt on seed 1 from the [model baseline](https://github.com/ProsusAI/vending-bench/tree/08c5a42a/results/baselines/models-30d) with daily balances. The save timeline replays the highest-scoring model run that reproduces exactly in the browser engine, so players can resume it from any morning. No v2 scores ship.
 
 ## Playtest results
 

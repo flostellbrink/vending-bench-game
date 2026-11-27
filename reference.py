@@ -6,7 +6,6 @@ import json
 import re
 import sys
 import tomllib
-from copy import deepcopy
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -77,17 +76,11 @@ def browser_tools():
 def reference_trace(version):
     engine = Engine.new(config.SEED)
     balances = [engine.s["balance"]]
-    moves = []
-    checkpoints = [{"day": engine.s["day"], "moveCount": 0, "cash": balances[0]}]
 
     class Recorder(DirectClient):
         def call(self, tool, **kwargs):
             day = engine.s["day"]
-            moves.append([tool, deepcopy(kwargs)])
             result = super().call(tool, **kwargs)
-            if day != engine.s["day"] and not engine.over:
-                checkpoints.append({"day": engine.s["day"], "moveCount": len(moves),
-                                    "cash": engine.s["balance"]})
             if len(balances) == day and (day != engine.s["day"] or engine.over):
                 balances.append(engine.s["balance"])
             return result
@@ -114,10 +107,56 @@ def reference_trace(version):
     # A configuration update may precede a published recalibration. In that case the
     # reproducible local bot is still valid; the old published target is not.
     source = calibrated if reproduced else TASK / "solution/reference_bot.py"
-    rival = {"kind": "script", "score": result["reward"], "values": balances,
+    return {"kind": "script", "score": result["reward"], "values": balances,
             "endDay": result["days_operated"], "finalBalance": result["final_balance"],
             "sourcePath": source.relative_to(ROOT).as_posix()}
-    return rival, {"seed": config.SEED, "moves": moves, "checkpoints": checkpoints}
+
+
+def recorded_calls(path):
+    calls, replies = [], {}
+    with path.open() as exchanges:
+        for line in exchanges:
+            for message in json.loads(line):
+                if message.get("role") == "assistant":
+                    calls += [(call["id"], call["function"]["name"], call["function"]["arguments"])
+                              for call in message.get("tool_calls") or []]
+                elif message.get("role") == "tool":
+                    replies[message["tool_call_id"]] = message["content"]
+    return calls, replies
+
+
+def model_replay(rival):
+    """Rebuild a trial's moves, or None unless every reply and the score reproduce."""
+    result_path = ROOT / rival["sourcePath"]
+    conversation = result_path.parent / "conversation.jsonl"
+    if not conversation.exists():
+        return None
+    calls, replies = recorded_calls(conversation)
+    scope = {"config": config}
+    exec(browser_tools(), scope)
+    engine = scope["ENGINE"] = Engine.new(config.SEED)
+    moves = []
+    checkpoints = [{"day": engine.s["day"], "moveCount": 0, "cash": engine.s["balance"]}]
+    for call_id, tool, arguments in calls:
+        if engine.over:
+            break
+        day = engine.s["day"]
+        try:
+            args = json.loads(arguments)
+            reply = scope["tools"][tool](**args)
+        except Exception:
+            return None
+        if reply != replies.get(call_id):
+            return None
+        moves.append([tool, args])
+        if day != engine.s["day"] and not engine.over:
+            checkpoints.append({"day": engine.s["day"], "moveCount": len(moves),
+                                "cash": engine.s["balance"]})
+    score, result = engine.score(), read_json(result_path)
+    if not engine.over or any(score[k] != result[k] for k in
+                              ("reward", "final_balance", "completed", "tool_calls", "units_sold")):
+        return None
+    return {"seed": config.SEED, "moves": moves, "checkpoints": checkpoints}
 
 
 def check_batch_source(batch, manifest):
@@ -264,7 +303,7 @@ def metadata():
     task = tomllib.loads((TASK / "task.toml").read_text())
     version = task["task"]["version"]
     brief = render()
-    script, replay = reference_trace(version)
+    script = reference_trace(version)
     tools, defaults = tool_metadata()
     # Baselines reuse study trials; the first copy wins because baselines record daily balances.
     models, trials = [], set()
@@ -273,6 +312,11 @@ def metadata():
         if trial not in trials:
             trials.add(trial)
             models.append(rival)
+    for rival in sorted(models, key=lambda rival: -rival["score"]):
+        replay = model_replay(rival)
+        if replay:
+            rival["replay"] = replay
+            break
     return json.dumps({"version": version, "seed": config.SEED, "days": config.SIM_DAYS,
                        "startingBalance": config.STARTING_BALANCE, "currency": config.CURRENCY,
                        "network": {"sites":len(config.LOCATIONS),"machines":len(config.machine_ids()),
@@ -282,6 +326,5 @@ def metadata():
                        "brief": brief.strip(), "tools": tools, "toolDefaults": defaults,
                        "reportLimits": {"mailCount": config.EMAIL_LIST_LIMIT_MAX,
                                         "salesDays": config.SALES_REPORT_MAX_DAYS},
-                       "scriptedReplay": replay,
                        "rivals": [script, *models]},
                       allow_nan=False)

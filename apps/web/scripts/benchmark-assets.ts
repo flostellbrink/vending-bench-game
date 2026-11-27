@@ -41,17 +41,17 @@ function assets({ browserTools, ...release }: SnapshotRelease): Release {
   const { revision, adapter } = release;
   const folder = "benchmarks/" + revision;
   mkdirSync(join(publicDir, folder), { recursive: true });
-  const scriptedReplay = folder + "/scripted-replay.json";
-  writeJSON(join(publicDir, scriptedReplay), { revision, ...release.scriptedReplay });
   const source = (path: string) => repoURL + revision + "/" + path;
-  const rivals = release.rivals.map(({ values, sourcePath, ...rival }, i) => {
+  const rivals = release.rivals.map(({ values, sourcePath, replay, ...rival }, i) => {
     const published = { ...rival, source: source(sourcePath) };
+    if (replay && !values) throw Error("A replayed run needs its daily balances: " + sourcePath);
     if (!values) return published;
     const balances = folder + "/rival-" + i + ".json";
     writeJSON(join(publicDir, balances), values);
-    return rival.kind === "script"
-      ? { ...published, balances, values }
-      : { ...published, balances };
+    if (!replay) return { ...published, balances };
+    const moves = folder + "/replay-" + i + ".json";
+    writeJSON(join(publicDir, moves), { revision, ...replay });
+    return { ...published, balances, values, replay: moves };
   });
   const mtime = git("show", "-s", "--format=%cI", revision).toString().trim();
   const engineArchive = folder + "/engine.zip";
@@ -73,7 +73,7 @@ function assets({ browserTools, ...release }: SnapshotRelease): Release {
   const hash = createHash("sha256").update(adapterSource).digest("hex");
   const adapterAsset = folder + "/adapter-" + hash.slice(0, 16) + ".py";
   writeFileSync(join(publicDir, adapterAsset), adapterSource);
-  return { ...release, scriptedReplay, engineArchive, adapter: adapterAsset, rivals };
+  return { ...release, engineArchive, adapter: adapterAsset, rivals };
 }
 
 if (import.meta.main) {

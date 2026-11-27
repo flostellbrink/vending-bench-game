@@ -26,6 +26,7 @@ export const rivalSchema = v.object({
   source: v.string(),
   balances: v.optional(v.string()),
   values: v.optional(v.array(v.number())),
+  replay: v.optional(v.string()),
 });
 export type Release = v.InferOutput<typeof releaseSchema>;
 export const releaseSchema = v.object({
@@ -77,7 +78,6 @@ export const releaseSchema = v.object({
     v.record(v.string(), jsonValueSchema),
   ),
   engineArchive: v.string(),
-  scriptedReplay: v.string(),
   adapter: v.string(),
   rivals: v.array(rivalSchema),
 });
@@ -153,7 +153,7 @@ export const commandArgsSchema = v.objectWithRest(
 );
 export type Move = v.InferOutput<typeof moveSchema>;
 export const moveSchema = v.tuple([v.string(), commandArgsSchema]);
-export const scriptedReplaySchema = v.object({
+export const replaySchema = v.object({
   revision: v.string(),
   seed: v.number(),
   moves: v.array(moveSchema),

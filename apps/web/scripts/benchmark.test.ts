@@ -1,9 +1,4 @@
-import {
-  actionsSchema,
-  parseReleases,
-  scriptedReplaySchema,
-  snapshotSchema,
-} from "games-common/benchmark";
+import { actionsSchema, parseReleases, replaySchema, snapshotSchema } from "games-common/benchmark";
 import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -136,11 +131,13 @@ snapshot()
   );
 });
 
-await test("the scripted journal reproduces each morning and the final score in the browser engine", async () => {
+await test("the reference run reproduces each morning and its published score in the browser engine", async () => {
   for (const release of catalog) {
+    const rival = assertValue(release.rivals.find((r) => r.replay));
+    assert.equal(rival.kind, "model");
     const journal = v.parse(
-      scriptedReplaySchema,
-      JSON.parse(await readFile(new URL("public/" + release.scriptedReplay, app), "utf8")),
+      replaySchema,
+      JSON.parse(await readFile(new URL("public/" + assertValue(rival.replay), app), "utf8")),
     );
     assert.equal(journal.revision, release.revision);
     assert.equal(journal.seed, release.seed);
@@ -168,13 +165,16 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
     );
     const result = v.parse(
       v.object({
-        checkpoints: scriptedReplaySchema.entries.checkpoints,
+        checkpoints: replaySchema.entries.checkpoints,
         final: v.object({ reward: v.number(), final_balance: v.number(), completed: v.boolean() }),
       }),
       replay,
     );
     assert.deepEqual(result.checkpoints, journal.checkpoints);
-    const rival = assertValue(release.rivals.find((r) => r.kind === "script"));
+    assert.deepEqual(
+      result.checkpoints.map((point) => point.cash),
+      assertValue(rival.values).slice(0, result.checkpoints.length),
+    );
     assert.equal(result.final.reward, rival.score);
     assert.equal(result.final.final_balance, rival.finalBalance);
     if (result.final.completed) assert.equal(result.checkpoints.length, release.days);

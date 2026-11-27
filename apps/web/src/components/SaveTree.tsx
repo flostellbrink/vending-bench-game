@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { RunSlot } from "@/game/runs";
 
 import { msg } from "@/dictionary";
-import { scriptedSlot } from "@/game/runs";
+import { referenceSlot } from "@/game/runs";
 import { useCurrency } from "@/localization/formatters";
 import { clock } from "@/scene/clock";
 
@@ -13,7 +13,7 @@ interface Props {
   release: Release;
   slots: RunSlot[];
   closings: number[];
-
+  reference?: string;
   activeSlot?: string;
   initialDay?: number;
   disabled: boolean;
@@ -50,7 +50,7 @@ function playerLanes(slots: RunSlot[], finishedColumn: number): Lane[] {
   const lanes: Lane[] = [];
   const seen = new Set<string>();
   const pending = [
-    ...(children.get(scriptedSlot) ?? []),
+    ...(children.get(referenceSlot) ?? []),
     ...(children.get(fresh.source) ?? []),
     ...slots,
   ].toReversed();
@@ -113,6 +113,7 @@ export default function SaveTree({
   release,
   slots,
   closings,
+  reference,
   activeSlot,
   initialDay,
   disabled,
@@ -121,14 +122,14 @@ export default function SaveTree({
 }: Props) {
   const [choice, setChoice] = useState<string>();
   const box = useRef<HTMLDivElement>(null);
-  const script: Node[] = closings
+  const referenceNodes: Node[] = closings
     .slice(0, release.days - 1)
-    .map((cash, i) => ({ source: scriptedSlot, day: i + 2, cash }));
+    .map((cash, i) => ({ source: referenceSlot, day: i + 2, cash }));
   const last = closings[release.days - 1];
   if (last !== undefined)
-    script.push({ source: scriptedSlot, day: release.days + 1, cash: last, result: true });
+    referenceNodes.push({ source: referenceSlot, day: release.days + 1, cash: last, result: true });
   const lanes: Lane[] = [
-    { source: scriptedSlot, nodes: [fresh, ...script] },
+    { source: referenceSlot, nodes: [fresh, ...referenceNodes] },
     ...playerLanes(slots, release.days + 1),
   ];
   const rowFor = new Map(lanes.map((lane, i) => [lane.source, i]));
@@ -174,7 +175,7 @@ export default function SaveTree({
     node === fresh
       ? msg.session.newSlot()
       : [
-          node.source === scriptedSlot && msg.session.scriptReference(),
+          node.source === referenceSlot && reference,
           node.result ? msg.session.finished() : msg.session.dayNumber({ day: node.day }),
           node.cash !== null && money.format(node.cash),
         ]
@@ -220,7 +221,7 @@ export default function SaveTree({
                         <b>{n.cash === null ? "—" : money.format(n.cash)}</b>
                       </>
                     );
-                  if (n.source === scriptedSlot && (n.result || !release.scriptedReplay))
+                  if (n.source === referenceSlot && n.result)
                     return (
                       <span
                         className="save-card reference"
@@ -235,11 +236,7 @@ export default function SaveTree({
                   return (
                     <button
                       type="button"
-                      className={
-                        "save-card" +
-                        (n === fresh ? " fresh" : "") +
-                        (n.source === scriptedSlot ? " scripted" : "")
-                      }
+                      className={"save-card" + (n === fresh ? " fresh" : "")}
                       key={id(n)}
                       data-day={n.day}
                       data-checkpoint={id(n)}
