@@ -1341,15 +1341,17 @@ landing:
   lead:
     .id: HN000001
     .inputs:
-      - $model :string
-    ^en: "{$model} ran a vending machine. Your shift."
-    es: "{$model} gestionó una máquina expendedora. Te toca."
-    de: "{$model} hat einen Verkaufsautomaten betrieben. Jetzt bist du dran."
+      - $days :integer
+    ^en: "{$days} days of Vending Bench. Can you beat the AI?"
+    es: "{$days} días de Vending Bench. ¿Puedes superar a la IA?"
+    de: "{$days} Tage Vending Bench. Schlägst du die KI?"
   fallback:
     .id: HN000002
-    ^en: "No AI has a published score here yet. Your shift."
-    es: "Aún ninguna IA tiene una puntuación publicada aquí. Te toca."
-    de: "Hier hat noch keine KI eine veröffentlichte Wertung. Jetzt bist du dran."
+    .inputs:
+      - $days :integer
+    ^en: "{$days} days of Vending Bench. No AI has a published score here yet."
+    es: "{$days} días de Vending Bench. Aún ninguna IA tiene una puntuación publicada aquí."
+    de: "{$days} Tage Vending Bench. Hier hat noch keine KI eine veröffentlichte Wertung."
   context:
     .id: HN000016
     ^en: "This independent game lets you play Prosus Vending Bench, an open benchmark for AI agents. Your job is the same as theirs: find suppliers, buy stock, set prices and keep enough cash for tomorrow."
