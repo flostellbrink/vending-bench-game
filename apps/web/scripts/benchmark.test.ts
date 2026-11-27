@@ -135,9 +135,12 @@ snapshot()
 });
 
 /** @risk impact=3 likelihood=3 */
-await test("the reference run reproduces each morning and its published score in the browser engine", async () => {
-  for (const release of catalog) {
-    const rival = assertValue(release.rivals.find((r) => r.replay));
+await test("each model run replay reproduces every morning and its published score in the browser engine", async () => {
+  const replayed = catalog.flatMap((release) =>
+    release.rivals.filter((r) => r.replay).map((rival) => ({ release, rival })),
+  );
+  assert.ok(replayed.length > 0, "No model run replays in the browser engine");
+  for (const { release, rival } of replayed) {
     const journal = v.parse(
       replaySchema,
       JSON.parse(await readFile(new URL(`public/${assertValue(rival.replay)}`, app), "utf8")),

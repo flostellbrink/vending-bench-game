@@ -1,9 +1,9 @@
 import type { Release } from "games-common/benchmark";
 
-import { hasValue, includes } from "games-common/language";
+import { hasValue, includes, type Optional } from "games-common/language";
 import { useLocale } from "games-localize/react";
 
-import type { ParentBalance } from "@/game/runs.ts";
+import type { ParentBalance, RunOrigin } from "@/game/runs.ts";
 
 import { msg } from "@/dictionary/index.ts";
 import { locales } from "@/dictionary/runtime.ts";
@@ -22,10 +22,11 @@ interface Props {
   release: Release;
   slot: string;
   parentBalance?: ParentBalance;
+  origin: Optional<RunOrigin>;
 
   changeLang: (locale: Lang) => void;
 }
-export function Station({ release, slot, parentBalance, changeLang, newRun }: Props) {
+export function Station({ release, slot, parentBalance, origin, changeLang, newRun }: Props) {
   const lang = useLocale();
   const nav = useNavigation(newRun ? "brief" : "suppliers");
   const run = useRun(release, slot, nav.showResult);
@@ -42,6 +43,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
     return (
       <Settlement
         money={money}
+        origin={origin}
         parentBalance={parentBalance}
         release={release}
         run={run}

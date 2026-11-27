@@ -7,16 +7,64 @@ import {
   type PersonalBest,
   type Receipt,
   type Release,
+  type Rival,
 } from "games-common/benchmark";
-import { hasValue, type Optional } from "games-common/language";
+import { assertValue, hasValue, type Optional } from "games-common/language";
 import * as v from "valibot";
 
 import { commandForMove } from "./commands.ts";
+import { rankedModels } from "./model-rivals.ts";
 
 export const legacySlot = "legacy";
-export const referenceSlot = "reference-run";
-export function referenceRun(release: Release) {
-  return release.rivals.find((rival) => rival.replay);
+/** Saves from before each model run had its own row use this parent for the top replayable run. */
+const legacyReference = "reference-run";
+const referencePrefix = "reference:";
+/** The parent slot of a run that branches from a published model run. */
+export function referenceSlotOf(rival: Pick<Rival, "id">) {
+  return `${referencePrefix}${rival.id}`;
+}
+export function isReferenceSlot(slot: Optional<string>) {
+  return slot === legacyReference || (slot?.startsWith(referencePrefix) ?? false);
+}
+/** The published model runs that the browser engine replays exactly, highest score first. */
+export function referenceRuns(release: Release) {
+  return rankedModels(release.rivals).filter((rival) => hasValue(rival.replay));
+}
+export function referenceFor(release: Release, slot: Optional<string>) {
+  const runs = referenceRuns(release);
+  return slot === legacyReference ? runs[0] : runs.find((rival) => referenceSlotOf(rival) === slot);
+}
+/** A save that continues a model run to its end, so that its result can be reviewed. */
+export function isReferenceResult(parent: RunSlot["parent"], release: Release) {
+  return isReferenceSlot(parent?.slot) && hasValue(parent) && parent.day > release.days;
+}
+export interface RunOrigin {
+  /** The morning on which the run left the model run, or the day after the last day. */
+  day: number;
+  rival: Rival;
+}
+/**
+ * The model run and morning that a run left, or nothing for a run that the player started.
+ * A fork from before an ancestor left the model run has the model run as its parent, so the
+ * first model run parent is the last morning with only that model's moves.
+ */
+export function runOrigin(
+  release: Release,
+  slots: readonly RunSlot[],
+  id: string,
+): Optional<RunOrigin> {
+  const seen = new Set<string>();
+  let slot = slots.find((s) => s.id === id);
+  while (slot && !seen.has(slot.id)) {
+    seen.add(slot.id);
+    const { parent } = slot;
+    if (parent && isReferenceSlot(parent.slot)) {
+      const rival = referenceFor(release, parent.slot);
+      return rival ? { day: parent.day, rival } : undefined;
+    }
+    slot = slots.find((s) => s.id === parent?.slot);
+  }
+  return undefined;
 }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -51,7 +99,10 @@ const lineageSchema = v.object({
   parent: v.nullable(
     v.object({
       day: checkpointSchema.entries.day,
-      slot: v.union([v.literal(referenceSlot), v.pipe(v.string(), v.check(isSlotId))]),
+      slot: v.pipe(
+        v.string(),
+        v.check((slot) => isSlotId(slot) || isReferenceSlot(slot)),
+      ),
     }),
   ),
   updatedAt: v.optional(v.number()),
@@ -130,9 +181,12 @@ export function readRecord(serialized: Optional<string>): Optional<PersonalBest>
 }
 
 /** Old saves contain only moves, so their pre-run comparison cannot be reconstructed. */
-export function readRun(serialized: Optional<string>, record: Optional<PersonalBest>): SavedRun {
+export function readRun(
+  serialized: Optional<string>,
+  record: Optional<PersonalBest>,
+): SavedRun & Pick<RunSlot, "parent"> {
   if (!hasValue(serialized)) {
-    return { finished: false, moves: [], opponent: record };
+    return { finished: false, moves: [], opponent: record, parent: null };
   }
   return decode(serialized);
 }
@@ -223,12 +277,16 @@ export function saveRun(
   return next;
 }
 
+interface NewSlot {
+  moves: Entry[];
+  timeline: RunTimeline;
+  parent: RunSlot["parent"];
+  finished?: boolean;
+}
 function newSlot(
   storage: StorageWriter,
   release: Release,
-  moves: Entry[],
-  timeline: RunTimeline,
-  parent: RunSlot["parent"],
+  { moves, timeline, parent, finished = false }: NewSlot,
 ) {
   const id = crypto.randomUUID();
   const key = runKey(release, id);
@@ -240,7 +298,7 @@ function newSlot(
   storage.setItem(
     key,
     JSON.stringify({
-      finished: false,
+      finished,
       format: 1,
       metadata: { createdAt: now, parent, timeline, updatedAt: now },
       moves,
@@ -251,19 +309,25 @@ function newSlot(
 }
 
 export function createRun(storage: StorageWriter, release: Release): string {
-  return newSlot(storage, release, [], runTimeline(release, [], false), null);
+  return newSlot(storage, release, {
+    moves: [],
+    parent: null,
+    timeline: runTimeline(release, [], false),
+  });
 }
 
+/** A new run from a model run's morning, or the whole model run when day follows the last day. */
 export async function forkReferenceRun(
   storage: StorageWriter,
   release: Release,
+  slot: string,
   day: number,
 ): Promise<string> {
-  const path = referenceRun(release)?.replay;
-  if (!path) {
+  const reference = referenceFor(release, slot);
+  if (!reference?.replay) {
     throw new Error("Missing reference replay");
   }
-  const response = await fetch(`/${path}`);
+  const response = await fetch(`/${reference.replay}`);
   if (!response.ok) {
     throw new Error("Reference replay unavailable");
   }
@@ -284,20 +348,25 @@ export async function forkReferenceRun(
   ) {
     throw new Error("Incompatible reference replay");
   }
-  const point = replay.checkpoints.find((p) => p.day === day);
+  const finished = day === release.days + 1;
+  const point = finished
+    ? { cash: assertValue(reference.finalBalance), day, moveCount: replay.moves.length }
+    : replay.checkpoints.find((p) => p.day === day);
   if (!point) {
     throw new Error("Missing reference morning");
   }
   const moves = replay.moves
     .slice(0, point.moveCount)
     .map((move) => ({ line: commandForMove(move, release.toolParameters[move[0]]), move }));
-  return newSlot(
-    storage,
-    release,
+  const checkpoints = replay.checkpoints.slice(0, day);
+  return newSlot(storage, release, {
+    finished,
     moves,
-    { ...point, checkpoints: replay.checkpoints.slice(0, day), minute: release.network.opens },
-    { day, slot: referenceSlot },
-  );
+    parent: { day, slot: referenceSlotOf(reference) },
+    timeline: finished
+      ? { ...point, checkpoints }
+      : { ...point, checkpoints, minute: release.network.opens },
+  });
 }
 
 export function forkRun(
@@ -320,7 +389,7 @@ export function forkRun(
   }
   let owner = parentSlot;
   let parent = load(owner);
-  while (parent.parent && parent.parent.slot !== referenceSlot && day <= parent.parent.day) {
+  while (parent.parent && !isReferenceSlot(parent.parent.slot) && day <= parent.parent.day) {
     owner = parent.parent.slot;
     parent = load(owner);
   }
@@ -330,17 +399,49 @@ export function forkRun(
     throw new Error("Missing day checkpoint");
   }
   const checkpoints = timeline.checkpoints.filter((p) => p.day <= day);
-  return newSlot(
-    storage,
-    release,
-    parent.moves.slice(0, point.moveCount),
-    { ...point, checkpoints, minute: release.network.opens },
-    {
-      day,
-      slot:
-        parent.parent?.slot === referenceSlot && day <= parent.parent.day ? referenceSlot : owner,
-    },
-  );
+  return newSlot(storage, release, {
+    moves: parent.moves.slice(0, point.moveCount),
+    parent:
+      parent.parent && isReferenceSlot(parent.parent.slot) && day <= parent.parent.day
+        ? { day, slot: parent.parent.slot }
+        : { day, slot: owner },
+    timeline: { ...point, checkpoints, minute: release.network.opens },
+  });
+}
+
+/**
+ * A saved run that already starts where a branch from source at day would start, so that
+ * opening the branch again reuses it. A day after the last day asks for the finished run.
+ */
+export function existingBranch(
+  runs: readonly RunSlot[],
+  release: Release,
+  { source, day, preferred }: { source: string; day: number; preferred?: string },
+) {
+  const fromSource = (slot: Optional<string>) =>
+    slot === source ||
+    (isReferenceSlot(slot) &&
+      isReferenceSlot(source) &&
+      referenceFor(release, slot) === referenceFor(release, source));
+  const startsThere = (run: RunSlot) =>
+    day > release.days
+      ? run.finished
+      : !run.finished &&
+        run.day === day &&
+        run.checkpoints.some((point) => point.day === day && point.moveCount === run.moves);
+  const [existing] = runs
+    .filter(
+      (run) =>
+        !run.damaged &&
+        startsThere(run) &&
+        (run.id === source || (fromSource(run.parent?.slot) && run.parent?.day === day)),
+    )
+    .toSorted(
+      (a, b) =>
+        Number(b.id === preferred) - Number(a.id === preferred) ||
+        (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
+    );
+  return existing;
 }
 
 function summary(raw: string, release: Release, id: string): RunSlot {

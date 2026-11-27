@@ -14,6 +14,7 @@ import {
   legacySlot,
   readSlotSnapshot,
   recordedClosings,
+  runOrigin,
   slotSnapshot,
 } from "@/game/runs.ts";
 
@@ -108,6 +109,7 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
       release={release}
       slot={slot}
       newRun={slots[index]?.moves === 0 && !parentId}
+      origin={runOrigin(release, slots, slot)}
       parentBalance={
         parent && !parent.damaged && hasValue(parent.cash)
           ? { values: recordedClosings(parent) }

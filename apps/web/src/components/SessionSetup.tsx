@@ -3,43 +3,27 @@ import type { Release } from "games-common/benchmark";
 import type { ReactElement } from "react";
 
 import { first, hasValue } from "games-common/language";
-import { useLocale } from "games-localize/react";
 import { useState } from "react";
 
 import { msg } from "@/dictionary/index.ts";
 import { rankedModels } from "@/game/model-rivals.ts";
 import { releases } from "@/game/releases.ts";
 import { readRecord, recordKey } from "@/game/runs.ts";
-import { unavailable, useLocationSearch, useStoredText } from "@/hooks/useSessionStorage.ts";
+import { useLocationSearch, useStoredText } from "@/hooks/useSessionStorage.ts";
 import { useCurrency } from "@/localization/formatters.ts";
 
 import "./session-setup.css";
 
-function setupTitle(compact: boolean) {
-  if (compact) {
-    return msg.session.next();
-  }
-  return releases.length === 1 ? msg.session.setup() : msg.session.choose();
-}
-
 interface Props {
-  initialRevision?: string;
-  activeSlot?: string;
-  compact?: boolean;
-  renderPage?: (release: Release, setup: ReactElement, slot?: string) => ReactElement;
+  renderPage: (release: Release, setup: ReactElement, slot?: string) => ReactElement;
 }
 
-export default function SessionSetup({
-  initialRevision,
-  activeSlot,
-  compact = false,
-  renderPage,
-}: Props) {
+export default function SessionSetup({ renderPage }: Props) {
   const search = useLocationSearch();
   const params = new URLSearchParams(search);
   const urlRevision = params.get("bench");
   const [choice, setChoice] = useState<string>();
-  const revision = choice ?? initialRevision ?? urlRevision;
+  const revision = choice ?? urlRevision;
   const current =
     releases.find((release) => release.revision === revision) ??
     releases.find((release) => release.rivals.length) ??
@@ -50,16 +34,8 @@ export default function SessionSetup({
   });
   const money = useCurrency(current.currency);
   const models = rankedModels(current.rivals);
-  const locale = useLocale();
-  const savedParams = new URLSearchParams({ bench: current.revision });
-  const selectedSlot =
-    current.revision === (initialRevision ?? urlRevision)
-      ? (activeSlot ?? params.get("slot"))
-      : null;
-  if (selectedSlot) {
-    savedParams.set("slot", selectedSlot);
-  }
-  const title = setupTitle(compact);
+  const selectedSlot = current.revision === urlRevision ? params.get("slot") : null;
+  const title = releases.length === 1 ? msg.session.setup() : msg.session.choose();
   const setup = (
     <section className="session-setup" aria-label={title}>
       <header>
@@ -120,13 +96,7 @@ export default function SessionSetup({
       <p className="session-note">
         {models.length ? msg.session.soloSeed({ seed: current.seed }) : msg.session.noAI()}
       </p>
-      {!renderPage && (
-        <p className="save-library-link">
-          <a href={`/${locale}?${savedParams}`}>{msg.session.mainMenu()}</a>
-        </p>
-      )}
-      {!renderPage && record === unavailable && <p role="alert">{msg.session.unavailable()}</p>}
     </section>
   );
-  return renderPage ? renderPage(current, setup, selectedSlot ?? undefined) : setup;
+  return renderPage(current, setup, selectedSlot ?? undefined);
 }

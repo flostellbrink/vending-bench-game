@@ -19,6 +19,7 @@ import { shouldOpenReceipt, type ResponseDestination } from "@/game/receipt-rout
 import { observation } from "@/game/reports.ts";
 import { loadRival } from "@/game/rival-balances.ts";
 import {
+  isReferenceResult,
   recordKey,
   runKey,
   readRecord,
@@ -152,6 +153,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     let first = false;
     let entries: Entry[] = [];
     let timeline: Optional<RunTimeline> = undefined;
+    let playerMoves = true;
     pending.current = null;
 
     const fail = (error: unknown) => {
@@ -179,6 +181,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
       }
       const saved = readRun(serialized, readRecord(localStorage.getItem(bestKey)));
       ({ opponent, timeline } = saved);
+      playerMoves = !isReferenceResult(saved.parent, release);
       entries = saved.moves;
       balances = [];
       pending.current = null;
@@ -246,7 +249,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           localStorage.setItem("vendix.booted", "1");
         }
       }
-      if (data.state.over) {
+      if (data.state.over && playerMoves) {
         try {
           await recordScore(bestKey, data.state, balances);
         } catch {

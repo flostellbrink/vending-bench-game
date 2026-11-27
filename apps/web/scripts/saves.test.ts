@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   createRun,
+  existingBranch,
   forkRun,
   legacySlot,
   listRuns,
@@ -13,7 +14,10 @@ import {
   readSlotSnapshot,
   recordedClosings,
   recordKey,
+  referenceRuns,
+  referenceSlotOf,
   runKey,
+  runOrigin,
   runTimeline,
   saveRun,
   slotSnapshot,
@@ -162,4 +166,52 @@ await test("old saves remain visible and one broken slot cannot hide healthy run
   });
   const branch = forkRun(db, release, legacySlot, 2);
   assert.deepEqual(readRun(db.getItem(runKey(release, branch)), null).moves, saved.moves);
+});
+
+/** @risk impact=4 likelihood=2 */
+await test("a run names the model run it left, through forks and the old shared marker", () => {
+  const [top, second] = referenceRuns(release);
+  assert.ok(top && second, "The catalog needs two replayable model runs");
+  const db = new Memory();
+  const dayTwoCash = 1400;
+  const morning = { cash: dayTwoCash, day: 2, moveCount: 1 };
+  const save = (id: string, parent: { day: number; slot: string }, finished = false) => {
+    db.setItem(
+      runKey(release, id),
+      JSON.stringify({
+        finished,
+        format: 1,
+        metadata: {
+          createdAt: 1,
+          parent,
+          timeline: {
+            ...morning,
+            checkpoints: [{ cash: release.startingBalance, day: 1, moveCount: 0 }, morning],
+            day: finished ? release.days + 1 : morning.day,
+          },
+        },
+        moves: [close],
+        opponent: null,
+      }),
+    );
+  };
+  const legacy = crypto.randomUUID();
+  const child = crypto.randomUUID();
+  const whole = crypto.randomUUID();
+  save(legacy, { day: morning.day, slot: "reference-run" });
+  save(child, { day: morning.day, slot: legacy });
+  save(whole, { day: release.days + 1, slot: referenceSlotOf(second) }, true);
+  const own = createRun(db, release);
+  const runs = listRuns(db, release);
+  assert.deepEqual(runOrigin(release, runs, legacy), { day: morning.day, rival: top });
+  assert.deepEqual(runOrigin(release, runs, child), { day: morning.day, rival: top });
+  assert.deepEqual(runOrigin(release, runs, whole), { day: release.days + 1, rival: second });
+  assert.equal(runOrigin(release, runs, own), undefined);
+  const { day } = morning;
+  assert.equal(existingBranch(runs, release, { day, source: referenceSlotOf(top) })?.id, legacy);
+  assert.equal(
+    existingBranch(runs, release, { day: release.days + 1, source: referenceSlotOf(second) })?.id,
+    whole,
+  );
+  assert.equal(existingBranch(runs, release, { day, source: referenceSlotOf(second) }), undefined);
 });

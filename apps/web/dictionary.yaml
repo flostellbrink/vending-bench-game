@@ -162,6 +162,11 @@ operator:
     ^en: Operator
     es: Operador
     de: Betreiber
+  rank:
+    .id: RANK0002
+    ^en: Rank
+    es: Puesto
+    de: Platz
   toolInformation:
     .id: TI000001
     ^en: Tool information
@@ -1143,6 +1148,14 @@ fields:
     ^en: "Player"
     es: "Jugador"
     de: "Spieler"
+  forkedPlayer:
+    .id: VF000028
+    .inputs:
+      - $model :string
+      - $day :integer
+    ^en: "Player (forked off {$model} day {$day})"
+    es: "Jugador (derivado de {$model}, día {$day})"
+    de: "Spieler (abgezweigt von {$model}, Tag {$day})"
   score:
     .id: VF000027
     ^en: "Final score"
@@ -1646,8 +1659,3 @@ session:
     ^en: "Personal best"
     es: "Récord personal"
     de: "Persönlicher Rekord"
-  next:
-    .id: SX000018
-    ^en: "Next run"
-    es: "Siguiente partida"
-    de: "Nächster Lauf"

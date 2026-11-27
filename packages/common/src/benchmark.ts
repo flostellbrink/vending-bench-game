@@ -23,6 +23,8 @@ export const rivalSchema = v.object({
   balances: v.optional(v.string()),
   endDay: v.optional(v.nullable(v.number())),
   finalBalance: v.optional(v.number()),
+  /** The published trial folder, which names the run across catalog builds. */
+  id: v.string(),
   name: v.string(),
   replay: v.optional(v.string()),
   score: v.number(),
