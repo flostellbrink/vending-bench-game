@@ -33,7 +33,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
   const money = (value: number) => currency.format(value);
   const shell = useCommandLine(run, nav, release);
   const { state, rivals, busy, history } = run;
-  const opponent = rankedModels(rivals)[0] ?? rivals[0],
+  const opponent = rankedModels(rivals)[0],
     day = history.length - 1,
     closing = history[day],
     rivalClose = opponent?.values?.[day];
@@ -51,7 +51,7 @@ export function Station({ release, slot, parentBalance, changeLang, newRun }: Pr
         <i className="vent" aria-hidden />
         {opponent && (
           <button className="pace-key" onClick={() => nav.setTab("scores")}>
-            <span>{opponent.kind === "script" ? msg.fields.bot() : opponent.name}</span>
+            <span>{opponent.name}</span>
             <b>
               {gap === null
                 ? msg.fields.score() + " · " + money(opponent.score)

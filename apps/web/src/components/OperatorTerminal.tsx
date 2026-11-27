@@ -105,7 +105,7 @@ export function OperatorTerminal({ release, money, run, shell, setTab }: Props) 
         {!lines.length && (
           <>
             <p>{msg.operator.objective({ days: release.days })}</p>
-            {!release.rivals.some((r) => r.kind === "model") && <p>{msg.operator.noRivals()}</p>}
+            {!release.rivals.length && <p>{msg.operator.noRivals()}</p>}
             <p>{msg.operator.hint()}</p>
           </>
         )}

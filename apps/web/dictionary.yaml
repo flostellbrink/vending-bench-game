@@ -1143,11 +1143,6 @@ fields:
     ^en: "Player"
     es: "Jugador"
     de: "Spieler"
-  bot:
-    .id: VF000026
-    ^en: "Scripted operator"
-    es: "Operador automático"
-    de: "Skriptbetreiber"
   score:
     .id: VF000027
     ^en: "Final score"

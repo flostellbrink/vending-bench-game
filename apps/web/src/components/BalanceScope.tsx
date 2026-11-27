@@ -59,7 +59,7 @@ export function BalanceScope({
     { name: msg.fields.player(), values: history },
     ...(best ? [{ name: msg.operator.previousBest(), values: best.values }] : []),
     ...rivals.map((r) => ({
-      name: r.kind === "script" ? msg.fields.bot() : assertValue(r.name),
+      name: r.name,
       values: r.values,
       endDay: r.endDay,
       finalBalance: r.finalBalance,

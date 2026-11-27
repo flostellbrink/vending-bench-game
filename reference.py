@@ -15,7 +15,7 @@ SERVER = TASK / "environment/sim-server"
 BASELINES = ROOT / "results/baselines"
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from local_run import Bot, DirectClient, Engine, build_world
+from local_run import Engine
 from sync_config import render
 from vending import config
 
@@ -71,45 +71,6 @@ def browser_tools():
         functions.append(node)
     names = ", ".join(f"{node.name!r}: {node.name}" for node in functions)
     return "\n\n".join([*(ast.unparse(node) for node in functions), f"tools = {{{names}}}"])
-
-
-def reference_trace(version):
-    engine = Engine.new(config.SEED)
-    balances = [engine.s["balance"]]
-
-    class Recorder(DirectClient):
-        def call(self, tool, **kwargs):
-            day = engine.s["day"]
-            result = super().call(tool, **kwargs)
-            if len(balances) == day and (day != engine.s["day"] or engine.over):
-                balances.append(engine.s["balance"])
-            return result
-
-    Bot(Recorder(engine), build_world()).run(max_days=config.SIM_DAYS)
-    result = engine.score()
-    if result["version"] != version or not engine.over:
-        raise ValueError("Scripted operator and pinned task disagree or the run did not finish")
-    calibrated = BASELINES / "scripted-reference/results.json"
-    published = [
-        row for row in (read_json(calibrated) if calibrated.is_file() else [])
-        if (row["version"], row["seed"], row["sim_days"])
-        == (version, config.SEED, config.SIM_DAYS)
-    ]
-    if len(published) > 1:
-        raise ValueError("Ambiguous published scripted calibration")
-    if result["completed"] and len(balances) != config.SIM_DAYS + 1:
-        raise ValueError("Missing daily balance in scripted replay")
-    if balances[-1] != result["final_balance"]:
-        raise ValueError("Closing balance does not match the scripted result")
-    reproduced = bool(published) and all(result[k] == published[0][k] for k in
-                        ("reward", "final_balance", "completed", "starting_balance",
-                         "currency", "tool_calls", "units_sold"))
-    # A configuration update may precede a published recalibration. In that case the
-    # reproducible local bot is still valid; the old published target is not.
-    source = calibrated if reproduced else TASK / "solution/reference_bot.py"
-    return {"kind": "script", "score": result["reward"], "values": balances,
-            "endDay": result["days_operated"], "finalBalance": result["final_balance"],
-            "sourcePath": source.relative_to(ROOT).as_posix()}
 
 
 def recorded_calls(path):
@@ -238,7 +199,7 @@ def model_results(version):
                           and comparable_config(read_json(result_path.parent / "config.json")))
             if comparable:
                 models.append({"trial": trial_key(result),
-                               "kind": "model", "name": name, "score": result["reward"],
+                               "name": name, "score": result["reward"],
                                "endDay": days if result["completed"] else result.get("days_operated"),
                                "finalBalance": result["final_balance"],
                                "sourcePath": source,
@@ -292,7 +253,7 @@ def study_results(version):
             if model in latest and latest[model][0]["timestamp_utc"] >= result["timestamp_utc"]:
                 continue
             latest[model] = (result, result_path, names[model]["name"].split(": ", 1)[-1])
-    return [{"trial": trial_key(result), "kind": "model", "name": name, "score": result["reward"],
+    return [{"trial": trial_key(result), "name": name, "score": result["reward"],
              "endDay": result["days_operated"], "finalBalance": result["final_balance"],
              "sourcePath": path.relative_to(ROOT).as_posix(),
              "values": recorded_balances(path.parent / "conversation.jsonl", result)}
@@ -303,7 +264,6 @@ def metadata():
     task = tomllib.loads((TASK / "task.toml").read_text())
     version = task["task"]["version"]
     brief = render()
-    script = reference_trace(version)
     tools, defaults = tool_metadata()
     # Baselines reuse study trials; the first copy wins because baselines record daily balances.
     models, trials = [], set()
@@ -326,5 +286,5 @@ def metadata():
                        "brief": brief.strip(), "tools": tools, "toolDefaults": defaults,
                        "reportLimits": {"mailCount": config.EMAIL_LIST_LIMIT_MAX,
                                         "salesDays": config.SALES_REPORT_MAX_DAYS},
-                       "rivals": [script, *models]},
+                       "rivals": models},
                       allow_nan=False)

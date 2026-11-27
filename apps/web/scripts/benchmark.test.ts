@@ -43,7 +43,7 @@ await test("each model shows its latest published attempt once, with daily balan
     if (time > (latest.get(model) ?? "")) latest.set(model, time);
   }
   assert.equal(latest.size, 5);
-  const models = release.rivals.filter((r) => r.kind === "model");
+  const models = release.rivals;
   const shown = new Map<string, string>();
   for (const model of models) {
     const result = trial(model.sourcePath);
@@ -83,14 +83,6 @@ str(inspect.signature(scope["tools"]["check_offers"]))
 `),
     "(supplier_id: str, quantity: int = 37)",
   );
-});
-const calibrationSchema = v.object({
-  seed: v.number(),
-  sim_days: v.number(),
-  version: v.string(),
-  reward: v.number(),
-  final_balance: v.number(),
-  completed: v.boolean(),
 });
 await test("a saved command sequence replays to the same final score", async () => {
   const release = assertValue(catalog[0]);
@@ -134,7 +126,6 @@ snapshot()
 await test("the reference run reproduces each morning and its published score in the browser engine", async () => {
   for (const release of catalog) {
     const rival = assertValue(release.rivals.find((r) => r.replay));
-    assert.equal(rival.kind, "model");
     const journal = v.parse(
       replaySchema,
       JSON.parse(await readFile(new URL("public/" + assertValue(rival.replay), app), "utf8")),
@@ -181,38 +172,12 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
   }
 });
 
-await test("published scripted calibration and briefing come from the selected Git revision", async () => {
+await test("the briefing comes from the selected Git revision", () => {
   for (const release of catalog) {
-    const show = (path: string) =>
-      execFileSync("git", ["-C", "vendor/vending-bench", "show", release.revision + ":" + path], {
-        cwd: root,
-        encoding: "utf8",
-      });
-    assert.equal(release.brief, show("tasks/vending-bench/instruction.md").trim());
-    const rival = assertValue(release.rivals.find((r) => r.kind === "script"));
-    const balances = v.parse(
-      v.array(v.number()),
-      JSON.parse(await readFile(new URL("public/" + assertValue(rival.balances), app), "utf8")),
+    assert.equal(
+      release.brief,
+      git("show", release.revision + ":tasks/vending-bench/instruction.md").trim(),
     );
-    assert.equal(balances[0], release.startingBalance);
-    if (rival.source.endsWith("/results.json")) {
-      const calibration = assertValue(
-        v
-          .parse(
-            v.array(calibrationSchema),
-            JSON.parse(show("results/baselines/scripted-reference/results.json")),
-          )
-          .find(
-            (r) =>
-              r.seed === release.seed &&
-              r.sim_days === release.days &&
-              r.version === release.version,
-          ),
-      );
-      assert.equal(rival.score, calibration.reward);
-      assert.equal(balances.at(-1), calibration.final_balance);
-      if (calibration.completed) assert.equal(balances.length, release.days + 1);
-    }
   }
 });
 
@@ -294,29 +259,25 @@ digest.hexdigest()
   assert.deepEqual(models(), []);
 });
 
-await test("a changed upstream site fee regenerates the brief and recalibrates the reference", async () => {
+await test("a changed upstream site fee regenerates the brief", async () => {
   const release = assertValue(catalog[0]);
   const python = await readSnapshot(release.revision);
   const changed = v.parse(
-    v.object({ brief: v.string(), fee: v.number(), symbol: v.string(), script: sourceRivalSchema }),
+    v.object({ brief: v.string(), fee: v.number(), symbol: v.string() }),
     pythonJSON(
       python,
       `
 config.DAILY_SPOT_FEE += 1
-updated = json.loads(metadata())
 json.dumps({
-    "brief": updated["brief"],
+    "brief": json.loads(metadata())["brief"],
     "fee": config.DAILY_SPOT_FEE,
     "symbol": config.CURRENCY_SYMBOL,
-    "script": updated["rivals"][0],
 })
 `,
     ),
   );
   assert.notEqual(changed.brief, release.brief);
   assert.ok(changed.brief.includes(changed.symbol + changed.fee));
-  assert.match(changed.script.sourcePath, /reference_bot\.py$/);
-  assert.equal(assertValue(changed.script.values).length, release.days + 1);
 });
 
 await test("GUI report limits follow the selected benchmark, independently of MCP defaults", async () => {
