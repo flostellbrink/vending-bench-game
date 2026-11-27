@@ -170,10 +170,6 @@ def recorded_balances(path, result):
     return balances if len(balances) > 1 else None
 
 
-def trial_key(result):
-    return result["model_requested"], result["timestamp_utc"]
-
-
 def model_results(version):
     models = []
     for aggregate in sorted(BASELINES.glob("models-*/aggregate.json")):
@@ -198,8 +194,7 @@ def model_results(version):
                           and days == config.SIM_DAYS and seed == config.SEED
                           and comparable_config(read_json(result_path.parent / "config.json")))
             if comparable:
-                models.append({"trial": trial_key(result),
-                               "name": name, "score": result["reward"],
+                models.append({"name": name, "score": result["reward"],
                                "endDay": days if result["completed"] else result.get("days_operated"),
                                "finalBalance": result["final_balance"],
                                "sourcePath": source,
@@ -207,71 +202,12 @@ def model_results(version):
     return models
 
 
-def evaluation_fingerprint(root):
-    engine = root / SERVER.relative_to(ROOT)
-    paths = sorted([*engine.rglob("*.py"), *engine.rglob("*.toml"),
-                    *root.glob("scripts/*.py"), *root.glob("tests/*.py"),
-                    *root.glob("tasks/vending-bench/instruction*.md")])
-    digest = hashlib.sha256()
-    for path in paths:
-        digest.update(path.relative_to(root).as_posix().encode())
-        digest.update(path.read_bytes())
-    return digest.hexdigest()
-
-
-def study_batches():
-    for manifest_path in sorted(ROOT.glob("results/*/single-agent/*/manifest.json")):
-        batch = manifest_path.parent
-        manifest = read_json(manifest_path)
-        if manifest["days"] != config.SIM_DAYS or config.SEED not in manifest["seeds"]:
-            continue
-        declared = (batch / "evaluation-source.sha256").read_text().strip()
-        if declared != manifest["source_sha256"]:
-            raise ValueError("Study batch and evaluation source fingerprints disagree")
-        yield batch, manifest
-
-
-def study_fingerprints():
-    return sorted({manifest["source_sha256"] for _, manifest in study_batches()})
-
-
-def study_results(version):
-    verified = set(json.loads(globals().get("verified_study_sources", "[]")))
-    latest = {}
-    for batch, manifest in study_batches():
-        if manifest["source_sha256"] not in verified:
-            continue
-        names = read_json(batch / "models.json")
-        for result_path in sorted(batch.glob("*/result.json")):
-            result = read_json(result_path)
-            if result["benchmark_sha256"] != manifest["source_sha256"]:
-                raise ValueError("Study trial and batch fingerprints disagree")
-            if (result["version"], result["horizon_days"], result["seed"]) != (
-                    version, config.SIM_DAYS, config.SEED):
-                continue
-            model = result["model_requested"]
-            if model in latest and latest[model][0]["timestamp_utc"] >= result["timestamp_utc"]:
-                continue
-            latest[model] = (result, result_path, names[model]["name"].split(": ", 1)[-1])
-    return [{"trial": trial_key(result), "name": name, "score": result["reward"],
-             "endDay": result["days_operated"], "finalBalance": result["final_balance"],
-             "sourcePath": path.relative_to(ROOT).as_posix(),
-             "values": recorded_balances(path.parent / "conversation.jsonl", result)}
-            for result, path, name in latest.values()]
-
-
 def metadata():
     task = tomllib.loads((TASK / "task.toml").read_text())
     version = task["task"]["version"]
     brief = render()
     tools, defaults = tool_metadata()
-    # Baselines reuse study trials; the first copy wins because baselines record daily balances.
-    models, trials = [], set()
-    for rival in [*model_results(version), *study_results(version)]:
-        trial = rival.pop("trial")
-        if trial not in trials:
-            trials.add(trial)
-            models.append(rival)
+    models = model_results(version)
     for rival in sorted(models, key=lambda rival: -rival["score"]):
         replay = model_replay(rival)
         if replay:

@@ -1,0 +1,26 @@
+name: Check code quality
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  check-code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      # A release test reads the parent of the pinned benchmark commit.
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Setup build
+        uses: ./.github/actions/setup-build
+        with:
+          package: "*"
+
+      - name: Check quality
+        shell: bash
+        run: pnpm quality:check

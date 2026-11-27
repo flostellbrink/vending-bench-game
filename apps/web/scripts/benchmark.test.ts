@@ -35,7 +35,7 @@ await test("each model shows its latest published attempt once, with daily balan
   const published = git("ls-tree", "-r", "--name-only", revision, "--", "results")
     .trim()
     .split("\n")
-    .filter((p) => /^results\/(baselines\/models-|[^/]+\/single-agent\/).*\/result\.json$/.test(p));
+    .filter((p) => /^results\/baselines\/models-.*\/result\.json$/.test(p));
   const latest = new Map<string, string>();
   for (const path of published) {
     const { model_requested: model, timestamp_utc: time, horizon_days, seed } = trial(path);
@@ -227,7 +227,6 @@ digest.hexdigest()
     version: release.version,
     completed: true,
     model_requested: "example/model",
-    timestamp_utc: "2026-11-22T00:00:00Z",
     reward: 2476,
     final_balance: 2476,
     benchmark_sha256: fingerprint,

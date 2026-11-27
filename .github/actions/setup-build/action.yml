@@ -1,0 +1,25 @@
+name: "Setup Build"
+description: "Installs dependencies and sets up builds for a specified package."
+inputs:
+  package:
+    description: "Package to set up, with the packages it depends on"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@v4
+
+    - name: Install node
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: .nvmrc
+        cache: "pnpm"
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install
+
+    - name: Generate the code
+      shell: bash
+      run: pnpm --filter "${{ inputs.package }}..." run "/^generate:.*$/"
