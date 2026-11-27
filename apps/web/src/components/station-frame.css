@@ -22,23 +22,6 @@
   text-transform: uppercase;
   letter-spacing: -0.065em;
 }
-.station-frame .mast nav {
-  display: flex;
-  gap: 0.18rem;
-  margin-left: auto;
-}
-.station-frame .mast nav a {
-  color: inherit;
-  font: bold 0.8rem monospace;
-  text-decoration: none;
-  padding: 0.25rem 0.45rem;
-  border: 1px solid transparent;
-}
-.station-frame .mast nav [aria-current="page"] {
-  background: #24382f;
-  color: #def0d9;
-  border-color: #26392e;
-}
 .dossier {
   max-width: 100rem;
   margin: 8px auto 0;

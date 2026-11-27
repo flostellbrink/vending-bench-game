@@ -4,8 +4,8 @@ import { hasValue } from "games-common/language";
 import { useLocale } from "games-localize/react";
 
 import { msg } from "@/dictionary/index.ts";
-import { locales } from "@/dictionary/runtime.ts";
 
+import { LanguageLinks } from "./LanguageLinks.tsx";
 import "./station-frame.css";
 
 interface Props {
@@ -33,18 +33,7 @@ export function StationFrame({ revision, children, page = "setup", slot, day }: 
         </a>
         <span className="operator">{msg.landing.human()}</span>
         <i className="vent" aria-hidden />
-        <nav aria-label="Language / Idioma / Sprache">
-          {locales.map((l) => (
-            <a
-              key={l}
-              lang={l}
-              aria-current={l === lang ? "page" : undefined}
-              href={`/${l}${page === "setup" ? "" : `/${page}`}?${query}`}
-            >
-              {l.toUpperCase()}
-            </a>
-          ))}
-        </nav>
+        <LanguageLinks href={(l) => `/${l}${page === "setup" ? "" : `/${page}`}?${query}`} />
       </header>
       {children}
     </main>
