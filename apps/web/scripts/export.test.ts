@@ -25,12 +25,12 @@ await test("each exported page ships only its own localized messages", async () 
   for (const locale of locales) {
     for (const [segment, landmarkId] of [
       ["", "SX000001"],
-      ["run/", "VBBOOT03"],
+      ["/run", "VBBOOT03"],
     ] as const) {
-      const route = new URL(`${locale}/${segment}`, directory);
-      const html = await readFile(new URL("index.html", route), "utf8");
+      const route = new URL(`${locale}${segment}`, directory);
+      const html = await readFile(new URL(`${route.href}.html`), "utf8");
       assert.ok(html.includes(`<html lang="${locale}">`));
-      if (segment !== "run/") {
+      if (segment !== "/run") {
         const headings = assertValue(
           /class="save-map-head"[^>]*>(?<headings>.*?)<\/div>/s.exec(html)?.groups?.headings,
         );
@@ -45,10 +45,7 @@ await test("each exported page ships only its own localized messages", async () 
           .map(([form]) => form)
           .filter((form) => {
             const action = /\baction="(?<action>[^"]+)"/.exec(form)?.groups?.action;
-            return (
-              action &&
-              new URL(action, `https://example.test/${locale}/`).pathname === `/${locale}/run/`
-            );
+            return action === `/${locale}/run`;
           });
         assert.equal(forms.length, 1, "Only the timeline starts a new game");
         const form = assertValue(forms[0]);
@@ -61,7 +58,7 @@ await test("each exported page ships only its own localized messages", async () 
         assert.ok(assertValue(buttons[0]).includes('type="submit"'));
         assert.ok(!assertValue(buttons[0]).includes("disabled"), "Start works before hydration");
       }
-      const flight = await readFile(new URL("index.txt", route), "utf8");
+      const flight = await readFile(new URL(`${route.href}.txt`), "utf8");
       const line = flight
         .split("\n")
         .find((l) => l.includes('"translations":{"vending-bench-game"'));
@@ -71,8 +68,8 @@ await test("each exported page ships only its own localized messages", async () 
       assert.deepEqual(keys(dictionary), [locale]);
       const messages = assertValue(dictionary[locale]);
       const landmark = assertValue(messages[landmarkId]);
-      assert.equal("VBBOOT03" in messages, segment === "run/", "Wrong boot-hint scope");
-      assert.equal("SLTR0014" in messages, segment !== "run/", "Wrong save-library scope");
+      assert.equal("VBBOOT03" in messages, segment === "/run", "Wrong boot-hint scope");
+      assert.equal("SLTR0014" in messages, segment !== "/run", "Wrong save-library scope");
       assert.equal(
         "HN000001" in messages,
         segment === "",

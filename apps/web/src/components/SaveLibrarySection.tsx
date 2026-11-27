@@ -1,6 +1,7 @@
 "use client";
 import type { Release } from "games-common/benchmark";
 
+import { useLocale } from "games-localize/react";
 import { useId, useState } from "react";
 
 import { msg } from "@/dictionary/index.ts";
@@ -37,8 +38,9 @@ export function SaveLibrarySection({
   const [problem, setProblem] = useState(false);
   const [sending, setSending] = useState(false);
   const newForm = useId();
+  const locale = useLocale();
   const resume = (id: string) =>
-    `run/?${new URLSearchParams({ bench: release.revision, slot: id })}`;
+    `/${locale}/run?${new URLSearchParams({ bench: release.revision, slot: id })}`;
   async function branch(id: string, startDay: number) {
     if (sending || typeof snapshot !== "string") {
       return;
@@ -104,7 +106,7 @@ export function SaveLibrarySection({
       )}
       {problem && <p role="alert">{msg.session.branchFailed()}</p>}
       <div className="save-console-actions">
-        <form id={newForm} action="run/" method="get">
+        <form id={newForm} action={`/${locale}/run`} method="get">
           <input type="hidden" name="bench" value={release.revision} />
           <input type="hidden" name="slot" value="new" />
         </form>

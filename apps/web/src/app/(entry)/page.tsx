@@ -10,12 +10,12 @@ export default function Entry() {
       .filter((language) => hasAny(language))
       .map((l) => l.split("-")[0]?.toLowerCase() ?? "")
       .find((l) => includes(locales, l));
-    globalThis.location.replace(`/${preferred ?? baseLocale}/${location.search}${location.hash}`);
+    globalThis.location.replace(`/${preferred ?? baseLocale}${location.search}${location.hash}`);
   }, []);
   return (
     <nav aria-label="Language">
       {locales.map((l) => (
-        <a key={l} href={`/${l}/`}>
+        <a key={l} href={`/${l}`}>
           {l.toUpperCase()}{" "}
         </a>
       ))}

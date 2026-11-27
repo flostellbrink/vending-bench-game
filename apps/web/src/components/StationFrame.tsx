@@ -27,7 +27,7 @@ export function StationFrame({ revision, children, page = "setup", slot, day }: 
   return (
     <main className="station-frame">
       <header className="mast">
-        <a className="station-wordmark" href={`/${lang}/?${query}`}>
+        <a className="station-wordmark" href={`/${lang}?${query}`}>
           <i className="brand-mark" aria-hidden />
           Vending Bench
         </a>
@@ -39,7 +39,7 @@ export function StationFrame({ revision, children, page = "setup", slot, day }: 
               key={l}
               lang={l}
               aria-current={l === lang ? "page" : undefined}
-              href={`/${l}/${page === "setup" ? "" : `${page}/`}?${query}`}
+              href={`/${l}${page === "setup" ? "" : `/${page}`}?${query}`}
             >
               {l.toUpperCase()}
             </a>

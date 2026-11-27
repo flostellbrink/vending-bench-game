@@ -2,6 +2,7 @@
 import type { Release } from "games-common/benchmark";
 
 import { hasValue } from "games-common/language";
+import { useLocale } from "games-localize/react";
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -26,12 +27,13 @@ export default function Game() {
 }
 
 function ActiveRun() {
+  const locale = useLocale();
   const query = useSearchParams();
   const revision = query.get("bench");
   const slot = query.get("slot") ?? legacySlot;
   const release = releases.find((entry) => entry.revision === revision);
   if (!release) {
-    redirect("../");
+    redirect(`/${locale}`);
   }
   if (slot === "new") {
     return <OpenNewRun release={release} />;
@@ -40,6 +42,7 @@ function ActiveRun() {
 }
 
 function OpenNewRun({ release }: { release: Release }) {
+  const locale = useLocale();
   const started = useRef(false);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -63,7 +66,7 @@ function OpenNewRun({ release }: { release: Release }) {
     <main className="run-loading">
       {failed ? (
         <p role="alert">
-          {msg.session.unavailable()} <a href="../">{msg.session.choose()}</a>
+          {msg.session.unavailable()} <a href={`/${locale}`}>{msg.session.choose()}</a>
         </p>
       ) : (
         "VENDIX/OS"
@@ -73,6 +76,7 @@ function OpenNewRun({ release }: { release: Release }) {
 }
 
 function SavedRun({ release, slot }: { release: Release; slot: string }) {
+  const locale = useLocale();
   const snapshot = useSyncExternalStore(
     subscribe,
     () => {
@@ -93,7 +97,7 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
   const slots = readSlotSnapshot(snapshot);
   const index = slots.findIndex((run) => run.id === slot);
   if (index === -1) {
-    redirect("../");
+    redirect(`/${locale}`);
   }
   const parentId = slots[index]?.parent?.slot;
   const parentIndex = slots.findIndex((run) => run.id === parentId);
@@ -112,7 +116,7 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
 
       changeLang={(l) => {
         localStorage.language = l;
-        globalThis.location.assign(`/${l}/run/${location.search}${location.hash}`);
+        globalThis.location.assign(`/${l}/run${location.search}${location.hash}`);
       }}
     />
   );
