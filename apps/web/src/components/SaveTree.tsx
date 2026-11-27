@@ -7,7 +7,8 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { RunSlot } from "@/game/runs.ts";
 
 import { msg } from "@/dictionary/index.ts";
-import { isReferenceResult, isReferenceSlot, referenceFor, referenceSlotOf } from "@/game/runs.ts";
+import { isReferenceSlot } from "@/game/runs.ts";
+import { freshNode, sourceOf, timelineLanes, type TimelineNode } from "@/game/save-timeline.ts";
 import { useCurrency } from "@/localization/formatters.ts";
 import { clock } from "@/scene/clock.ts";
 
@@ -22,18 +23,7 @@ interface Props {
   newForm: string;
   branch: (slot: string, day: number) => void;
 }
-interface Node {
-  source: string;
-  day: number;
-  cash: Optional<number>;
-  result?: boolean;
-}
-interface Lane {
-  label: string;
-  source: string;
-  parent?: { slot: string; day: number };
-  nodes: Node[];
-}
+type Node = TimelineNode;
 const column = 106;
 const rowHeight = 60;
 const cardWidth = 90;
@@ -46,68 +36,7 @@ const headHeight = 36;
 const x = (day: number) => labelWidth + day * column - column / 2;
 const y = (row: number) => row * rowHeight + rowHeight / 2;
 const id = (node: Node) => `${node.source}:${node.day}`;
-const fresh: Node = { cash: null, day: 1, source: "new" };
-
-/** The row source of a parent slot; old saves name the top model run with a shared marker. */
-function sourceOf(release: Release, slot: string) {
-  const reference = isReferenceSlot(slot) ? referenceFor(release, slot) : undefined;
-  return reference ? referenceSlotOf(reference) : slot;
-}
-
-function referenceLane(release: Release, reference: Rival): Lane {
-  const source = referenceSlotOf(reference);
-  const closings = reference.values?.slice(1, release.days + 1) ?? [];
-  const nodes: Node[] = closings
-    .slice(0, release.days - 1)
-    .map((cash, i) => ({ cash, day: i + 2, source }));
-  const last = closings[release.days - 1];
-  if (hasValue(last)) {
-    nodes.push({ cash: last, day: release.days + 1, result: true, source });
-  }
-  return { label: reference.name, nodes, source };
-}
-
-function playerLanes(release: Release, slots: RunSlot[], references: Rival[]): Lane[] {
-  const finishedColumn = release.days + 1;
-  // A finished model run is the result box of its own row.
-  const shown = slots.filter((s) => !s.damaged && !isReferenceResult(s.parent, release));
-  const parentOf = (s: RunSlot) =>
-    s.parent
-      ? { day: s.parent.day, slot: sourceOf(release, s.parent.slot) }
-      : { day: 1, slot: fresh.source };
-  const children = new Map<string, RunSlot[]>();
-  for (const s of shown) {
-    const parent = parentOf(s).slot;
-    children.set(parent, [...(children.get(parent) ?? []), s]);
-  }
-  const lanes: Lane[] = [];
-  const seen = new Set<string>();
-  const pending = [
-    ...references.flatMap((reference) => children.get(referenceSlotOf(reference)) ?? []),
-    ...(children.get(fresh.source) ?? []),
-    ...shown,
-  ].toReversed();
-  for (let s = pending.pop(); s; s = pending.pop()) {
-    if (seen.has(s.id)) {
-      continue;
-    }
-    seen.add(s.id);
-    const parent = parentOf(s);
-    const nodes: Node[] = s.checkpoints
-      .filter((p) => p.day > parent.day)
-      .map((p) => ({ cash: p.cash, day: p.day, source: s.id }));
-    if (s.finished) {
-      nodes.push({ cash: s.cash, day: finishedColumn, result: true, source: s.id });
-    }
-    if (nodes.length) {
-      lanes.push({ label: msg.fields.player(), nodes, parent, source: s.id });
-    }
-    for (const child of (children.get(s.id) ?? []).toReversed()) {
-      pending.push(child);
-    }
-  }
-  return lanes;
-}
+const fresh = freshNode;
 
 function moveFocus(event: KeyboardEvent<HTMLDivElement>) {
   const button = event.target;
@@ -262,12 +191,13 @@ export default function SaveTree({
 }: Props) {
   const [choice, setChoice] = useState<string>();
   const box = useRef<HTMLDivElement>(null);
-  const lanes: Lane[] = [
-    { label: msg.session.newSlot(), nodes: [fresh], source: fresh.source },
-    ...references.map((reference) => referenceLane(release, reference)),
-    ...playerLanes(release, slots, references),
-  ];
+  const lanes = timelineLanes(release, {
+    labels: { newRun: msg.session.newSlot(), player: msg.fields.player() },
+    references,
+    slots,
+  });
   const rowFor = new Map(lanes.map((lane, i) => [lane.source, i]));
+  rowFor.set(fresh.source, 0);
   const labelFor = new Map(lanes.map((lane) => [lane.source, lane.label]));
   const all = lanes.flatMap((l) => l.nodes);
   const local = slots.find((s) => s.id === activeSlot);
