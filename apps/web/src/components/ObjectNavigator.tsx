@@ -66,7 +66,6 @@ export function ObjectNavigator({ state, suppliers, value, onOpen }: Props) {
       id: "world",
       label: msg.operator.bank(),
     },
-    { id: "scores", label: msg.operator.standings() },
     {
       children: state?.machines.map((id) => ({ id: `machine:${id}`, label: address(id) })) ?? [],
       id: "site:depot",

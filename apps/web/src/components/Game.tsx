@@ -115,11 +115,6 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
           ? { values: recordedClosings(parent) }
           : undefined
       }
-
-      changeLang={(l) => {
-        localStorage.language = l;
-        globalThis.location.assign(`/${l}/run${location.search}${location.hash}`);
-      }}
     />
   );
 }

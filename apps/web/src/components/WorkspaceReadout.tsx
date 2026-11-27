@@ -22,7 +22,6 @@ import { OperatorBrief } from "./OperatorBrief.tsx";
 import { OrderRegister } from "./OrderRegister.tsx";
 import { OrderSlip, QuoteRequest } from "./OrderSlip.tsx";
 import { ReportList } from "./ReportList.tsx";
-import { Scorecard } from "./Scorecard.tsx";
 import { UninspectedMachine } from "./SlotInstrument.tsx";
 import { SupplierDirectory } from "./SupplierDirectory.tsx";
 
@@ -316,22 +315,6 @@ export function WorkspaceReadout({
   }
   if (tab === "brief") {
     return <OperatorBrief embedded release={release} state={state} money={money} />;
-  }
-  if (tab === "scores") {
-    return (
-      <Scorecard
-        seed={release.seed}
-        embedded
-        history={run.history}
-        reviewDay={showDay}
-        state={state}
-        reports={reports}
-        money={money}
-        rivals={run.rivals}
-        best={run.best}
-        openReport={setTab}
-      />
-    );
   }
   const byDay = typeof tab === "string" && tab.startsWith(dayPrefix);
   return (

@@ -77,7 +77,6 @@ body {
     #cbd2bf 4px 5px
   );
 }
-.mast select,
 footer button,
 .tabs button,
 .input-zone form button {
@@ -1150,16 +1149,10 @@ footer button[aria-pressed="true"] {
   border: 0;
   text-align: left;
 }
-.bank-key,
-.pace-key {
+.bank-key {
   background: none;
   border: 0;
   padding: 0;
-}
-.pace-key {
-  display: grid;
-  text-align: left;
-  font-size: 0.85rem;
 }
 .settlement {
   max-width: 72rem;

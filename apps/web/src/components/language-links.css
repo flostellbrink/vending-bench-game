@@ -1,0 +1,17 @@
+.language-links {
+  display: flex;
+  gap: 0.18rem;
+  margin-left: auto;
+}
+.language-links a {
+  color: inherit;
+  font: bold 0.8rem monospace;
+  text-decoration: none;
+  padding: 0.25rem 0.45rem;
+  border: 1px solid transparent;
+}
+.language-links [aria-current="page"] {
+  background: #24382f;
+  color: #def0d9;
+  border-color: #26392e;
+}
