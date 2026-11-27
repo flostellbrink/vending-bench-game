@@ -35,7 +35,7 @@ await test("each exported page ships only its own localized messages", async () 
         const firstTrack = assertValue(html.match(/class="save-map-row"[^>]*>(.*?)<\/div>/s)?.[1]);
         const nodes = [...firstTrack.matchAll(/<button\b[^>]+>/g)].map(([button]) => button);
         assert.ok(assertValue(nodes[0]).includes('data-checkpoint="new:1"'));
-        assert.ok(assertValue(nodes[1]).includes('data-checkpoint="scripted-reference:2"'));
+        assert.ok(assertValue(nodes[1]).includes('data-checkpoint="reference-run:2"'));
         const forms = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)]
           .map(([form]) => form)
           .filter((form) => {

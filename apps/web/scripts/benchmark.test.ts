@@ -1,9 +1,4 @@
-import {
-  actionsSchema,
-  parseReleases,
-  scriptedReplaySchema,
-  snapshotSchema,
-} from "games-common/benchmark";
+import { actionsSchema, parseReleases, replaySchema, snapshotSchema } from "games-common/benchmark";
 import { assertValue } from "games-common/language";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -23,47 +18,46 @@ const pinned = assertValue(catalog[0]).revision;
 const git = (...args: string[]) =>
   execFileSync("git", ["-C", "vendor/vending-bench", ...args], { cwd: root, encoding: "utf8" });
 
-await test("the published solo study contributes one final score per model, using the latest attempt", async () => {
+await test("each model shows its latest published attempt once, with daily balances", async () => {
   const revision = pinned;
   const release = assertValue((await readReleases([{ revision }]))[0]);
-  const study = "results/two-agent-seed1/single-agent";
-  const trials = git(
-    "ls-tree",
-    "-r",
-    "--name-only",
-    revision,
-    "--",
-    study + "/30d",
-    study + "/30d-gpt-rerun",
-  )
-    .trim()
-    .split("\n")
-    .filter((path) => path.endsWith("/result.json"));
   const resultSchema = v.object({
     model_requested: v.string(),
     timestamp_utc: v.string(),
+    horizon_days: v.number(),
+    seed: v.number(),
     days_operated: v.number(),
     final_balance: v.number(),
     reward: v.number(),
   });
-  const latest = new Map<string, { path: string; trial: v.InferOutput<typeof resultSchema> }>();
-  for (const path of trials) {
-    const trial = v.parse(resultSchema, JSON.parse(git("show", revision + ":" + path)));
-    const previous = latest.get(trial.model_requested);
-    if (!previous || trial.timestamp_utc > previous.trial.timestamp_utc)
-      latest.set(trial.model_requested, { path, trial });
+  const trial = (path: string) =>
+    v.parse(resultSchema, JSON.parse(git("show", revision + ":" + path)));
+  const published = git("ls-tree", "-r", "--name-only", revision, "--", "results")
+    .trim()
+    .split("\n")
+    .filter((p) => /^results\/(baselines\/models-|[^/]+\/single-agent\/).*\/result\.json$/.test(p));
+  const latest = new Map<string, string>();
+  for (const path of published) {
+    const { model_requested: model, timestamp_utc: time, horizon_days, seed } = trial(path);
+    if (horizon_days !== release.days || seed !== release.seed) continue;
+    if (time > (latest.get(model) ?? "")) latest.set(model, time);
   }
   assert.equal(latest.size, 5);
-  assert.equal(trials.length, 6);
   const models = release.rivals.filter((r) => r.kind === "model");
-  assert.equal(models.length, latest.size);
-  for (const { path, trial } of latest.values()) {
-    const model = assertValue(models.find((r) => r.sourcePath === path));
-    assert.equal(model.score, trial.reward);
-    assert.equal(model.endDay, trial.days_operated);
-    assert.equal(model.finalBalance, trial.final_balance);
-    assert.equal(model.values == null, true);
+  const shown = new Map<string, string>();
+  for (const model of models) {
+    const result = trial(model.sourcePath);
+    shown.set(result.model_requested, result.timestamp_utc);
+    assert.equal(model.score, result.reward);
+    assert.equal(model.endDay, result.days_operated);
+    assert.equal(model.finalBalance, result.final_balance);
+    const values = assertValue(model.values);
+    assert.equal(values.length, release.days + 1);
+    assert.equal(values[0], release.startingBalance);
+    assert.equal(values.at(-1), result.final_balance);
   }
+  assert.equal(models.length, shown.size);
+  assert.deepEqual(shown, latest);
 });
 await test("quote defaults come from the published MCP signature, not a frontend constant", async () => {
   const python = await readSnapshot(pinned);
@@ -137,11 +131,13 @@ snapshot()
   );
 });
 
-await test("the scripted journal reproduces each morning and the final score in the browser engine", async () => {
+await test("the reference run reproduces each morning and its published score in the browser engine", async () => {
   for (const release of catalog) {
+    const rival = assertValue(release.rivals.find((r) => r.replay));
+    assert.equal(rival.kind, "model");
     const journal = v.parse(
-      scriptedReplaySchema,
-      JSON.parse(await readFile(new URL("public/" + release.scriptedReplay, app), "utf8")),
+      replaySchema,
+      JSON.parse(await readFile(new URL("public/" + assertValue(rival.replay), app), "utf8")),
     );
     assert.equal(journal.revision, release.revision);
     assert.equal(journal.seed, release.seed);
@@ -169,13 +165,16 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
     );
     const result = v.parse(
       v.object({
-        checkpoints: scriptedReplaySchema.entries.checkpoints,
+        checkpoints: replaySchema.entries.checkpoints,
         final: v.object({ reward: v.number(), final_balance: v.number(), completed: v.boolean() }),
       }),
       replay,
     );
     assert.deepEqual(result.checkpoints, journal.checkpoints);
-    const rival = assertValue(release.rivals.find((r) => r.kind === "script"));
+    assert.deepEqual(
+      result.checkpoints.map((point) => point.cash),
+      assertValue(rival.values).slice(0, result.checkpoints.length),
+    );
     assert.equal(result.final.reward, rival.score);
     assert.equal(result.final.final_balance, rival.finalBalance);
     if (result.final.completed) assert.equal(result.checkpoints.length, release.days);
@@ -263,6 +262,7 @@ digest.hexdigest()
     version: release.version,
     completed: true,
     model_requested: "example/model",
+    timestamp_utc: "2026-11-22T00:00:00Z",
     reward: 2476,
     final_balance: 2476,
     benchmark_sha256: fingerprint,

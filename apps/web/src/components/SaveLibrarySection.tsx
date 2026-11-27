@@ -1,16 +1,16 @@
 "use client";
-import type { Release, Rival } from "games-common/benchmark";
+import type { Release } from "games-common/benchmark";
 
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 import { msg } from "@/dictionary";
-import { loadRival } from "@/game/rival-balances";
 import {
+  forkReferenceRun,
   forkRun,
-  forkScriptedRun,
   listRuns,
+  referenceRun,
+  referenceSlot,
   runKey,
-  scriptedSlot,
   readSlotSnapshot,
   slotSnapshot,
   withRunLock,
@@ -30,23 +30,8 @@ export function SaveLibrarySection({
   slot?: string;
   day?: number;
 }) {
-  const script = release.rivals.find((r) => r.kind === "script" && (r.balances || r.values));
-  const [loaded, setLoaded] = useState<{ script: Rival; values?: number[] }>();
-  useEffect(() => {
-    if (!script || script.values) return undefined;
-    const request = new AbortController();
-    void loadRival(script, request.signal)
-      .then((data) => {
-        if (!request.signal.aborted) setLoaded({ script, values: data.values });
-      })
-      .catch(() => {});
-    return () => request.abort();
-  }, [script]);
-  const closings =
-    (script?.values ?? (loaded && loaded.script === script ? loaded.values : undefined))?.slice(
-      1,
-      release.days + 1,
-    ) ?? [];
+  const reference = referenceRun(release);
+  const closings = reference?.values?.slice(1, release.days + 1) ?? [];
   const snapshot = useStoredText(() => slotSnapshot(localStorage, release));
   const runs = typeof snapshot === "string" ? readSlotSnapshot(snapshot) : [];
   const [problem, setProblem] = useState(false),
@@ -76,8 +61,8 @@ export function SaveLibrarySection({
               (b.updatedAt ?? b.createdAt ?? 0) - (a.updatedAt ?? a.createdAt ?? 0),
           )[0];
         if (existing) return existing.id;
-        return id === scriptedSlot
-          ? forkScriptedRun(localStorage, release, startDay)
+        return id === referenceSlot
+          ? forkReferenceRun(localStorage, release, startDay)
           : forkRun(localStorage, release, id, startDay);
       });
       location.assign(resume(child));
@@ -104,6 +89,7 @@ export function SaveLibrarySection({
           release={release}
           slots={runs}
           closings={closings}
+          reference={reference?.name}
 
           activeSlot={slot}
           initialDay={day}

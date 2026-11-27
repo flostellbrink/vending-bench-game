@@ -1,4 +1,4 @@
-import { releaseSchema, rivalSchema, scriptedReplaySchema } from "games-common/benchmark";
+import { releaseSchema, replaySchema, rivalSchema } from "games-common/benchmark";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -9,9 +9,10 @@ import * as v from "valibot";
 export const pinSchema = v.object({ revision: v.string() });
 type Pin = v.InferOutput<typeof pinSchema>;
 export const sourceRivalSchema = v.object({
-  ...v.omit(rivalSchema, ["source", "balances", "values"]).entries,
+  ...v.omit(rivalSchema, ["source", "balances", "values", "replay"]).entries,
   sourcePath: v.string(),
   values: v.nullish(v.array(v.number())),
+  replay: v.optional(v.omit(replaySchema, ["revision"])),
 });
 const metadataSchema = v.object({
   ...v.pick(releaseSchema, [
@@ -27,7 +28,6 @@ const metadataSchema = v.object({
     "reportLimits",
   ]).entries,
   rivals: v.array(sourceRivalSchema),
-  scriptedReplay: v.omit(scriptedReplaySchema, ["revision"]),
 });
 type Metadata = v.InferOutput<typeof metadataSchema>;
 export interface SnapshotRelease extends Metadata {
