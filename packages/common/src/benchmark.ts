@@ -38,7 +38,6 @@ export const releaseSchema = v.object({
   currency: v.string(),
   days: v.number(),
   engineArchive: v.string(),
-  id: v.string(),
   network: v.object({
     closes: v.number(),
     fee: v.number(),
@@ -86,8 +85,8 @@ export const releaseSchema = v.object({
   tools: v.record(v.string(), v.string()),
   version: v.string(),
 });
-export function parseReleases(input: unknown): Release[] {
-  return v.parse(v.pipe(v.array(releaseSchema), v.minLength(1)), input);
+export function parseRelease(input: unknown): Release {
+  return v.parse(releaseSchema, input);
 }
 
 const finalScoreSchema = v.object({

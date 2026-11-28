@@ -14,7 +14,6 @@
     "**/src/generated/**",
     "**/public/benchmarks/**",
     "**/public/python/**",
-    "**/public/releases.json",
     "**/public/worker.js"
   ],
   "options": { "typeAware": true, "typeCheck": true },

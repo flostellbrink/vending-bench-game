@@ -1,11 +1,10 @@
 "use client";
-import type { Release } from "games-common/benchmark";
-import type { ReactElement } from "react";
-
 import { hoursPerDay } from "games-common/language";
 
 import { msg } from "@/dictionary/index.ts";
 import { rankedModels } from "@/game/model-rivals.ts";
+import { release } from "@/game/release.ts";
+import { useLocationSearch } from "@/hooks/useSessionStorage.ts";
 import { useCurrency } from "@/localization/formatters.ts";
 import { clock } from "@/scene/clock.ts";
 import Office from "@/scene/Office.tsx";
@@ -20,18 +19,13 @@ const minutesPerDay = hoursPerDay * 60;
 /** The length of a short Git commit hash. */
 const shortRevision = 7;
 
-interface Props {
-  release: Release;
-  setup: ReactElement;
-  slot?: string;
-}
-
-function LandingDesk({ release, setup, slot }: Props) {
+export default function BenchmarkLanding() {
+  const slot = new URLSearchParams(useLocationSearch()).get("slot") ?? undefined;
   const money = useCurrency(release.currency);
   const scored = rankedModels(release.rivals).length > 0;
   const source = `https://github.com/ProsusAI/vending-bench/tree/${release.revision}`;
   return (
-    <StationFrame revision={release.revision} slot={slot}>
+    <StationFrame slot={slot}>
       <div className="desk landing-desk">
         <article className="shell landing-console">
           <div className="landing-intro">
@@ -45,7 +39,7 @@ function LandingDesk({ release, setup, slot }: Props) {
               {msg.landing.gameSource()}
             </a>
           </div>
-          {setup}
+          <SessionSetup />
         </article>
         <section className="workspace landing-workspace">
           <div className="surface landing-room">
@@ -91,15 +85,5 @@ function LandingDesk({ release, setup, slot }: Props) {
         </a>
       </footer>
     </StationFrame>
-  );
-}
-
-export default function BenchmarkLanding() {
-  return (
-    <SessionSetup
-      renderPage={(release, setup, slot) => (
-        <LandingDesk release={release} setup={setup} slot={slot} />
-      )}
-    />
   );
 }

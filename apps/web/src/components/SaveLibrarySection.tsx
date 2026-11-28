@@ -38,8 +38,7 @@ export function SaveLibrarySection({
   const [sending, setSending] = useState(false);
   const newForm = useId();
   const locale = useLocale();
-  const resume = (id: string) =>
-    `/${locale}/run?${new URLSearchParams({ bench: release.revision, slot: id })}`;
+  const resume = (id: string) => `/${locale}/run?${new URLSearchParams({ slot: id })}`;
   async function branch(id: string, startDay: number) {
     if (sending || typeof snapshot !== "string") {
       return;
@@ -72,14 +71,14 @@ export function SaveLibrarySection({
           <h2>{msg.session.saveTimeline()}</h2>
         </div>
         <small>
-          {msg.session.version()} {release.id} · {msg.session.seed()} {release.seed}
+          {msg.session.version()} {release.version} · {msg.session.seed()} {release.seed}
         </small>
       </header>
       {snapshot === unavailable ? (
         <p role="alert">{msg.session.unavailable()}</p>
       ) : (
         <SaveTree
-          key={`${release.revision}:${slot ?? "latest"}:${day ?? "tip"}`}
+          key={`${slot ?? "latest"}:${day ?? "tip"}`}
           release={release}
           slots={runs}
           references={referenceRuns(release)}
@@ -94,7 +93,6 @@ export function SaveLibrarySection({
       {problem && <p role="alert">{msg.session.branchFailed()}</p>}
       <div className="save-console-actions">
         <form id={newForm} action={`/${locale}/run`} method="get">
-          <input type="hidden" name="bench" value={release.revision} />
           <input type="hidden" name="slot" value="new" />
         </form>
       </div>

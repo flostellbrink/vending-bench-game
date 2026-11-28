@@ -1,5 +1,5 @@
-import { parseReleases } from "games-common/benchmark";
-import { assertValue, first, keys } from "games-common/language";
+import { parseRelease } from "games-common/benchmark";
+import { assertValue, keys } from "games-common/language";
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
@@ -9,10 +9,8 @@ import { locales } from "../src/dictionary/runtime.ts";
 import { referenceRuns, referenceSlotOf } from "../src/game/runs.ts";
 
 const directory = new URL("../out/", import.meta.url);
-const release = first(
-  parseReleases(
-    JSON.parse(await readFile(new URL("../src/generated/releases.json", import.meta.url), "utf8")),
-  ),
+const release = parseRelease(
+  JSON.parse(await readFile(new URL("../src/generated/release.json", import.meta.url), "utf8")),
 );
 const messageSubset = v.record(v.string(), v.record(v.string(), v.string()));
 const flightRecord = v.tuple([
@@ -31,7 +29,7 @@ await test("each exported page ships only its own localized messages", async () 
   );
   for (const locale of locales) {
     for (const [segment, landmarkId] of [
-      ["", "SX000001"],
+      ["", "SX000002"],
       ["/run", "VBBOOT03"],
     ] as const) {
       const route = new URL(`${locale}${segment}`, directory);

@@ -1,13 +1,11 @@
 "use client";
-import type { Release } from "games-common/benchmark";
-
 import { hasValue } from "games-common/language";
 import { useLocale } from "games-localize/react";
 import { redirect, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { msg } from "@/dictionary/index.ts";
-import { releases } from "@/game/releases.ts";
+import { release } from "@/game/release.ts";
 import {
   createRun,
   isSlotId,
@@ -28,21 +26,14 @@ export default function Game() {
 }
 
 function ActiveRun() {
-  const locale = useLocale();
-  const query = useSearchParams();
-  const revision = query.get("bench");
-  const slot = query.get("slot") ?? legacySlot;
-  const release = releases.find((entry) => entry.revision === revision);
-  if (!release) {
-    redirect(`/${locale}`);
-  }
+  const slot = useSearchParams().get("slot") ?? legacySlot;
   if (slot === "new") {
-    return <OpenNewRun release={release} />;
+    return <OpenNewRun />;
   }
-  return <SavedRun release={release} slot={slot} />;
+  return <SavedRun slot={slot} />;
 }
 
-function OpenNewRun({ release }: { release: Release }) {
+function OpenNewRun() {
   const locale = useLocale();
   const started = useRef(false);
   const [failed, setFailed] = useState(false);
@@ -55,19 +46,15 @@ function OpenNewRun({ release }: { release: Release }) {
     void Promise.resolve()
       .then(() => {
         const slot = createRun(localStorage, release);
-        globalThis.history.replaceState(
-          null,
-          "",
-          `?${new URLSearchParams({ bench: release.revision, slot })}`,
-        );
+        globalThis.history.replaceState(null, "", `?${new URLSearchParams({ slot })}`);
       })
       .catch(() => setFailed(true));
-  }, [release]);
+  }, []);
   return (
     <main className="run-loading">
       {failed ? (
         <p role="alert">
-          {msg.session.unavailable()} <a href={`/${locale}`}>{msg.session.choose()}</a>
+          {msg.session.unavailable()} <a href={`/${locale}`}>{msg.session.setup()}</a>
         </p>
       ) : (
         "VENDIX/OS"
@@ -76,7 +63,7 @@ function OpenNewRun({ release }: { release: Release }) {
   );
 }
 
-function SavedRun({ release, slot }: { release: Release; slot: string }) {
+function SavedRun({ slot }: { slot: string }) {
   const locale = useLocale();
   const snapshot = useSyncExternalStore(
     subscribe,
@@ -105,7 +92,7 @@ function SavedRun({ release, slot }: { release: Release; slot: string }) {
   const parent = slots[parentIndex];
   return (
     <Station
-      key={`${release.revision}:${slot}`}
+      key={slot}
       release={release}
       slot={slot}
       newRun={slots[index]?.moves === 0 && !parentId}

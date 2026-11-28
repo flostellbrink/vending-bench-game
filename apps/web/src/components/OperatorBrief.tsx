@@ -52,7 +52,7 @@ export function OperatorBrief({ release, state, money, embedded }: Props) {
     <section className="sheet brief">
       {!embedded && (
         <h2>
-          {msg.operator.rules()} · {release.id}
+          {msg.operator.rules()} · {release.version}
         </h2>
       )}
       {state && (

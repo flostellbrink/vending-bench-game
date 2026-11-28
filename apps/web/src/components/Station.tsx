@@ -30,7 +30,7 @@ export function Station({ release, slot, parentBalance, origin, newRun }: Props)
   const money = (value: number) => currency.format(value);
   const shell = useCommandLine(run, nav, release);
   const { state } = run;
-  const query = new URLSearchParams({ bench: release.revision, slot });
+  const query = new URLSearchParams({ slot });
   if (state?.over) {
     return (
       <Settlement
@@ -82,7 +82,7 @@ export function Station({ release, slot, parentBalance, origin, newRun }: Props)
         <span>
           {state?.final
             ? `${msg.operator.score()} · ${money(state.final.reward)}`
-            : `Vending Bench / ${release.id} · Seed ${release.seed}`}
+            : `Vending Bench / ${release.version} · Seed ${release.seed}`}
         </span>
         <a href={`/${lang}?${query}`}>{msg.session.mainMenu()}</a>
       </footer>

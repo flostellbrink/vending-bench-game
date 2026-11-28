@@ -1569,11 +1569,6 @@ session:
     ^en: Replace and start
     es: Reemplazar e iniciar
     de: Ersetzen und starten
-  choose:
-    .id: SX000001
-    ^en: "Choose a benchmark"
-    es: "Elige un benchmark"
-    de: "Benchmark auswählen"
   opening:
     .id: SX000002
     ^en: "Opening balance"

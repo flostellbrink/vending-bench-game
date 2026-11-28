@@ -44,7 +44,6 @@ type View = number | "suppliers";
 type SimulatorResult = Extract<WorkerReply, { state: Snapshot }>;
 
 interface RunView {
-  revision: string;
   journal: Entry[];
   state: Optional<Snapshot>;
   actions: Actions;
@@ -68,7 +67,6 @@ function initialView(): RunView {
     journal: [],
     lines: [],
     reports: [],
-    revision: "",
     state: null,
   };
 }
@@ -116,11 +114,8 @@ function reportsFor(data: SimulatorResult, entries: Entry[], offset: number): Re
 
 /** Keeps the selected run's simulator, journal and comparison record in sync. */
 export function useRun(release: Release, slot: string, onView: (id: View) => void) {
-  const [storedView, setStoredView] = useState<RunView>(initialView);
-  const view = storedView.revision === release.revision ? storedView : initialView();
-  const [rivalResult, setRivalResult] =
-    useState<Optional<{ revision: string; rivals: Rival[] }>>(null);
-  const rivals = rivalResult?.revision === release.revision ? rivalResult.rivals : [];
+  const [view, setView] = useState<RunView>(initialView);
+  const [rivals, setRivals] = useState<Rival[]>([]);
   const [saveIssue, setSaveIssue] = useState<SaveIssue>("");
   const [runtimeError, setRuntimeError] = useState("");
   const [epoch, setEpoch] = useState(0);
@@ -128,7 +123,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
   const pending = useRef<Optional<{ entry: Entry; destination: ResponseDestination }>>(null);
   const saveKey = runKey(release, slot);
   const bestKey = recordKey(release);
-  const setError = useCallback((error: string) => setStoredView((old) => ({ ...old, error })), []);
+  const setError = useCallback((error: string) => setView((old) => ({ ...old, error })), []);
   const clearSaveIssue = useCallback(() => setSaveIssue(""), []);
 
   const startWorker = useCallback(() => {
@@ -141,7 +136,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           return;
         }
         setRuntimeError(errorToString(startError));
-        setStoredView({ ...initialView(), busy: false, revision: release.revision });
+        setView({ ...initialView(), busy: false });
       });
       return () => abort.abort();
     }
@@ -165,12 +160,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
       worker.current = null;
       pending.current = null;
       setRuntimeError(errorToString(error));
-      setStoredView((old) => ({
-        ...(old.revision === release.revision ? old : initialView()),
-        busy: false,
-        error: "",
-        revision: release.revision,
-      }));
+      setView((old) => ({ ...old, busy: false, error: "" }));
     };
 
     function replay() {
@@ -214,7 +204,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
             error instanceof Error && error.message === "changed" ? "saveConflict" : "saveFailed",
           );
           setEpoch((n) => n + 1);
-          setStoredView({ ...initialView(), revision: release.revision });
+          setView(initialView());
           onView("suppliers");
           replay();
           return;
@@ -262,7 +252,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         return;
       }
       pending.current = null;
-      setStoredView((old) => {
+      setView((old) => {
         const replayBoot: Optional<BootStage[]> = first ? [...(old.boot ?? []), "ready"] : null;
         return {
           ...old,
@@ -274,7 +264,6 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           journal: entries,
           lines: entry ? [...old.lines, ...reports] : reports,
           reports: entry ? [...old.reports, ...reports] : reports,
-          revision: release.revision,
           state: data.state,
         };
       });
@@ -304,14 +293,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
           }
           if ("boot" in data) {
             if (first) {
-              setStoredView((old) => {
-                const active = old.revision === release.revision ? old : initialView();
-                return {
-                  ...active,
-                  boot: [...(active.boot ?? []), data.boot],
-                  revision: release.revision,
-                };
-              });
+              setView((old) => ({ ...old, boot: [...(old.boot ?? []), data.boot] }));
             }
             return;
           }
@@ -345,7 +327,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
         return;
       }
       setRuntimeError("");
-      setStoredView((old) => ({ ...old, busy: true }));
+      setView((old) => ({ ...old, busy: true }));
       stop = startWorker();
     }
     globalThis.addEventListener("pagehide", hidePage);
@@ -362,7 +344,7 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     Promise.all(release.rivals.map((rival) => loadRival(rival, abort.signal)))
       .then((data) => {
         if (!abort.signal.aborted) {
-          setRivalResult({ revision: release.revision, rivals: data });
+          setRivals(data);
         }
       })
       .catch((error: unknown) => {
@@ -379,12 +361,12 @@ export function useRun(release: Release, slot: string, onView: (id: View) => voi
     }
     pending.current = { destination, entry };
     clearSaveIssue();
-    setStoredView((old) => ({ ...old, busy: true, error: "" }));
+    setView((old) => ({ ...old, busy: true, error: "" }));
     post(worker.current, { moves: [entry.move] });
     return true;
   }
   function appendLocal(line: string, localText: string) {
-    setStoredView((old) =>
+    setView((old) =>
       !old.state
         ? old
         : {

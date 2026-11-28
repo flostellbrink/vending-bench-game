@@ -23,7 +23,6 @@
     "**/src/generated/**",
     "**/public/benchmarks/**",
     "**/public/python/**",
-    "**/public/releases.json",
     "**/public/worker.js",
     "pnpm-lock.yaml"
   ]
