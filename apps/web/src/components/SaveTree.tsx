@@ -133,13 +133,11 @@ function SaveCard({
 function SaveAction({
   selected,
   newForm,
-  revision,
   disabled,
   branch,
 }: {
   selected: Node;
   newForm: string;
-  revision: string;
   disabled: boolean;
   branch: (slot: string, day: number) => void;
 }) {
@@ -164,7 +162,7 @@ function SaveAction({
   }
   if (selected.result) {
     return (
-      <a href={`/${locale}/run?${new URLSearchParams({ bench: revision, slot: selected.source })}`}>
+      <a href={`/${locale}/run?${new URLSearchParams({ slot: selected.source })}`}>
         {msg.session.reopen()}
       </a>
     );
@@ -298,13 +296,7 @@ export default function SaveTree({
         </div>
       </div>
       <div className="save-decision">
-        <SaveAction
-          selected={selected}
-          newForm={newForm}
-          revision={release.revision}
-          disabled={disabled}
-          branch={branch}
-        />
+        <SaveAction selected={selected} newForm={newForm} disabled={disabled} branch={branch} />
         <small aria-live="polite">
           {selected === fresh ? msg.session.dayNumber({ day: 1 }) : title(selected)}
         </small>

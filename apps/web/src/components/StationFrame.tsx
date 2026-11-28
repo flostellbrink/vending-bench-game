@@ -9,15 +9,14 @@ import { LanguageLinks } from "./LanguageLinks.tsx";
 import "./station-frame.css";
 
 interface Props {
-  revision: string;
   children: ReactNode;
   page?: "run" | "setup";
   slot?: string;
   day?: number;
 }
-export function StationFrame({ revision, children, page = "setup", slot, day }: Props) {
+export function StationFrame({ children, page = "setup", slot, day }: Props) {
   const lang = useLocale();
-  const query = new URLSearchParams({ bench: revision });
+  const query = new URLSearchParams();
   if (slot) {
     query.set("slot", slot);
   }

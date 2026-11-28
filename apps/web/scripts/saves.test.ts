@@ -1,5 +1,5 @@
-import { parseReleases, type Entry } from "games-common/benchmark";
-import { assertValue, first, hasValue } from "games-common/language";
+import { parseRelease, type Entry } from "games-common/benchmark";
+import { assertValue, hasValue } from "games-common/language";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -25,10 +25,9 @@ import {
 } from "../src/game/runs.ts";
 import { saveTimeline } from "../src/game/save-timeline.ts";
 
-const releases = JSON.parse(
-  await readFile(new URL("../src/generated/releases.json", import.meta.url), "utf8"),
+const release = parseRelease(
+  JSON.parse(await readFile(new URL("../src/generated/release.json", import.meta.url), "utf8")),
 );
-const release = first(parseReleases(releases));
 class Memory {
   private readonly values = new Map<string, string>();
   get length() {

@@ -51,7 +51,7 @@ export function Settlement({ run, release, slot, money, parentBalance, origin }:
   const finalReceipt = reports.at(-1);
   const openDay = (day: number) => nav.setTab(`day:${day}`);
   return (
-    <StationFrame revision={release.revision} slot={slot} page="run">
+    <StationFrame slot={slot} page="run">
       <div className="dossier settlement-desks">
         <section className="bench-paper">
           <Scorecard

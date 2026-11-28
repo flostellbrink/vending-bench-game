@@ -5,28 +5,22 @@ import {
   cpSync,
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import * as v from "valibot";
 
 import {
   app,
-  root,
   publicDir,
   engine,
   git,
-  pinSchema,
-  readReleases,
+  readRelease,
   type SnapshotRelease,
 } from "./benchmark-source.ts";
-
-const previousCatalogSchema = v.array(
-  v.object({ engineArchive: v.optional(v.string()), id: v.string(), revision: v.string() }),
-);
 
 const repoURL = "https://github.com/ProsusAI/vending-bench/blob/";
 const hashPrefixLength = 16;
@@ -83,27 +77,11 @@ function assets({ browserTools, ...release }: SnapshotRelease): Release {
 }
 
 if (import.meta.main) {
-  const pins = v.parse(
-    v.array(pinSchema),
-    JSON.parse(readFileSync(join(root, "releases.json"), "utf8")),
-  );
-  const releases = await readReleases(pins);
-  const catalog = releases.map(assets);
-  const oldCatalog = join(publicDir, "releases.json");
-  if (existsSync(oldCatalog)) {
-    for (const old of v.parse(
-      previousCatalogSchema,
-      JSON.parse(readFileSync(oldCatalog, "utf8")),
-    )) {
-      if (!old.engineArchive && /^[\w.+-]+$/.test(old.id)) {
-        rmSync(join(publicDir, `${old.id}.zip`), { force: true });
-      }
-      if (
-        /^[0-9a-f]{40}$/.test(old.revision) &&
-        !catalog.some((r) => r.revision === old.revision)
-      ) {
-        rmSync(join(publicDir, "benchmarks", old.revision), { force: true, recursive: true });
-      }
+  const release = assets(await readRelease());
+  const benchmarks = join(publicDir, "benchmarks");
+  for (const folder of existsSync(benchmarks) ? readdirSync(benchmarks) : []) {
+    if (folder !== release.revision) {
+      rmSync(join(benchmarks, folder), { force: true, recursive: true });
     }
   }
   const destination = join(app, "src/generated");
@@ -118,6 +96,5 @@ if (import.meta.main) {
   ]) {
     cpSync(join(app, "node_modules/pyodide", file), join(publicDir, "python", file));
   }
-  writeJSON(join(destination, "releases.json"), catalog);
-  writeJSON(join(publicDir, "releases.json"), catalog);
+  writeJSON(join(destination, "release.json"), release);
 }

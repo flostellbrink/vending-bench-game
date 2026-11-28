@@ -1,4 +1,4 @@
-import { actionsSchema, parseReleases, replaySchema, snapshotSchema } from "games-common/benchmark";
+import { actionsSchema, parseRelease, replaySchema, snapshotSchema } from "games-common/benchmark";
 import { assertValue, keys } from "games-common/language";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -7,22 +7,20 @@ import test from "node:test";
 import { loadPyodide } from "pyodide";
 import * as v from "valibot";
 
-import { pythonJSON, readReleases, readSnapshot, sourceRivalSchema } from "./benchmark-source.ts";
+import { pythonJSON, readRelease, readSnapshot, sourceRivalSchema } from "./benchmark-source.ts";
 
 const root = new URL("../../../", import.meta.url);
 const app = new URL("../", import.meta.url);
-const catalog = parseReleases(
-  JSON.parse(await readFile(new URL("src/generated/releases.json", app), "utf8")),
+const release = parseRelease(
+  JSON.parse(await readFile(new URL("src/generated/release.json", app), "utf8")),
 );
-const pinned = assertValue(catalog[0]).revision;
+const { revision } = release;
 const git = (...args: string[]) =>
   execFileSync("git", ["-C", "vendor/vending-bench", ...args], { cwd: root, encoding: "utf8" });
 
 /** @risk impact=4 likelihood=2 */
 await test("each model shows its latest published attempt once, with daily balances", async () => {
-  const revision = pinned;
-  const releases = await readReleases([{ revision }]);
-  const release = assertValue(releases[0]);
+  const source = await readRelease();
   const resultSchema = v.object({
     days_operated: v.number(),
     final_balance: v.number(),
@@ -41,7 +39,7 @@ await test("each model shows its latest published attempt once, with daily balan
   const latest = new Map<string, string>();
   for (const path of published) {
     const { model_requested: model, timestamp_utc: time, horizon_days, seed } = trial(path);
-    if (horizon_days !== release.days || seed !== release.seed) {
+    if (horizon_days !== source.days || seed !== source.seed) {
       continue;
     }
     if (time > (latest.get(model) ?? "")) {
@@ -49,7 +47,7 @@ await test("each model shows its latest published attempt once, with daily balan
     }
   }
   assert.equal(latest.size, 5);
-  const models = release.rivals;
+  const models = source.rivals;
   const shown = new Map<string, string>();
   for (const model of models) {
     const result = trial(model.sourcePath);
@@ -58,8 +56,8 @@ await test("each model shows its latest published attempt once, with daily balan
     assert.equal(model.endDay, result.days_operated);
     assert.equal(model.finalBalance, result.final_balance);
     const values = assertValue(model.values);
-    assert.equal(values.length, release.days + 1);
-    assert.equal(values[0], release.startingBalance);
+    assert.equal(values.length, source.days + 1);
+    assert.equal(values[0], source.startingBalance);
     assert.equal(values.at(-1), result.final_balance);
   }
   assert.equal(models.length, shown.size);
@@ -67,7 +65,7 @@ await test("each model shows its latest published attempt once, with daily balan
 });
 /** @risk impact=4 likelihood=2 */
 await test("quote defaults and parameter order come from the published MCP signature", async () => {
-  const python = await readSnapshot(pinned);
+  const python = await readSnapshot(revision);
   const path = v.parse(v.string(), python.runPython('str(SERVER / "server.py")'));
   python.FS.writeFile(
     path,
@@ -96,7 +94,6 @@ str(inspect.signature(scope["tools"]["check_offers"]))
 });
 /** @risk impact=5 likelihood=2 */
 await test("a saved command sequence replays to the same final score", async () => {
-  const release = assertValue(catalog[0]);
   const python = await loadPyodide();
   python.unpackArchive(
     new Uint8Array(await readFile(new URL(`public/${release.engineArchive}`, app))),
@@ -136,16 +133,14 @@ snapshot()
 
 /** @risk impact=3 likelihood=3 */
 await test("each model run replay reproduces every morning and its published score in the browser engine", async () => {
-  const replayed = catalog.flatMap((release) =>
-    release.rivals.filter((r) => r.replay).map((rival) => ({ release, rival })),
-  );
+  const replayed = release.rivals.filter((r) => r.replay);
   assert.ok(replayed.length > 0, "No model run replays in the browser engine");
-  for (const { release, rival } of replayed) {
+  for (const rival of replayed) {
     const journal = v.parse(
       replaySchema,
       JSON.parse(await readFile(new URL(`public/${assertValue(rival.replay)}`, app), "utf8")),
     );
-    assert.equal(journal.revision, release.revision);
+    assert.equal(journal.revision, revision);
     assert.equal(journal.seed, release.seed);
     const python = await loadPyodide();
     python.unpackArchive(
@@ -190,32 +185,13 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
 });
 
 /** @risk impact=2 likelihood=1 */
-await test("the briefing comes from the selected Git revision", () => {
-  for (const release of catalog) {
-    assert.equal(
-      release.brief,
-      git("show", `${release.revision}:tasks/vending-bench/instruction.md`).trim(),
-    );
-  }
-});
-
-/** @risk impact=3 likelihood=2 */
-await test("different commits sharing one release version remain distinct; duplicate pins collapse", async () => {
-  const previous = git("rev-parse", `${pinned}^`).trim();
-  const releases = await readReleases([pinned, previous, pinned].map((revision) => ({ revision })));
-  assert.equal(releases.length, 2);
-  assert.equal(assertValue(releases[0]).version, assertValue(releases[1]).version);
-  assert.notEqual(assertValue(releases[0]).id, assertValue(releases[1]).id);
-  assert.deepEqual(
-    releases.map((r) => r.revision),
-    [pinned, previous],
-  );
+await test("the briefing comes from the submodule commit", () => {
+  assert.equal(release.brief, git("show", `${revision}:tasks/vending-bench/instruction.md`).trim());
 });
 
 /** @risk impact=4 likelihood=3 */
 await test("model endpoints need matching source and conditions; only recorded closings become a trace", async () => {
-  const release = assertValue(catalog[0]);
-  const python = await readSnapshot(release.revision);
+  const python = await readSnapshot(revision);
   const fixtureScore = 2476;
   const dayTwoMorningBalance = 1481.25;
   const batch = "/upstream/results/baselines/models-30d";
@@ -285,8 +261,7 @@ digest.hexdigest()
 
 /** @risk impact=2 likelihood=2 */
 await test("a changed upstream site fee regenerates the brief", async () => {
-  const release = assertValue(catalog[0]);
-  const python = await readSnapshot(release.revision);
+  const python = await readSnapshot(revision);
   const changed = v.parse(
     v.object({ brief: v.string(), fee: v.number(), symbol: v.string() }),
     pythonJSON(
@@ -306,9 +281,8 @@ json.dumps({
 });
 
 /** @risk impact=3 likelihood=2 */
-await test("GUI report limits follow the selected benchmark, independently of MCP defaults", async () => {
-  const release = assertValue(catalog[0]);
-  const python = await readSnapshot(release.revision);
+await test("GUI report limits follow the benchmark, independently of MCP defaults", async () => {
+  const python = await readSnapshot(revision);
   const addedMails = 3;
   const addedSalesDays = 7;
   assert.deepEqual(
