@@ -1,6 +1,5 @@
 import type { Release } from "games-common/benchmark";
 
-import { assertValue } from "games-common/language";
 import { createHash } from "node:crypto";
 import {
   cpSync,
@@ -118,12 +117,6 @@ if (import.meta.main) {
     "python_stdlib.zip",
   ]) {
     cpSync(join(app, "node_modules/pyodide", file), join(publicDir, "python", file));
-  }
-  for (const file of ["NOTICE", "LICENSE"]) {
-    cpSync(
-      join(publicDir, "benchmarks", assertValue(catalog[0]).revision, file),
-      join(publicDir, file),
-    );
   }
   writeJSON(join(destination, "releases.json"), catalog);
   writeJSON(join(publicDir, "releases.json"), catalog);
