@@ -61,7 +61,7 @@ export function OperatorBrief({ release, state, money, embedded }: Props) {
           {msg.operator.fee()} {money(state.fee)}
         </p>
       )}
-      <div lang="en">{briefBody(release.brief)}</div>
+      <div>{briefBody(msg.benchmark.brief())}</div>
     </section>
   );
 }

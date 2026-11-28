@@ -4,6 +4,7 @@ import { hasValue } from "games-common/language";
 import { useId, useRef } from "react";
 
 import { msg } from "@/dictionary/index.ts";
+import { toolDescription } from "@/game/benchmark-text.ts";
 import { syntax } from "@/game/commands.ts";
 import { toolDefaults } from "@/game/tool-defaults.ts";
 
@@ -91,7 +92,7 @@ export function ToolInfo({ release, verb: tool, actions, prediction }: Props) {
             {msg.operator.defaults()}: <code>{defaults}</code>
           </small>
         )}
-        <p lang="en">{release.tools[tool]}</p>
+        <p>{toolDescription(release, tool)}</p>
       </div>
     </>
   );

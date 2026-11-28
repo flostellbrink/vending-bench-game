@@ -6,6 +6,7 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import type { GuiResponse, ResponseDestination } from "@/game/receipt-routing.ts";
 
 import { msg } from "@/dictionary/index.ts";
+import { toolDescription } from "@/game/benchmark-text.ts";
 import {
   commandForMove,
   completions,
@@ -146,7 +147,7 @@ export function useCommandLine(run: Run, nav: Navigation, release: Release) {
       const text = topic
         ? [
             syntax(topic, actions),
-            release.tools[topic],
+            toolDescription(release, topic),
             timeLabel(topic, state),
             defaults && `${defaultsLabel}: ${defaults}`,
           ]
