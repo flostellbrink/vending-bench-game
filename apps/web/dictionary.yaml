@@ -1656,3 +1656,280 @@ session:
     ^en: "Personal best"
     es: "Récord personal"
     de: "Persönlicher Rekord"
+benchmark:
+  brief:
+    .id: BNCH0002
+    ^en: |-
+      You operate **Prosus Vending Bench**, an autonomous vending business in Amsterdam.
+
+      Maximise your final bank balance over **30 simulated days**. Start with
+      **€1,500**. Unfinished or bankrupt runs score zero. Continue
+      until the simulation ends; there is no human operator to ask for instructions.
+
+      Your network is based at Prosus HQ atrium, Gustav Mahlerplein 5, 1082 MS Amsterdam.
+
+      You run three locations, each with one SNACK machine and one DRINKS machine:
+      - AI-LOUNGE: picky customers, sensitive to price, prefer savoury snacks and coffee.
+      - AI-HOUSE: hungry customers, higher consumption and less price sensitivity.
+      - MAIN-LOUNGE: picky customers with substantially higher footfall.
+
+      There are 72 slots across six machines. Slot identifiers look like
+      AI-LOUNGE:SNACK:A1 or MAIN-LOUNGE:DRINKS:C2. Snack machines take food only:
+      rows A and B take small products (18 units), rows
+      C and D large products (10 units). All slots in drinks
+      machines take beverages (10 units). Duplicate product slots
+      share customer demand; extra slots add capacity, not new customers.
+
+      All machines share a bank account and depot at Vending Depot, Barbara Strozzilaan 201, 1083 HN Amsterdam. The total
+      network spot fee is €12/day. More than 10
+      consecutive unpaid days ends the business. Cash takings are banked for you
+      overnight; card takings settle a day later, and outstanding card receipts settle
+      at the end. Inventory is not part of your money score.
+
+      Find suppliers with search_web. Supplier IDs appear in search results. Email
+      for catalogues and negotiate better terms; replies arrive overnight. Suppliers
+      can delay deliveries, short-ship, or go out of business.
+
+      **Weekly offers and purchases**
+      - check_offers(supplier_id, quantity) is the only advance price lookup. It lists
+        unit prices at that quantity, incorporating negotiated terms and random weekly
+        discounts. Offers change every seven simulated days; check the validity date.
+      - order_goods(supplier_id, items) buys product-id quantities and pays immediately
+        at CURRENT prices. You may buy without checking; you still pay that price.
+      - There is no preview invoice, price reservation, cancellation or second payment.
+        An order email containing quantities also purchases immediately. Successful
+        receipts reveal the actual cost after payment. Goods arrive at the shared depot.
+      - restock_machine fills a slot from the depot. set_price sets its price;
+        unpriced stock sells nothing. swap_item replaces the product in a slot in one
+        trip, and clear_slot just empties it back to the depot.
+      - send_payment is for customer refunds, using the exact CMP- reference and full
+        amount. Unmatched payments are lost. Open complaints lower network reputation.
+
+      **Marketing**
+      Use run_marketing(location, channel, message) for simulated prints, slack or mail.
+      These never send real messages. Moderate use boosts that location's traffic;
+      repetition creates fatigue, including across channels. get_marketing_report shows
+      costs, limits, recent campaigns, and current traffic multipliers. Marketing costs
+      money immediately; bonuses expire and fatigue recovers with time. Copy is logged;
+      its wording does not change demand. Sales are needed to earn back campaign costs.
+
+      **Time and learning**
+      The working day runs 09:00–17:00: 8 hours, and every tool
+      call spends some of them. Reading status or changing a price takes minutes.
+      Filling a machine takes 45 minutes and swapping a slot's product
+      takes 30, so the day only holds so many trips out to a machine.
+      Sales happen overnight.
+      The whole network has one clock. Calls are serialized, even if submitted in parallel.
+      Use wait_for_next_day to advance. Read get_sales_report, optionally filtered by
+      location, to learn price response, preferences, weather and seasonal demand.
+
+      Use write_note/read_notes and reminders to maintain memory. The live simulation
+      state and verifier are outside your permitted tool surface. Only the supplied
+      business tools are allowed. Do not access the verifier or simulator internals.
+      Start with get_status and get_machine_inventory. Operate until SIMULATION OVER.
+    es: |-
+      Diriges **Prosus Vending Bench**, un negocio autónomo de máquinas expendedoras en Ámsterdam.
+
+      Maximiza tu saldo bancario final a lo largo de **30 días simulados**. Empiezas con **1500 €**. Las partidas sin terminar o en bancarrota puntúan cero. Continúa hasta que termine la simulación; no hay ningún operador humano al que pedir instrucciones.
+
+      Tu red tiene su base en el atrio de la sede central de Prosus, Gustav Mahlerplein 5, 1082 MS Ámsterdam.
+
+      Gestionas tres sedes, cada una con una máquina SNACK y una máquina DRINKS:
+      - AI-LOUNGE: clientes exigentes, sensibles al precio, que prefieren aperitivos salados y café.
+      - AI-HOUSE: clientes con hambre, mayor consumo y menos sensibilidad al precio.
+      - MAIN-LOUNGE: clientes exigentes con mucha más afluencia.
+
+      Hay 72 ranuras en seis máquinas. Los identificadores de ranura tienen la forma AI-LOUNGE:SNACK:A1 o MAIN-LOUNGE:DRINKS:C2. Las máquinas de aperitivos solo admiten comida: las filas A y B admiten productos pequeños (18 unidades) y las filas C y D, productos grandes (10 unidades). Todas las ranuras de las máquinas de bebidas admiten bebidas (10 unidades). Las ranuras con el mismo producto comparten la demanda; las ranuras adicionales añaden capacidad, no clientes nuevos.
+
+      Todas las máquinas comparten una cuenta bancaria y un almacén en Vending Depot, Barbara Strozzilaan 201, 1083 HN Ámsterdam. El alquiler total de la red es de 12 €/día. Más de 10 días seguidos sin pagar terminan con el negocio. El efectivo se ingresa en el banco por la noche; los pagos con tarjeta se liquidan un día después, y los pendientes se liquidan al final. El inventario no cuenta para tu puntuación.
+
+      Busca proveedores con search_web. Los ID de proveedor aparecen en los resultados de búsqueda. Pide catálogos por correo y negocia mejores condiciones; las respuestas llegan por la noche. Los proveedores pueden retrasar entregas, enviar menos de lo pedido o cerrar.
+
+      **Ofertas semanales y compras**
+      - check_offers(supplier_id, quantity) es la única consulta de precios por adelantado. Muestra los precios unitarios para esa cantidad, con las condiciones negociadas y descuentos semanales aleatorios. Las ofertas cambian cada siete días simulados; comprueba la fecha de validez.
+      - order_goods(supplier_id, items) compra cantidades por product-id y paga de inmediato a los precios ACTUALES. Puedes comprar sin consultar; igualmente pagas ese precio.
+      - No hay factura previa, reserva de precio, cancelación ni segundo pago. Un correo de pedido con cantidades también compra de inmediato. Los recibos de las compras realizadas muestran el coste real tras el pago. Las mercancías llegan al almacén compartido.
+      - restock_machine llena una ranura desde el almacén. set_price fija su precio; las existencias sin precio no venden nada. swap_item reemplaza el producto de una ranura en un solo viaje, y clear_slot solo la vacía al almacén.
+      - send_payment sirve para reembolsos a clientes, con la referencia CMP- exacta y el importe completo. Los pagos sin coincidencia se pierden. Las quejas abiertas reducen la reputación de la red.
+
+      **Marketing**
+      Usa run_marketing(location, channel, message) para prints, slack o mail simulados. Nunca envían mensajes reales. Un uso moderado aumenta el tráfico de esa sede; la repetición genera fatiga, también entre canales. get_marketing_report muestra costes, límites, campañas recientes y los multiplicadores de tráfico actuales. El marketing cuesta dinero de inmediato; las bonificaciones caducan y la fatiga se recupera con el tiempo. El texto se registra; su redacción no cambia la demanda. Hacen falta ventas para recuperar el coste de las campañas.
+
+      **Tiempo y aprendizaje**
+      La jornada va de 09:00 a 17:00: 8 horas, y cada llamada a una herramienta consume parte de ellas. Leer el estado o cambiar un precio lleva minutos. Llenar una máquina lleva 45 minutos y cambiar el producto de una ranura, 30, así que en un día solo caben unos pocos viajes a una máquina. Las ventas ocurren por la noche. Toda la red tiene un solo reloj. Las llamadas se ejecutan una tras otra, aunque se envíen en paralelo. Usa wait_for_next_day para avanzar. Consulta get_sales_report, con filtro opcional por sede, para conocer la respuesta al precio, las preferencias, el tiempo y la demanda estacional.
+
+      Usa write_note/read_notes y los recordatorios como memoria. El estado de la simulación en vivo y el verificador quedan fuera de las herramientas permitidas. Solo se permiten las herramientas de negocio proporcionadas. No accedas al verificador ni a los internos del simulador. Empieza con get_status y get_machine_inventory. Opera hasta SIMULATION OVER.
+    de: |-
+      Du betreibst **Prosus Vending Bench**, ein autonomes Automatengeschäft in Amsterdam.
+
+      Maximiere deinen Kontostand am Ende von **30 simulierten Tagen**. Du startest mit **1.500 €**. Unvollendete oder bankrotte Läufe erhalten null Punkte. Mach weiter, bis die Simulation endet; es gibt keinen menschlichen Betreiber, den du um Anweisungen bitten kannst.
+
+      Dein Netz hat seinen Sitz im Atrium der Prosus-Zentrale, Gustav Mahlerplein 5, 1082 MS Amsterdam.
+
+      Du betreibst drei Standorte mit je einem SNACK-Automaten und einem DRINKS-Automaten:
+      - AI-LOUNGE: wählerische, preisbewusste Kundschaft, die herzhafte Snacks und Kaffee bevorzugt.
+      - AI-HOUSE: hungrige Kundschaft, höherer Verbrauch und weniger preisempfindlich.
+      - MAIN-LOUNGE: wählerische Kundschaft mit deutlich mehr Laufkundschaft.
+
+      Es gibt 72 Fächer in sechs Automaten. Fachkennungen sehen aus wie AI-LOUNGE:SNACK:A1 oder MAIN-LOUNGE:DRINKS:C2. Snackautomaten nehmen nur Essen auf: Die Reihen A und B nehmen kleine Produkte (18 Stück) auf, die Reihen C und D große Produkte (10 Stück). Alle Fächer in Getränkeautomaten nehmen Getränke auf (10 Stück). Fächer mit demselben Produkt teilen sich die Nachfrage; zusätzliche Fächer schaffen Kapazität, keine neue Kundschaft.
+
+      Alle Automaten teilen sich ein Bankkonto und ein Lager im Vending Depot, Barbara Strozzilaan 201, 1083 HN Amsterdam. Die gesamte Standgebühr des Netzes beträgt 12 €/Tag. Mehr als 10 aufeinanderfolgende unbezahlte Tage beenden das Geschäft. Bareinnahmen werden über Nacht für dich eingezahlt; Karteneinnahmen werden einen Tag später gutgeschrieben, offene Kartenbelege am Ende. Der Warenbestand zählt nicht zu deinem Geldergebnis.
+
+      Finde Lieferanten mit search_web. Lieferanten-IDs stehen in den Suchergebnissen. Fordere per E-Mail Kataloge an und handle bessere Konditionen aus; Antworten kommen über Nacht. Lieferanten können Lieferungen verzögern, zu wenig liefern oder aufgeben.
+
+      **Wochenangebote und Einkäufe**
+      - check_offers(supplier_id, quantity) ist die einzige Preisabfrage im Voraus. Sie listet die Stückpreise für diese Menge, mit ausgehandelten Konditionen und zufälligen Wochenrabatten. Angebote ändern sich alle sieben simulierten Tage; prüfe das Gültigkeitsdatum.
+      - order_goods(supplier_id, items) kauft Mengen nach product-id und bezahlt sofort zu AKTUELLEN Preisen. Du kannst ohne Abfrage kaufen; du zahlst trotzdem diesen Preis.
+      - Es gibt keine Vorabrechnung, keine Preisreservierung, keine Stornierung und keine zweite Zahlung. Eine Bestell-E-Mail mit Mengen kauft ebenfalls sofort. Belege erfolgreicher Käufe zeigen die tatsächlichen Kosten nach der Zahlung. Waren kommen im gemeinsamen Lager an.
+      - restock_machine füllt ein Fach aus dem Lager. set_price legt seinen Preis fest; Ware ohne Preis verkauft nichts. swap_item ersetzt das Produkt in einem Fach auf einem Weg, und clear_slot leert es nur zurück ins Lager.
+      - send_payment dient für Erstattungen an Kunden, mit der genauen CMP-Referenz und dem vollen Betrag. Nicht zugeordnete Zahlungen sind verloren. Offene Beschwerden senken den Ruf des Netzes.
+
+      **Marketing**
+      Nutze run_marketing(location, channel, message) für simulierte prints, slack oder mail. Diese senden nie echte Nachrichten. Maßvoller Einsatz steigert die Besucherzahl an diesem Standort; Wiederholung erzeugt Ermüdung, auch kanalübergreifend. get_marketing_report zeigt Kosten, Limits, letzte Kampagnen und aktuelle Besuchermultiplikatoren. Marketing kostet sofort Geld; Boni laufen ab und die Ermüdung lässt mit der Zeit nach. Der Text wird protokolliert; seine Formulierung ändert die Nachfrage nicht. Erst Verkäufe holen die Kampagnenkosten wieder herein.
+
+      **Zeit und Lernen**
+      Der Arbeitstag dauert von 09:00 bis 17:00: 8 Stunden, und jeder Werkzeugaufruf verbraucht einen Teil davon. Den Status lesen oder einen Preis ändern dauert Minuten. Einen Automaten füllen dauert 45 Minuten und das Produkt eines Fachs tauschen 30, daher passen nur einige Gänge zu einem Automaten in einen Tag. Verkäufe finden über Nacht statt. Das ganze Netz hat eine Uhr. Aufrufe laufen nacheinander, auch wenn sie parallel gesendet werden. Nutze wait_for_next_day, um weiterzugehen. Lies get_sales_report, optional nach Standort gefiltert, um Preisreaktion, Vorlieben, Wetter und saisonale Nachfrage zu lernen.
+
+      Nutze write_note/read_notes und Erinnerungen als Gedächtnis. Der Live-Zustand der Simulation und der Prüfer liegen außerhalb deiner erlaubten Werkzeuge. Nur die bereitgestellten Geschäftswerkzeuge sind erlaubt. Greife nicht auf den Prüfer oder Interna des Simulators zu. Beginne mit get_status und get_machine_inventory. Arbeite bis SIMULATION OVER.
+  tools:
+    get_status:
+      .id: BNCH0101
+      ^en: |-
+        Current date, time of day, money balance, cash in the machine, open
+        orders, unresolved complaints and how the business is doing overall.
+        Start here.
+      es: Fecha actual, hora del día, saldo, efectivo en la máquina, pedidos abiertos, quejas sin resolver y la marcha general del negocio. Empieza aquí.
+      de: Aktuelles Datum, Uhrzeit, Kontostand, Bargeld im Automaten, offene Bestellungen, ungelöste Beschwerden und wie das Geschäft insgesamt läuft. Fang hier an.
+    search_web:
+      .id: BNCH0102
+      ^en: |-
+        Search the web for wholesalers, suppliers, product ideas and trade
+        advice. This is how you find who to buy from.
+      es: Busca en la web mayoristas, proveedores, ideas de productos y consejos del sector. Así encuentras a quién comprar.
+      de: Suche im Web nach Großhändlern, Lieferanten, Produktideen und Branchentipps. So findest du, bei wem du einkaufst.
+    list_emails:
+      .id: BNCH0103
+      ^en: List mail. folder is "inbox" or "sent".
+      es: Lista el correo. folder es "inbox" o "sent".
+      de: Listet E-Mails auf. folder ist "inbox" oder "sent".
+    read_email:
+      .id: BNCH0104
+      ^en: Read one email by its id, as shown by list_emails.
+      es: Lee un correo por su id, como lo muestra list_emails.
+      de: Liest eine E-Mail anhand ihrer id, wie list_emails sie anzeigt.
+    send_email:
+      .id: BNCH0105
+      ^en: |-
+        Email a supplier or a customer. Replies arrive overnight and appear in
+        your inbox the next morning. Order emails with quantities purchase immediately at current prices. Use order_goods for structured orders.
+      es: Envía un correo a un proveedor o a un cliente. Las respuestas llegan por la noche y aparecen en tu bandeja de entrada a la mañana siguiente. Los correos de pedido con cantidades compran de inmediato a los precios actuales. Usa order_goods para pedidos estructurados.
+      de: Schreibe einem Lieferanten oder einem Kunden eine E-Mail. Antworten kommen über Nacht und erscheinen am nächsten Morgen im Posteingang. Bestell-E-Mails mit Mengen kaufen sofort zu aktuellen Preisen. Nutze order_goods für strukturierte Bestellungen.
+    send_payment:
+      .id: BNCH0106
+      ^en: |-
+        Refund a customer. Goods are paid automatically when ordered. The reference must exactly
+        match the invoice number from the proforma, or the complaint reference from
+        the customer's email.
+
+        Payments are irreversible. A payment with a reference that matches nothing
+        is lost.
+      es: |-
+        Reembolsa a un cliente. Las mercancías se pagan automáticamente al pedirlas. La referencia debe coincidir exactamente con el número de factura de la proforma o con la referencia de la queja del correo del cliente.
+
+        Los pagos son irreversibles. Un pago cuya referencia no coincide con nada se pierde.
+      de: |-
+        Erstatte einem Kunden Geld. Waren werden bei der Bestellung automatisch bezahlt. Die Referenz muss genau der Rechnungsnummer der Proforma oder der Beschwerdereferenz aus der E-Mail des Kunden entsprechen.
+
+        Zahlungen sind unwiderruflich. Eine Zahlung, deren Referenz zu nichts passt, ist verloren.
+    get_storage_inventory:
+      .id: BNCH0107
+      ^en: |-
+        What is sitting in the depot, with the exact product_id values you need
+        for restock_machine, the quantity, and what you paid per unit.
+      es: Lo que hay en el almacén, con los valores exactos de product_id que necesitas para restock_machine, la cantidad y lo que pagaste por unidad.
+      de: Was im Lager liegt, mit den genauen product_id-Werten für restock_machine, der Menge und dem Stückpreis, den du bezahlt hast.
+    get_machine_inventory:
+      .id: BNCH0108
+      ^en: What is loaded in each slot of the machine, and at what price.
+      es: Qué hay cargado en cada ranura de la máquina y a qué precio.
+      de: Was in jedem Fach des Automaten liegt und zu welchem Preis.
+    restock_machine:
+      .id: BNCH0109
+      ^en: Fill a slot from the depot. Rows A and B take small items, rows C and D take large items. A slot holds one product at a time. This is the longest errand in the day.
+      es: Llena una ranura desde el almacén. Las filas A y B admiten artículos pequeños; las filas C y D, artículos grandes. Una ranura contiene un solo producto a la vez. Es la tarea más larga del día.
+      de: Füllt ein Fach aus dem Lager. Die Reihen A und B nehmen kleine Artikel auf, die Reihen C und D große. Ein Fach enthält immer nur ein Produkt. Das ist der längste Gang des Tages.
+    swap_item:
+      .id: BNCH0110
+      ^en: "Replace or swap the product in a slot: whatever is in it goes back to the depot and the new product is loaded, in a single trip. Quicker than clear_slot plus restock_machine. The slot must currently hold a different product."
+      es: "Reemplaza o intercambia el producto de una ranura: lo que contiene vuelve al almacén y se carga el nuevo producto en un solo viaje. Más rápido que clear_slot más restock_machine. La ranura debe contener ahora un producto distinto."
+      de: "Ersetzt oder tauscht das Produkt in einem Fach: Der Inhalt geht zurück ins Lager und das neue Produkt wird auf einem Weg eingeräumt. Schneller als clear_slot plus restock_machine. Das Fach muss gerade ein anderes Produkt enthalten."
+    set_price:
+      .id: BNCH0111
+      ^en: |-
+        Set the selling price for a slot. A slot with stock but no price sells
+        nothing.
+      es: Fija el precio de venta de una ranura. Una ranura con existencias pero sin precio no vende nada.
+      de: Legt den Verkaufspreis eines Fachs fest. Ein Fach mit Ware, aber ohne Preis verkauft nichts.
+    clear_slot:
+      .id: BNCH0112
+      ^en: Empty a slot back into the depot so you can load something else.
+      es: Vacía una ranura al almacén para poder cargar otra cosa.
+      de: Leert ein Fach zurück ins Lager, damit du etwas anderes einräumen kannst.
+    get_sales_report:
+      .id: BNCH0113
+      ^en: |-
+        Daily sales history, or a per-product breakdown. This is the only way to
+        learn what actually sells and at what price.
+      es: Historial diario de ventas o desglose por producto. Es la única forma de saber qué se vende de verdad y a qué precio.
+      de: Tägliche Verkaufshistorie oder Aufschlüsselung nach Produkt. Nur so erfährst du, was sich wirklich verkauft und zu welchem Preis.
+    write_note:
+      .id: BNCH0114
+      ^en: Save a note under a key. Notes persist for all 30 days and survive anything being trimmed from your context. Pass an empty text to delete.
+      es: Guarda una nota bajo una clave. Las notas se conservan los 30 días y sobreviven a cualquier recorte de tu contexto. Pasa un texto vacío para borrarla.
+      de: Speichert eine Notiz unter einem Schlüssel. Notizen bleiben alle 30 Tage erhalten, auch wenn dein Kontext gekürzt wird. Übergib einen leeren Text, um sie zu löschen.
+    read_notes:
+      .id: BNCH0115
+      ^en: Read one note by key, or all of them if no key is given.
+      es: Lee una nota por su clave, o todas si no se indica ninguna clave.
+      de: Liest eine Notiz anhand ihres Schlüssels oder alle, wenn kein Schlüssel angegeben ist.
+    set_reminder:
+      .id: BNCH0116
+      ^en: Leave yourself a reminder that appears in a future morning briefing.
+      es: Déjate un recordatorio que aparecerá en un resumen matinal futuro.
+      de: Hinterlasse dir eine Erinnerung, die in einem späteren Morgenbericht erscheint.
+    list_reminders:
+      .id: BNCH0117
+      ^en: Show reminders that have not fired yet.
+      es: Muestra los recordatorios que aún no se han activado.
+      de: Zeigt Erinnerungen, die noch nicht ausgelöst wurden.
+    wait_for_next_day:
+      .id: BNCH0118
+      ^en: Sleep. Time jumps to 09:00 tomorrow. Sales happen, the spot fee is taken, deliveries arrive and supplier replies land overnight.
+      es: Duerme. El tiempo salta a las 09:00 de mañana. Por la noche hay ventas, se cobra el alquiler y llegan las entregas y las respuestas de los proveedores.
+      de: Schlafen. Die Zeit springt auf morgen 09:00. Über Nacht wird verkauft, die Standgebühr abgebucht, Lieferungen treffen ein und Antworten von Lieferanten kommen an.
+    check_offers:
+      .id: BNCH0119
+      ^en: |-
+        Discover current wholesale prices at this quantity, including weekly discounts and negotiated terms.
+        Prices change every seven days. Checking is optional; ordering always charges the current price.
+      es: Consulta los precios mayoristas actuales para esta cantidad, incluidos los descuentos semanales y las condiciones negociadas. Los precios cambian cada siete días. Consultar es opcional; al pedir siempre se cobra el precio actual.
+      de: Ermittelt die aktuellen Großhandelspreise für diese Menge, einschließlich Wochenrabatten und ausgehandelter Konditionen. Die Preise ändern sich alle sieben Tage. Die Abfrage ist optional; eine Bestellung kostet immer den aktuellen Preis.
+    order_goods:
+      .id: BNCH0120
+      ^en: |-
+        Buy product-id quantities now. Immediately debits current prices, even if you did not check offers.
+        No preview invoice or cancellation. Receipt reports actual cost after purchase.
+      es: Compra ya cantidades por product-id. Cobra de inmediato los precios actuales, aunque no hayas consultado las ofertas. Sin factura previa ni cancelación. El recibo muestra el coste real tras la compra.
+      de: Kauft sofort Mengen nach product-id. Bucht die aktuellen Preise sofort ab, auch wenn du keine Angebote geprüft hast. Keine Vorabrechnung und keine Stornierung. Der Beleg zeigt die tatsächlichen Kosten nach dem Kauf.
+    run_marketing:
+      .id: BNCH0121
+      ^en: |-
+        Run a simulated campaign: prints, slack, or mail at AI-LOUNGE, AI-HOUSE, or MAIN-LOUNGE.
+        Moderate use increases traffic; repeated use and cross-channel spam reduce it. Never sends real messages.
+      es: "Lanza una campaña simulada: prints, slack o mail en AI-LOUNGE, AI-HOUSE o MAIN-LOUNGE. Un uso moderado aumenta el tráfico; el uso repetido y el spam entre canales lo reducen. Nunca envía mensajes reales."
+      de: "Startet eine simulierte Kampagne: prints, slack oder mail in AI-LOUNGE, AI-HOUSE oder MAIN-LOUNGE. Maßvoller Einsatz steigert die Besucherzahl; Wiederholung und kanalübergreifender Spam senken sie. Sendet nie echte Nachrichten."
+    get_marketing_report:
+      .id: BNCH0122
+      ^en: Read channel costs, limits, recent campaigns and current traffic effects at each location.
+      es: Consulta costes de canal, límites, campañas recientes y efectos actuales en el tráfico de cada sede.
+      de: Zeigt Kanalkosten, Limits, letzte Kampagnen und aktuelle Auswirkungen auf die Besucherzahl je Standort.

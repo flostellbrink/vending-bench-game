@@ -1,5 +1,5 @@
 import { actionsSchema, parseRelease, replaySchema, snapshotSchema } from "games-common/benchmark";
-import { assertValue, keys } from "games-common/language";
+import { assertValue, entries, keys } from "games-common/language";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
@@ -7,6 +7,8 @@ import test from "node:test";
 import { loadPyodide } from "pyodide";
 import * as v from "valibot";
 
+import { brief } from "../src/dictionary/msg/benchmark/brief.ts";
+import * as tools from "../src/dictionary/msg/benchmark/tools/names.ts";
 import { pythonJSON, readRelease, readSnapshot, sourceRivalSchema } from "./benchmark-source.ts";
 
 const root = new URL("../../../", import.meta.url);
@@ -187,6 +189,28 @@ json.dumps({"checkpoints": mornings, "final": json.loads(snapshot())["final"]})
 /** @risk impact=2 likelihood=1 */
 await test("the briefing comes from the submodule commit", () => {
   assert.equal(release.brief, git("show", `${revision}:tasks/vending-bench/instruction.md`).trim());
+});
+
+const outdated = (key: string) =>
+  `The benchmark text of ${key} changed. In apps/web/dictionary.yaml, set its ^en to the ` +
+  "expected text below and update its es and de translations to match.";
+
+/** @risk impact=2 likelihood=3 */
+await test("the dictionary translates the published brief and tool descriptions", () => {
+  const english = { locale: "en" };
+  assert.equal(brief(undefined, english), release.brief, outdated("benchmark.brief"));
+  const messages = new Map<string, typeof brief>(entries(tools));
+  assert.deepEqual(
+    [...messages.keys()].toSorted(),
+    keys(release.tools).toSorted(),
+    "The published tools changed. In apps/web/dictionary.yaml, add or remove benchmark.tools " +
+      "entries to match them, each with ^en set to the published description and es and de " +
+      "translations.",
+  );
+  for (const [tool, text] of entries(release.tools)) {
+    const message = assertValue(messages.get(tool));
+    assert.equal(message(undefined, english), text, outdated(`benchmark.tools.${tool}`));
+  }
 });
 
 /** @risk impact=4 likelihood=3 */

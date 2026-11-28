@@ -4,6 +4,7 @@ import { keys, type Optional } from "games-common/language";
 import { useState } from "react";
 
 import { msg } from "@/dictionary/index.ts";
+import { toolDescription } from "@/game/benchmark-text.ts";
 import { commandGroups, local, syntax, toolFor } from "@/game/commands.ts";
 import { useTimeLabel } from "@/game/time-label.ts";
 import { toolDefaults } from "@/game/tool-defaults.ts";
@@ -42,7 +43,7 @@ export function CommandIndex({ actions, release, state }: Props) {
     ? choice
     : (sections[0]?.names[0] ?? "help");
   const tool = selected === "help" ? undefined : selected;
-  const description = tool ? release.tools[tool] : undefined;
+  const description = tool ? toolDescription(release, tool) : undefined;
   const defaults = toolDefaults(release, tool);
   return (
     <section className="command-manual">
@@ -82,7 +83,7 @@ export function CommandIndex({ actions, release, state }: Props) {
             {msg.operator.defaults()}: <code>{defaults}</code>
           </small>
         )}
-        {description && <p lang="en">{description}</p>}
+        {description && <p>{description}</p>}
         {!other.includes(selected) && <small>{msg.operator.notation()}</small>}
       </article>
     </section>
